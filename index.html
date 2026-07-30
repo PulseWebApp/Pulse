@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse — what's happening near you</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#12233B">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F6F5; --page:#E7ECEA; --surface:#FFFFFF; --surface-2:#FAFBFA;
+    --ink:#12233B; --ink-secondary:#5B6B7C; --ink-muted:#8B98A3;
+    --border:#E2E6E5; --border-strong:#CBD3D2;
+    --teal-bg:#E1F5EE; --teal-text:#0F6E56; --teal-fill:#1D9E75;
+    --amber-bg:#FAEEDA; --amber-text:#854F0B; --amber-fill:#EF9F27;
+    --coral-bg:#FAECE7; --coral-text:#99311D; --coral-fill:#D85A30;
+    --blue-bg:#E6F1FB; --blue-text:#185FA5; --blue-fill:#378ADD;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--page); font-family:'Inter',sans-serif; color:var(--ink); display:flex; justify-content:center;}
+  .frame{width:100%; max-width:460px; min-height:100vh; background:var(--bg); padding:0;}
+  .screen{background:var(--surface); min-height:100vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
+  @media (min-width:461px){
+    body{padding:32px 16px;}
+    .frame{min-height:auto; border-radius:36px; padding:12px; box-shadow:0 20px 60px rgba(18,35,59,0.18);}
+    .screen{min-height:700px; border-radius:26px;}
+  }
+  .mode-banner{font-size:11px; text-align:center; padding:6px; background:var(--amber-bg); color:var(--amber-text); display:none; font-family:'IBM Plex Mono',monospace;}
+  .mode-banner.show{display:block;}
+
+  .topbar{padding:18px 18px 10px;}
+  .brand{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .wordmark{font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:600; display:flex; align-items:center; gap:8px;}
+  .pulse-dot{width:9px; height:9px; border-radius:50%; background:var(--teal-fill); animation:breathe 1.8s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.4; transform:scale(0.75);}}
+
+  .persona{display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px;}
+  .persona button{flex:1; border:none; background:none; padding:7px 8px; font-family:'Inter',sans-serif; font-size:12px; font-weight:500; color:var(--ink-secondary); border-radius:8px; cursor:pointer;}
+  .persona button.active{background:var(--ink); color:#fff;}
+
+  .filters{display:flex; gap:6px; overflow-x:auto; padding:0 18px 12px; }
+  .filters::-webkit-scrollbar{display:none;}
+  .chip{white-space:nowrap; font-size:12px; padding:7px 13px; border-radius:20px; border:1px solid var(--border); color:var(--ink-secondary); background:var(--surface); cursor:pointer; font-family:'Inter',sans-serif;}
+  .chip.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  .content{flex:1; overflow-y:auto; padding:0 14px 14px; display:flex; flex-direction:column; gap:10px;}
+
+  .card{background:var(--surface-2); border-radius:var(--radius); padding:13px; cursor:pointer; border:1px solid transparent; transition:border-color .15s;}
+  .card:hover{border-color:var(--border-strong);}
+  .card-row{display:flex; gap:11px; align-items:flex-start;}
+  .icon-badge{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:17px;}
+  .card-body{flex:1; min-width:0;}
+  .card-title{font-size:14px; font-weight:600; margin:0; display:flex; align-items:center; gap:6px;}
+  .card-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
+  .card-right{text-align:right; flex-shrink:0;}
+  .card-metric{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600;}
+  .card-label{font-size:10px; color:var(--ink-muted); margin-top:2px; font-family:'IBM Plex Mono',monospace; letter-spacing:.02em;}
+  .badge-owner{font-size:10px; background:var(--blue-bg); color:var(--blue-text); padding:2px 7px; border-radius:20px; display:inline-flex; align-items:center; gap:3px; font-family:'Inter',sans-serif; font-weight:500;}
+  .status-dot{width:7px; height:7px; border-radius:50%; display:inline-block; animation:breathe 1.8s ease-in-out infinite;}
+
+  .section-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; padding:6px 6px 2px;}
+
+  .bottomnav{display:flex; border-top:1px solid var(--border); background:var(--surface);}
+  .bottomnav button{flex:1; border:none; background:none; padding:12px 0 10px; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; color:var(--ink-muted); cursor:pointer; font-family:'Inter',sans-serif;}
+  .bottomnav button i{font-size:20px;}
+  .bottomnav button.active{color:var(--ink);}
+
+  .fab{position:absolute; right:16px; bottom:78px; background:var(--ink); color:#fff; border:none; border-radius:24px; padding:11px 18px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:6px; cursor:pointer; font-family:'Inter',sans-serif; box-shadow:0 8px 20px rgba(18,35,59,0.25);}
+
+  .overlay{position:absolute; inset:0; background:rgba(18,35,59,0.45); display:flex; align-items:flex-end; z-index:10;}
+  .sheet{background:var(--surface); width:100%; border-radius:22px 22px 0 0; padding:18px; max-height:90%; overflow-y:auto;}
+  .sheet-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .sheet-title{font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600; margin:0;}
+  .sheet-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
+  .close-btn{background:var(--surface-2); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-secondary);}
+
+  .big-metric{text-align:center; padding:14px 0;}
+  .big-metric .num{font-family:'Space Grotesk',sans-serif; font-size:40px; font-weight:600; line-height:1;}
+  .big-metric .cap{font-size:11px; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; margin-top:6px;}
+
+  .opt-btn{width:100%; text-align:left; padding:13px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-family:'Inter',sans-serif; color:var(--ink);}
+  .opt-btn:hover{border-color:var(--border-strong);}
+  .opt-btn.selected{border-color:var(--blue-fill); background:var(--blue-bg); color:var(--blue-text);}
+
+  .type-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:14px;}
+  .type-opt{padding:14px 6px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-size:11px; color:var(--ink-secondary); background:var(--surface);}
+  .type-opt i{font-size:20px;}
+  .type-opt.selected{border-color:var(--ink); background:var(--surface-2); color:var(--ink);}
+
+  select, input[type=text]{width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); margin-bottom:12px;}
+
+  .primary-btn{width:100%; padding:13px; background:var(--ink); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif;}
+  .status-set{display:flex; gap:8px; margin-bottom:12px;}
+  .status-set button{flex:1; padding:11px 4px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); font-size:12px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif; color:var(--ink-secondary);}
+  .status-set button.sel-green.selected{border-color:var(--teal-fill); background:var(--teal-bg); color:var(--teal-text);}
+  .status-set button.sel-amber.selected{border-color:var(--amber-fill); background:var(--amber-bg); color:var(--amber-text);}
+  .status-set button.sel-red.selected{border-color:var(--coral-fill); background:var(--coral-bg); color:var(--coral-text);}
+
+  .owner-card{background:var(--surface-2); border-radius:16px; padding:16px; margin-bottom:14px;}
+  .owner-card-head{display:flex; gap:10px; align-items:center; margin-bottom:14px;}
+  .owner-note{font-size:12px; color:var(--ink-secondary); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 10px; margin-top:2px;}
+
+  .toast{position:absolute; bottom:88px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 18px; border-radius:24px; font-size:12px; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:20; white-space:nowrap; font-family:'Inter',sans-serif;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+  .empty{text-align:center; padding:40px 20px; color:var(--ink-muted); font-size:13px;}
+
+  svg text{font-family:'Inter',sans-serif;}
+  .map-pin{cursor:pointer;}
+  .legend{position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,0.96); border-top:1px solid var(--border); padding:10px 14px; display:flex; flex-wrap:wrap; gap:10px 14px;}
+  .legend span{font-size:10px; color:var(--ink-secondary); display:flex; align-items:center; gap:5px;}
+  .legend .dot{width:8px; height:8px; border-radius:50%;}
+</style>
+</head>
+<body>
+
+<div class="frame"><div class="screen" id="screen">
+  <div class="mode-banner" id="mode-banner"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="wordmark"><span class="pulse-dot"></span>Pulse</div>
+      <i class="ti ti-bell" style="font-size:19px; color:var(--ink-secondary);"></i>
+    </div>
+    <div class="persona">
+      <button id="persona-resident" class="active" onclick="setPersona('resident')">Resident</button>
+      <button id="persona-owner" onclick="setPersona('owner')">Business owner</button>
+    </div>
+  </div>
+
+  <div id="filters" class="filters"></div>
+  <div id="content" class="content"></div>
+
+  <div id="fab-holder"></div>
+  <div id="modal-holder"></div>
+  <div id="toast" class="toast"></div>
+
+  <div id="bottomnav" class="bottomnav">
+    <button id="nav-feed" class="active" onclick="setTab('feed')"><i class="ti ti-list"></i>Feed</button>
+    <button id="nav-map" onclick="setTab('map')"><i class="ti ti-map-2"></i>Map</button>
+    <button id="nav-report" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>
+  </div>
+</div></div>
+
+<script>
+// DAY 1 SETUP: paste your deployed Worker URL here once it's live,
+// e.g. 'https://pulse-api.YOURNAME.workers.dev'. Left empty, the app
+// runs entirely on the local demo data below (useful for opening this
+// file directly before deployment).
+const API_BASE = '';
+
+async function api(path, opts){
+  if(!API_BASE) return null;
+  try{
+    const res = await fetch(API_BASE+path, opts);
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
+}
+
+let locations = [
+  {id:1, name:'Eastside pharmacy', category:'health', icon:'ti-first-aid-kit', distance:'0.4 mi', status:'green', minutes:4, confirms:6, updated:'40 sec ago', ownerOwned:false, ownerVerified:false, x:100, y:70},
+  {id:2, name:'City DMV branch', category:'service', icon:'ti-building-bank', distance:'1.1 mi', status:'amber', minutes:38, confirms:21, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:105, y:205},
+  {id:3, name:'Riverside urgent care', category:'health', icon:'ti-stethoscope', distance:'0.8 mi', status:'red', minutes:57, confirms:14, updated:'5 min ago', ownerOwned:false, ownerVerified:false, x:245, y:325},
+  {id:4, name:'Northgate laundromat', category:'errand', icon:'ti-wash', distance:'0.6 mi', status:'green', minutes:2, confirms:3, updated:'6 min ago', ownerOwned:false, ownerVerified:false, x:100, y:430},
+  {id:5, name:'Shell station, Main St', category:'fuel', icon:'ti-gas-station', distance:'0.5 mi', status:'amber', minutes:12, confirms:0, updated:'1 min ago', ownerOwned:true, ownerVerified:true, note:'2 pumps closed for maintenance', x:250, y:70},
+  {id:6, name:'Bilal barbershop', category:'service', icon:'ti-scissors', distance:'0.3 mi', status:'red', minutes:45, confirms:0, updated:'3 min ago', ownerOwned:true, ownerVerified:true, note:'3 people ahead, walk-ins only', x:57, y:335},
+  {id:7, name:'Ranchers Restaurant', category:'food', icon:'ti-tools-kitchen-2', distance:'0.3 mi', status:'green', minutes:5, confirms:8, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:180, y:115},
+  {id:8, name:'Layers Bakeshop', category:'food', icon:'ti-bread', distance:'0.5 mi', status:'amber', minutes:15, confirms:4, updated:'3 min ago', ownerOwned:false, ownerVerified:false, x:122, y:310}
+];
+
+let roadReports = [
+  {id:101, name:'Signal down, 9th St and Elm St', type:'hazard', icon:'ti-traffic-cone', detail:'Treat as 4-way stop', updated:'12 min ago', confirms:9, x:45, y:395},
+  {id:102, name:'Highway 9 closed near Main St', type:'closure', icon:'ti-road-off', detail:'Water main repair, est. clears 6:00 PM', updated:'21 min ago', confirms:21, x:250, y:219},
+  {id:103, name:'Slow on Highway 9, eastbound', type:'jam', icon:'ti-car', detail:'Adds about 15 min', updated:'4 min ago', confirms:6, x:300, y:203},
+  {id:104, name:'Police reported, Main St', type:'police', icon:'ti-shield', detail:'North end, near 2nd Ave', updated:'8 min ago', confirms:30, x:150, y:40},
+  {id:105, name:'Speed camera, 2nd Ave', type:'camera', icon:'ti-camera', detail:'Fixed location', updated:'confirmed by many', confirms:34, x:280, y:150}
+];
+
+let signals = [
+  {id:201, name:'Main St and 2nd Ave', color:'red', reportedAt: Date.now()-40000, confirms:3, x:150, y:150},
+  {id:202, name:'Highway 9 and Main St', color:'green', reportedAt: Date.now()-15000, confirms:5, x:150, y:252},
+  {id:203, name:'9th St and 2nd Ave', color:'red', reportedAt: Date.now()-95000, confirms:1, x:54, y:150}
+];
+
+function timeAgo(ts){
+  const s = Math.max(0, Math.round((Date.now()-ts)/1000));
+  if(s<60) return s+' sec ago';
+  const m = Math.round(s/60);
+  if(m<60) return m+' min ago';
+  return Math.round(m/60)+' hr ago';
+}
+
+const statusColors = {
+  green:{bg:'var(--teal-bg)', text:'var(--teal-text)', fill:'var(--teal-fill)', label:'short wait'},
+  amber:{bg:'var(--amber-bg)', text:'var(--amber-text)', fill:'var(--amber-fill)', label:'building up'},
+  red:{bg:'var(--coral-bg)', text:'var(--coral-text)', fill:'var(--coral-fill)', label:'long wait'}
+};
+const typeColors = {
+  hazard:{bg:'var(--coral-bg)', text:'var(--coral-text)'},
+  closure:{bg:'var(--coral-bg)', text:'var(--coral-text)'},
+  jam:{bg:'var(--amber-bg)', text:'var(--amber-text)'},
+  police:{bg:'var(--blue-bg)', text:'var(--blue-text)'},
+  camera:{bg:'var(--blue-bg)', text:'var(--blue-text)'}
+};
+
+let persona = 'resident';
+let tab = 'feed';
+let filter = 'all';
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function setPersona(p){
+  persona = p;
+  document.getElementById('persona-resident').classList.toggle('active', p==='resident');
+  document.getElementById('persona-owner').classList.toggle('active', p==='owner');
+  document.getElementById('bottomnav').style.display = p==='resident' ? 'flex' : 'none';
+  render();
+}
+
+function setTab(t){
+  tab = t;
+  document.getElementById('nav-feed').classList.toggle('active', t==='feed');
+  document.getElementById('nav-map').classList.toggle('active', t==='map');
+  render();
+}
+
+function setFilter(f){ filter = f; render(); }
+
+function render(){
+  const filters = document.getElementById('filters');
+  const content = document.getElementById('content');
+  const fabHolder = document.getElementById('fab-holder');
+
+  if(persona==='owner'){
+    filters.innerHTML='';
+    fabHolder.innerHTML='';
+    renderOwner(content);
+    return;
+  }
+
+  const chipDefs = [
+    {k:'all', label:'All'}, {k:'food', label:'Food'}, {k:'fuel', label:'Fuel'}, {k:'health', label:'Health'},
+    {k:'service', label:'Service'}, {k:'errand', label:'Errands'}, {k:'road', label:'Roads'}
+  ];
+  filters.innerHTML = chipDefs.map(c=>`<button class="chip ${filter===c.k?'active':''}" onclick="setFilter('${c.k}')">${c.label}</button>`).join('');
+
+  if(tab==='map'){
+    fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
+    renderMap(content);
+    return;
+  }
+
+  fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
+  renderFeed(content);
+}
+
+function renderFeed(content){
+  let waits = locations.filter(l=> filter==='all' || filter==='road' ? filter!=='road' : l.category===filter);
+  if(filter==='all') waits = locations;
+  else if(filter==='road') waits = [];
+  else waits = locations.filter(l=>l.category===filter);
+
+  let roads = (filter==='all' || filter==='road') ? roadReports : [];
+
+  let html = '';
+  if(waits.length){
+    html += `<div class="section-label">Nearby wait times</div>`;
+    html += waits.map(l=>{
+      const c = statusColors[l.status];
+      return `<div class="card" onclick="openDetail(${l.id})">
+        <div class="card-row">
+          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${l.icon}"></i></div>
+          <div class="card-body">
+            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''}</p>
+            <p class="card-sub">${l.distance} · ${l.confirms>0? l.confirms+' check-ins':'owner reported'}</p>
+          </div>
+          <div class="card-right">
+            <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
+              <span class="status-dot" style="background:${c.fill};"></span>
+              <span class="card-metric" style="color:${c.text};">${l.minutes} min</span>
+            </div>
+            <div class="card-label">${c.label}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if(roads.length){
+    html += `<div class="section-label">Road & area reports</div>`;
+    html += roads.map(r=>{
+      const c = typeColors[r.type];
+      return `<div class="card" onclick="openRoadDetail(${r.id})">
+        <div class="card-row">
+          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${r.icon}"></i></div>
+          <div class="card-body">
+            <p class="card-title">${r.name}</p>
+            <p class="card-sub">${r.detail} · ${r.updated}</p>
+          </div>
+          <div class="card-right"><div class="card-label">${r.confirms} confirms</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  let sigs = (filter==='all' || filter==='road') ? signals : [];
+  if(sigs.length){
+    html += `<div class="section-label">Signal reports</div>`;
+    html += sigs.map(s=>{
+      const c = s.color==='red' ? statusColors.red : statusColors.green;
+      return `<div class="card" onclick="openSignalDetail(${s.id})">
+        <div class="card-row">
+          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ti-traffic-lights"></i></div>
+          <div class="card-body">
+            <p class="card-title">${s.name}</p>
+            <p class="card-sub">${s.confirms} confirms</p>
+          </div>
+          <div class="card-right">
+            <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
+              <span class="status-dot" style="background:${c.fill};"></span>
+              <span class="card-metric" style="color:${c.text};">${s.color.toUpperCase()}</span>
+            </div>
+            <div class="card-label" data-ts="${s.reportedAt}">${timeAgo(s.reportedAt)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if(!html) html = `<div class="empty">Nothing reported in this category yet.<br>Be the first to report it.</div>`;
+  content.innerHTML = html;
+}
+
+const iconGlyphs = {
+  'ti-first-aid-kit': c=>`<path d="M -1.4 -4 L 1.4 -4 L 1.4 -1.4 L 4 -1.4 L 4 1.4 L 1.4 1.4 L 1.4 4 L -1.4 4 L -1.4 1.4 L -4 1.4 L -4 -1.4 L -1.4 -1.4 Z" fill="${c}"></path>`,
+  'ti-stethoscope': c=>`<path d="M -1.4 -4 L 1.4 -4 L 1.4 -1.4 L 4 -1.4 L 4 1.4 L 1.4 1.4 L 1.4 4 L -1.4 4 L -1.4 1.4 L -4 1.4 L -4 -1.4 L -1.4 -1.4 Z" fill="${c}"></path>`,
+  'ti-building-bank': c=>`<g fill="none" stroke="${c}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M -4 4 L 4 4"></path><path d="M -3.5 4 L -3.5 0 M -1.2 4 L -1.2 0 M 1.2 4 L 1.2 0 M 3.5 4 L 3.5 0"></path><path d="M -4.3 0 L 0 -4 L 4.3 0 Z" fill="${c}" stroke="none"></path></g>`,
+  'ti-wash': c=>`<circle cx="0" cy="0" r="4" fill="none" stroke="${c}" stroke-width="1.3"></circle><circle cx="0" cy="0" r="1.8" fill="${c}"></circle>`,
+  'ti-gas-station': c=>`<rect x="-3.2" y="-4" width="4.6" height="8" rx="0.8" fill="${c}"></rect><rect x="1.8" y="-4" width="2.4" height="2.2" rx="0.5" fill="${c}"></rect><line x1="1.4" y1="-2.9" x2="1.8" y2="-2.9" stroke="${c}" stroke-width="1"></line>`,
+  'ti-scissors': c=>`<g fill="none" stroke="${c}" stroke-width="1.2" stroke-linecap="round"><circle cx="-2.6" cy="2.6" r="1.4"></circle><circle cx="2.6" cy="2.6" r="1.4"></circle><line x1="-1.7" y1="1.7" x2="3.6" y2="-3.6"></line><line x1="1.7" y1="1.7" x2="-3.6" y2="-3.6"></line></g>`,
+  'ti-tools-kitchen-2': c=>`<g fill="none" stroke="${c}" stroke-width="1.1" stroke-linecap="round"><line x1="-2.4" y1="-4" x2="-2.4" y2="-0.8"></line><line x1="0" y1="-4" x2="0" y2="-0.8"></line><line x1="2.4" y1="-4" x2="2.4" y2="-0.8"></line><path d="M -2.4 -0.8 Q -2.4 1.2 0 1.2 Q 2.4 1.2 2.4 -0.8"></path><line x1="0" y1="1.2" x2="0" y2="4.4"></line></g>`,
+  'ti-bread': c=>`<path d="M -4 2.4 Q -4.2 -3 0 -3.2 Q 4.2 -3 4 2.4 Z" fill="${c}"></path><line x1="-1.9" y1="-1" x2="-0.8" y2="1" stroke="#fff" stroke-width="0.9" stroke-linecap="round"></line><line x1="0.1" y1="-1.4" x2="1" y2="0.9" stroke="#fff" stroke-width="0.9" stroke-linecap="round"></line><line x1="2" y1="-1" x2="2.9" y2="1" stroke="#fff" stroke-width="0.9" stroke-linecap="round"></line>`,
+  'ti-map-pin': c=>`<circle cx="0" cy="0" r="2.2" fill="${c}"></circle>`
+};
+
+function renderMap(content){
+  const pins = locations.map(l=>{
+    const c = statusColors[l.status];
+    return `<g class="map-pin" transform="translate(${l.x},${l.y})" onclick="openDetail(${l.id})">
+      <path d="M 0 0 C -11 -11 -11 -27 0 -33 C 11 -27 11 -11 0 0 Z" fill="${c.fill}"></path>
+      <circle cx="0" cy="-21" r="8" fill="#fff"></circle>
+    </g>`;
+  }).join('');
+  const pinGlyphs = locations.map(l=>{
+    const glyph = (iconGlyphs[l.icon] || iconGlyphs['ti-map-pin'])(statusColors[l.status].fill);
+    return `<g transform="translate(${l.x},${l.y-21})" style="pointer-events:none;">${glyph}</g>`;
+  }).join('');
+  const roadPins = roadReports.map(r=>{
+    const c = typeColors[r.type];
+    return `<g class="map-pin" transform="translate(${r.x},${r.y})" onclick="openRoadDetail(${r.id})">
+      <rect x="-10" y="-10" width="20" height="20" rx="6" fill="${r.type==='police'||r.type==='camera'?'var(--blue-fill)':(r.type==='jam'?'var(--amber-fill)':'var(--coral-fill)')}"></rect>
+      <text x="0" y="4" text-anchor="middle" font-size="11" fill="#fff"><tspan></tspan></text>
+    </g>`;
+  }).join('');
+  const signalPins = signals.map(s=>{
+    const fill = s.color==='red' ? 'var(--coral-fill)' : 'var(--teal-fill)';
+    return `<g class="map-pin" transform="translate(${s.x},${s.y})" onclick="openSignalDetail(${s.id})">
+      <rect x="-10" y="-10" width="20" height="20" rx="6" fill="${fill}"></rect>
+      <path d="M -3 -6 L 3 -6 M -3 0 L 3 0 M -3 6 L 3 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"></path>
+    </g>`;
+  }).join('');
+
+  content.innerHTML = `
+  <div style="position:relative; margin:0 -14px;">
+    <svg viewBox="0 0 340 460" style="width:100%; display:block;">
+      <rect x="0" y="0" width="340" height="460" fill="#EEF2F1"></rect>
+      <path d="M 250 0 L 340 60 L 340 220 L 300 260 L 260 460 L 200 460 L 240 220 L 260 100 Z" fill="#CFE3F2"></path>
+      <path d="M 20 20 Q 60 10 90 40 Q 100 70 70 90 Q 30 95 15 60 Z" fill="#D8EAC0"></path>
+
+      <rect x="65" y="30" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
+      <rect x="70" y="165" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
+      <rect x="205" y="285" width="80" height="80" rx="6" fill="#F7F9F8"></rect>
+      <rect x="65" y="390" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
+      <rect x="210" y="20" width="80" height="80" rx="6" fill="#F7F9F8"></rect>
+      <rect x="22" y="295" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
+      <rect x="160" y="90" width="40" height="50" rx="6" fill="#F7F9F8"></rect>
+      <rect x="100" y="280" width="45" height="60" rx="6" fill="#F7F9F8"></rect>
+
+      <line x1="150" y1="0" x2="150" y2="460" stroke="#CBD3D2" stroke-width="4"></line>
+      <line x1="0" y1="150" x2="340" y2="150" stroke="#CBD3D2" stroke-width="4"></line>
+      <line x1="60" y1="0" x2="40" y2="460" stroke="#DCE1DF" stroke-width="2"></line>
+      <line x1="0" y1="400" x2="340" y2="380" stroke="#DCE1DF" stroke-width="2"></line>
+      <line x1="0" y1="300" x2="340" y2="190" stroke="#CBD3D2" stroke-width="7"></line>
+
+      <text x="156" y="26" font-size="9" fill="var(--ink-secondary)">Main St</text>
+      <text x="10" y="144" font-size="9" fill="var(--ink-secondary)">2nd Ave</text>
+      <text x="66" y="20" font-size="9" fill="var(--ink-secondary)">9th St</text>
+      <text x="8" y="392" font-size="9" fill="var(--ink-secondary)">Elm St</text>
+      <text x="150" y="228" font-size="9" fill="var(--ink-secondary)" transform="rotate(-18 150 228)">Highway 9</text>
+
+      ${pins}
+      ${pinGlyphs}
+      ${roadPins}
+      ${signalPins}
+      <circle cx="150" cy="280" r="6" fill="var(--blue-fill)" stroke="#fff" stroke-width="2.5"></circle>
+    </svg>
+    <div class="legend">
+      <span style="width:100%; color:var(--ink-muted);">Icon shows what it is, color shows current status</span>
+      <span><span class="dot" style="background:var(--teal-fill);"></span>Short wait</span>
+      <span><span class="dot" style="background:var(--amber-fill);"></span>Building up</span>
+      <span><span class="dot" style="background:var(--coral-fill);"></span>Long wait / hazard</span>
+      <span><span class="dot" style="background:var(--blue-fill);"></span>Police / camera</span>
+      <span><i class="ti ti-traffic-lights" style="font-size:11px; color:var(--ink-secondary);"></i>Signal, reported color</span>
+    </div>
+  </div>`;
+}
+
+function renderOwner(content){
+  const mine = locations.filter(l=>l.ownerOwned);
+  content.innerHTML = `<div class="section-label">Your businesses</div>` + mine.map(l=>{
+    const c = statusColors[l.status];
+    return `<div class="owner-card">
+      <div class="owner-card-head">
+        <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${l.icon}"></i></div>
+        <div>
+          <p style="font-weight:600; font-size:14px; margin:0;">${l.name}</p>
+          <p style="font-size:11px; color:var(--ink-muted); margin:2px 0 0;">${l.updated}</p>
+        </div>
+      </div>
+      <p style="font-size:11px; color:var(--ink-muted); margin:0 0 8px;">Current status</p>
+      <div class="status-set">
+        <button class="sel-green ${l.status==='green'?'selected':''}" onclick="ownerSetStatus(${l.id},'green')">Short</button>
+        <button class="sel-amber ${l.status==='amber'?'selected':''}" onclick="ownerSetStatus(${l.id},'amber')">Building up</button>
+        <button class="sel-red ${l.status==='red'?'selected':''}" onclick="ownerSetStatus(${l.id},'red')">Long wait</button>
+      </div>
+      <p style="font-size:11px; color:var(--ink-muted); margin:0 0 6px;">Note for customers (optional)</p>
+      <input type="text" id="note-${l.id}" value="${l.note||''}" placeholder="e.g. 2 pumps closed for maintenance">
+      <button class="primary-btn" onclick="ownerSave(${l.id})">Save and notify nearby residents</button>
+    </div>`;
+  }).join('') + `<div class="empty" style="text-align:left; padding:6px 4px;">Any shop, clinic, or station can claim a listing here. Updates you save show instantly on the resident feed, marked as owner verified.</div>`;
+}
+
+function ownerSetStatus(id, status){
+  const l = locations.find(x=>x.id===id);
+  l.status = status;
+  render();
+}
+function ownerSave(id){
+  const l = locations.find(x=>x.id===id);
+  l.note = document.getElementById('note-'+id).value;
+  l.updated = 'Updated by owner · just now';
+  l.ownerVerified = true;
+  api('/api/owner-update', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({locationId:id, status:l.status, note:l.note})});
+  toast('Saved. Nearby residents can see this now.');
+  render();
+}
+
+function openDetail(id){
+  const l = locations.find(x=>x.id===id);
+  const c = statusColors[l.status];
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">${l.name}</p>
+          <p class="sheet-sub">${l.ownerVerified? 'Reported by the owner · '+l.updated : 'Based on '+l.confirms+' check-ins · '+l.updated}</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="big-metric">
+        <div class="num" style="color:${c.text};">${l.minutes} min</div>
+        <div class="cap">${c.label.toUpperCase()}</div>
+      </div>
+      <p style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">How long did you actually wait?</p>
+      <button class="opt-btn" onclick="checkin(${l.id}, 3, 'green')">Under 10 min <i class="ti ti-chevron-right"></i></button>
+      <button class="opt-btn" onclick="checkin(${l.id}, 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
+      <button class="opt-btn" onclick="checkin(${l.id}, 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
+    </div>
+  </div>`;
+}
+
+function checkin(id, minutes, status){
+  const l = locations.find(x=>x.id===id);
+  l.minutes = minutes; l.status = status; l.confirms += 1; l.updated = 'just now';
+  api('/api/checkin', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({locationId:id, minutes, status})});
+  closeModal();
+  toast('Thanks, check-in added.');
+  render();
+}
+
+function openRoadDetail(id){
+  const r = roadReports.find(x=>x.id===id);
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">${r.name}</p>
+          <p class="sheet-sub">${r.detail} · ${r.updated}</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <p style="font-size:12px; color:var(--ink-muted); margin:0 0 10px;">${r.confirms} people have confirmed this is still happening.</p>
+      <button class="opt-btn" onclick="confirmRoad(${r.id})">Still there <i class="ti ti-check"></i></button>
+      <button class="opt-btn" onclick="clearRoad(${r.id})">It's cleared now <i class="ti ti-x"></i></button>
+    </div>
+  </div>`;
+}
+function confirmRoad(id){
+  const r = roadReports.find(x=>x.id===id);
+  r.confirms += 1; r.updated = 'just now';
+  api('/api/road-confirm', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})});
+  closeModal(); toast('Confirmed, thanks.'); render();
+}
+function clearRoad(id){
+  roadReports = roadReports.filter(x=>x.id!==id);
+  api('/api/road-clear', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})});
+  closeModal(); toast('Marked as cleared.'); render();
+}
+
+function openSignalDetail(id){
+  const s = signals.find(x=>x.id===id);
+  const c = s.color==='red' ? statusColors.red : statusColors.green;
+  const other = s.color==='red' ? 'green' : 'red';
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">${s.name}</p>
+          <p class="sheet-sub">Reported by people passing through, not a live feed</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="big-metric">
+        <div class="num" style="color:${c.text};">${s.color.toUpperCase()}</div>
+        <div class="cap">REPORTED ${timeAgo(s.reportedAt).toUpperCase()} &middot; ${s.confirms} CONFIRMS</div>
+      </div>
+      <p style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">What do you see right now?</p>
+      <button class="opt-btn" onclick="reportSignal(${s.id}, '${s.color}')">Still ${s.color} <i class="ti ti-check"></i></button>
+      <button class="opt-btn" onclick="reportSignal(${s.id}, '${other}')">Now ${other} <i class="ti ti-refresh"></i></button>
+    </div>
+  </div>`;
+}
+function reportSignal(id, color){
+  const s = signals.find(x=>x.id===id);
+  s.color = color; s.reportedAt = Date.now(); s.confirms += 1;
+  api('/api/signal-report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, color})});
+  closeModal();
+  toast('Thanks, that keeps this current.');
+  render();
+}
+
+let reportType = null;
+function openReportModal(){
+  reportType = null;
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">What are you seeing?</p>
+          <p class="sheet-sub">Reports share your current location</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="type-grid" id="type-grid">
+        ${['signal|ti-traffic-cone|Signal down','signalstate|ti-traffic-lights|Signal color','closure|ti-road-off|Road closed','jam|ti-car|Traffic jam','police|ti-shield|Police','camera|ti-camera|Camera','wait|ti-clock-plus|Wait time']
+          .map(t=>{const [k,icon,label]=t.split('|'); return `<div class="type-opt" data-k="${k}" onclick="selectType('${k}')"><i class="ti ${icon}"></i><span>${label}</span></div>`;}).join('')}
+      </div>
+      <div id="report-extra"></div>
+      <button class="primary-btn" onclick="submitReport()">Submit report</button>
+    </div>
+  </div>`;
+}
+let reportSignalColor = 'red';
+function pickColor(c){
+  reportSignalColor = c;
+  document.getElementById('clr-red')?.classList.toggle('selected', c==='red');
+  document.getElementById('clr-green')?.classList.toggle('selected', c==='green');
+}
+function selectType(k){
+  reportType = k;
+  document.querySelectorAll('.type-opt').forEach(el=>el.classList.toggle('selected', el.dataset.k===k));
+  const extra = document.getElementById('report-extra');
+  if(k==='wait'){
+    extra.innerHTML = `<input type="text" id="report-name" placeholder="Place name, e.g. Corner Market">`;
+  } else if(k==='signalstate'){
+    reportSignalColor = 'red';
+    extra.innerHTML = `<input type="text" id="report-name" placeholder="Intersection, e.g. 5th and Main">
+      <p style="font-size:12px; color:var(--ink-muted); margin:0 0 6px;">What color is it right now?</p>
+      <div class="status-set">
+        <button type="button" class="sel-red selected" id="clr-red" onclick="pickColor('red')">Red</button>
+        <button type="button" class="sel-green" id="clr-green" onclick="pickColor('green')">Green</button>
+      </div>`;
+  } else {
+    extra.innerHTML = `<p style="font-size:12px; color:var(--ink-muted); margin:0 0 6px;">How long will it likely last?</p>
+      <select id="report-duration"><option>A few minutes</option><option selected>15 to 30 minutes</option><option>An hour or more</option><option>Not sure</option></select>`;
+  }
+}
+function submitReport(){
+  if(!reportType){ toast("Pick what you're reporting first."); return; }
+  if(reportType==='wait'){
+    const name = document.getElementById('report-name')?.value || 'New spot';
+    locations.unshift({id:Date.now(), name, category:'errand', icon:'ti-map-pin', distance:'nearby', status:'amber', minutes:10, confirms:1, updated:'just now', ownerOwned:false, ownerVerified:false, x:100, y:70});
+    api('/api/report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kind:'wait', name})});
+  } else if(reportType==='signalstate'){
+    const name = document.getElementById('report-name')?.value || 'New intersection';
+    signals.unshift({id:Date.now(), name, color:reportSignalColor, reportedAt:Date.now(), confirms:1, x:150, y:150});
+    api('/api/signal-report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, color:reportSignalColor, x:150, y:150})});
+  } else {
+    const map = {signal:['Signal reported down','hazard','ti-traffic-cone'], closure:['Road reported closed','closure','ti-road-off'], jam:['Traffic jam reported','jam','ti-car'], police:['Police reported','police','ti-shield'], camera:['Camera reported','camera','ti-camera']};
+    const [name,type,icon] = map[reportType];
+    roadReports.unshift({id:Date.now(), name, type, icon, detail:'Reported just now', updated:'just now', confirms:1, x:200, y:230});
+    api('/api/report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kind:reportType, name, detail:'Reported just now', x:200, y:230})});
+  }
+  closeModal();
+  toast('Report added, thanks.');
+  render();
+}
+
+function closeModal(){ document.getElementById('modal-holder').innerHTML=''; }
+
+setInterval(()=>{
+  document.querySelectorAll('[data-ts]').forEach(el=>{ el.textContent = timeAgo(Number(el.dataset.ts)); });
+}, 1000);
+
+async function boot(){
+  const banner = document.getElementById('mode-banner');
+  const data = await api('/api/feed');
+  if(data){
+    locations = data.locations;
+    roadReports = data.roadReports;
+    signals = data.signals;
+    banner.classList.remove('show');
+  } else {
+    banner.textContent = API_BASE ? 'Could not reach the API \u2014 showing demo data' : 'Demo mode \u2014 showing sample data';
+    banner.classList.add('show');
+  }
+  render();
+}
+boot();
+</script>
+</body>
+</html>
