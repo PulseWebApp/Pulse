@@ -298,7 +298,7 @@ function renderFeed(content){
   if(roads.length){
     html += `<div class="section-label">Road & area reports</div>`;
     html += roads.map(r=>{
-      const c = typeColors[r.type];
+      const c = typeColors[r.type] || {bg:'var(--surface-1)', text:'var(--ink-secondary)'};
       return `<div class="card" onclick="openRoadDetail(${r.id})">
         <div class="card-row">
           <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${r.icon}"></i></div>
