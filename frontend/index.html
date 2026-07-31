@@ -1197,11 +1197,14 @@ function openDetail(id){
             <p class="sheet-sub">${l.ownerVerified? 'Reported by the owner · '+l.updated : 'Based on '+l.confirms+' check-ins · '+l.updated}</p>
           </div>
         </div>
-        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+        <div style="display:flex; gap:6px;">
+          <button class="close-btn" onclick="closeModal(); openReportModal();" title="Report something wrong" style="color:var(--coral-text);"><i class="fa-solid fa-flag" style="font-size:13px;"></i></button>
+          <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+        </div>
       </div>
       <div style="display:flex; gap:8px; margin-bottom:10px;">
         <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
-        <button class="opt-btn" onclick="closeModal(); openReportModal();" style="justify-content:center; gap:6px; flex:1; margin-bottom:0; border-color:var(--coral-fill); color:var(--coral-text);"><i class="fa-solid fa-flag"></i>Report</button>
+        <button class="primary-btn" onclick="document.getElementById('checkin-section-${l.id}').scrollIntoView({behavior:'smooth', block:'nearest'})" style="flex:1; margin-bottom:0; display:flex; align-items:center; justify-content:center; gap:6px;"><i class="fa-solid fa-check"></i>Check In</button>
       </div>
       <div class="big-metric">
         <div class="num" style="color:${c.text}; font-size:${l.minutes==null?'26px':'40px'};">${l.minutes==null ? 'No reports yet' : l.minutes+' min'}</div>
@@ -1222,7 +1225,7 @@ function openDetail(id){
         </div>
         <p style="font-size:11.5px; color:var(--ink-secondary); margin:0;">${l.crowdCount} check-in${l.crowdCount===1?'':'s'} in the last 2 hours</p>
       </div>` : ''}
-      <p style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">How long did you actually wait?</p>
+      <p id="checkin-section-${l.id}" style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">How long did you actually wait?</p>
       <button class="opt-btn" onclick="checkin('${l.id}', 3, 'green')">Under 10 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
