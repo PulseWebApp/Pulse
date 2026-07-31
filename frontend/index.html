@@ -264,10 +264,13 @@ function demoToLatLng(x, y){
 
 function getUserLocation(){
   return new Promise(resolve => {
-    if(!navigator.geolocation){ resolve(null); return; }
+    if(!navigator.geolocation){ resolve({error:'not_supported'}); return; }
     navigator.geolocation.getCurrentPosition(
       pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude}),
-      () => resolve(null),
+      err => {
+        const reasons = {1:'permission_denied', 2:'position_unavailable', 3:'timeout'};
+        resolve({error: reasons[err.code] || 'unknown_error'});
+      },
       {timeout: 15000}
     );
   });
@@ -294,7 +297,7 @@ async function fetchNearbyPlaces(lat, lng){
       laundry:{category:'errand', icon:'ti-wash'},
       hairdresser:{category:'service', icon:'ti-scissors'},
     };
-    return (data.elements || []).filter(el => el.tags && el.tags.name).map(el => {
+    const mapped = (data.elements || []).filter(el => el.tags && el.tags.name).map(el => {
       const kind = el.tags.amenity || el.tags.shop;
       const c = catMap[kind] || {category:'service', icon:'ti-map-pin'};
       return {
@@ -304,6 +307,14 @@ async function fetchNearbyPlaces(lat, lng){
         osm: true, lat: el.lat, lng: el.lon,
       };
     });
+    // De-dupe: OSM sometimes has two nodes for the same real place.
+    // Treat same name + within ~30m as a duplicate, keep the first.
+    const deduped = [];
+    for(const p of mapped){
+      const dupe = deduped.find(x => x.name===p.name && Math.abs(x.lat-p.lat)<0.0003 && Math.abs(x.lng-p.lng)<0.0003);
+      if(!dupe) deduped.push(p);
+    }
+    return deduped;
   }catch(e){ return []; }
 }
 
@@ -502,7 +513,7 @@ function renderFeed(content){
           <div class="card-right">
             <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
               <span class="status-dot" style="background:${c.fill};"></span>
-              <span class="card-metric" style="color:${c.text};">${l.minutes} min</span>
+              <span class="card-metric" style="color:${c.text};">${l.minutes==null ? '—' : l.minutes+' min'}</span>
             </div>
             <div class="card-label">${c.label}</div>
           </div>
@@ -809,13 +820,21 @@ async function boot(){
 
   const loc = await getUserLocation();
   const fallback = {lat: 33.6, lng: 73.0};
-  const centerForPlaces = loc || fallback;
-  if(loc){
+  const gotRealLocation = loc && !loc.error;
+  const centerForPlaces = gotRealLocation ? loc : fallback;
+  if(gotRealLocation){
     userLoc = loc; usingRealLocation = true;
     locBanner.style.display = 'none';
   } else {
     userLoc = fallback; usingRealLocation = false;
-    locBanner.textContent = 'Using a default area \u2014 real nearby places shown, but not your exact location';
+    const reasonText = {
+      permission_denied: 'Location permission denied',
+      position_unavailable: 'Location unavailable on this device',
+      timeout: 'Location request timed out',
+      not_supported: "This browser doesn't support location",
+      unknown_error: 'Could not get location',
+    };
+    locBanner.textContent = (reasonText[loc && loc.error] || 'Could not get location') + ' \u2014 using a default area, real nearby places still shown';
     locBanner.style.display = 'block';
   }
   const places = await fetchNearbyPlaces(centerForPlaces.lat, centerForPlaces.lng);
