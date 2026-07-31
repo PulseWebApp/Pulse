@@ -28,6 +28,8 @@ function timeAgo(ms) {
 function mapLocation(row) {
   const ratingCount = row.rating_count || 0;
   const ratingAvg = ratingCount > 0 ? Math.round((row.rating_sum / ratingCount) * 10) / 10 : null;
+  const crowdCount = row.crowd_count || 0;
+  const crowdLevel = crowdCount >= 5 ? 'High' : crowdCount >= 2 ? 'Medium' : crowdCount >= 1 ? 'Low' : null;
   return {
     id: row.id, name: row.name, category: row.category, icon: row.icon,
     distance: row.distance, status: row.status, minutes: row.minutes,
@@ -35,6 +37,8 @@ function mapLocation(row) {
     ownerOwned: !!row.owner_owned, ownerVerified: !!row.owner_verified,
     note: row.note, x: row.x, y: row.y,
     ratingAvg, ratingCount,
+    photoUrl: row.photo_url || null,
+    crowdLevel, crowdCount,
   };
 }
 function mapRoadReport(row) {
@@ -62,8 +66,12 @@ export default {
 
     // GET /api/feed
     if (path === '/api/feed' && method === 'GET') {
+      const crowdWindowStart = Date.now() - (2 * 60 * 60 * 1000); // last 2 hours
       const [locs, roads, sigs] = await Promise.all([
-        env.DB.prepare('SELECT * FROM locations ORDER BY id').all(),
+        env.DB.prepare(
+          `SELECT l.*, (SELECT COUNT(*) FROM checkins c WHERE c.location_id = l.id AND c.created_at > ?) AS crowd_count
+           FROM locations l ORDER BY l.id`
+        ).bind(crowdWindowStart).all(),
         env.DB.prepare('SELECT * FROM road_reports ORDER BY id DESC').all(),
         env.DB.prepare('SELECT * FROM signals ORDER BY id').all(),
       ]);
@@ -80,6 +88,9 @@ export default {
       await env.DB.prepare(
         'UPDATE locations SET minutes=?, status=?, confirms=confirms+1, updated_at=? WHERE id=?'
       ).bind(body.minutes, body.status, Date.now(), body.locationId).run();
+      await env.DB.prepare(
+        'INSERT INTO checkins (location_id, minutes, status, created_at) VALUES (?,?,?,?)'
+      ).bind(body.locationId, body.minutes, body.status, Date.now()).run();
       return json({ ok: true });
     }
 
@@ -141,12 +152,12 @@ export default {
       return json({ ok: true, id });
     }
 
-    // POST /api/owner-update  { locationId, status, note }
+    // POST /api/owner-update  { locationId, status, note, photoUrl }
     if (path === '/api/owner-update' && method === 'POST') {
       const body = await request.json();
       await env.DB.prepare(
-        'UPDATE locations SET status=?, note=?, updated_at=?, owner_verified=1 WHERE id=?'
-      ).bind(body.status, body.note, Date.now(), body.locationId).run();
+        'UPDATE locations SET status=?, note=?, photo_url=?, updated_at=?, owner_verified=1 WHERE id=?'
+      ).bind(body.status, body.note, body.photoUrl || null, Date.now(), body.locationId).run();
       return json({ ok: true });
     }
 
