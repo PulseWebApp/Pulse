@@ -172,7 +172,7 @@
 
   /* Real map */
   #leaflet-map{width:100%; height:100%; background:var(--surface-1, #EEF2F1);}
-  #leaflet-map .leaflet-tile-pane{filter:saturate(0.6) brightness(1.06) contrast(0.92);}
+  #leaflet-map .leaflet-tile-pane{filter:saturate(1.8) contrast(1.05);}
   .map-wrap{position:relative; flex:1; min-height:0; border-radius:20px; overflow:hidden; box-shadow:0 10px 34px rgba(15,23,42,.10);}
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -640,7 +640,7 @@ function initMapIfNeeded(){
   const center = userLoc || {lat:33.6, lng:73.0};
   const worldBounds = L.latLngBounds([-85,-185],[85,185]);
   leafletMap = L.map(leafletMapDiv, {zoomControl:false, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0}).setView([center.lat, center.lng], 15);
-  baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(leafletMap);
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
@@ -1394,7 +1394,7 @@ function toggleSatellite(){
   satelliteOn = !satelliteOn;
   baseTileLayer = satelliteOn
     ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri'})
-    : L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'});
+    : L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'});
   baseTileLayer.addTo(leafletMap);
   baseTileLayer.bringToBack();
   toast(satelliteOn ? 'Satellite view' : 'Street view');
