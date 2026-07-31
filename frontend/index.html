@@ -155,7 +155,8 @@
   .map-pin{cursor:pointer;}
   .search-bar-wrap{position:absolute; top:14px; left:14px; right:130px; z-index:450; padding:0; border:none; background:none; flex-shrink:0; display:flex; align-items:center; gap:10px;}
   .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0; position:absolute; left:18px; z-index:1; color:var(--ink-muted);}
-  .search-input{flex:1; padding:15px 16px 15px 44px; border-radius:18px; border:1px solid var(--border); font-size:14.5px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); transition:box-shadow .3s;}
+  .search-input{flex:1; padding:15px 16px 15px 44px; border-radius:18px; border:1px solid var(--border); font-size:14.5px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); transition:box-shadow .3s; outline:none;}
+  .search-input:focus{box-shadow:var(--shadow-card), 0 0 0 3px var(--accent-bg); border-color:var(--accent);}
   [data-theme="dark"] .search-input{background:var(--surface);}
   .search-results{position:absolute; left:0; right:0; top:calc(100% + 10px); background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); z-index:1250; max-height:340px; overflow-y:auto; display:none; padding:14px;}
   [data-theme="dark"] .search-results{background:var(--surface);}
@@ -298,7 +299,7 @@
     .desktop-nav .nav-item i{font-size:18px; width:18px;}
     .desktop-nav .nav-item.active{background:var(--accent-bg); color:var(--accent-text); font-weight:600;}
     .desktop-nav .nav-item:hover:not(.active){background:var(--surface-2); color:var(--ink);}
-    .promo-card{display:block; margin:10px 18px 6px; background:linear-gradient(135deg,#6366F1 0%,#8B5CF6 55%,#A855F7 100%); border-radius:16px; padding:18px; color:#fff; position:relative; overflow:hidden;}
+    .promo-card{display:block; margin:0 18px 20px; background:linear-gradient(135deg,#6366F1 0%,#8B5CF6 55%,#A855F7 100%); border-radius:16px; padding:18px; color:#fff; position:relative; overflow:hidden; flex-shrink:0;}
     .promo-card::after{content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.12);}
     .promo-card p{font-size:14.5px; font-weight:700; margin:0 0 4px; position:relative;}
     .promo-card span{font-size:11.5px; opacity:.85; display:block; margin-bottom:14px; line-height:1.4; position:relative;}
@@ -310,8 +311,9 @@
     body{padding:0;}
     .frame{max-width:none; width:100%; padding:0; box-shadow:none; border-radius:0; background:var(--page);}
     .screen{flex-direction:row; height:100vh; border-radius:0; box-shadow:none; background:var(--page); padding:0; gap:0; position:relative;}
-    .app-shell{display:flex; flex-direction:column; position:fixed; top:24px; left:24px; bottom:24px; width:307px; z-index:1000; background:#fff; border:none; border-radius:40px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow-y:auto; padding:20px 0 40px; scrollbar-width:none; -ms-overflow-style:none;}
-    .app-shell::-webkit-scrollbar{display:none;}
+    .app-shell{display:flex; flex-direction:column; position:fixed; top:24px; left:24px; bottom:24px; width:307px; z-index:1000; background:#fff; border:none; border-radius:40px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow:hidden; padding:0;}
+    .app-shell-scroll{flex:1; min-height:0; overflow-y:auto; padding:20px 0 6px; scrollbar-width:none; -ms-overflow-style:none;}
+    .app-shell-scroll::-webkit-scrollbar{display:none;}
     [data-theme="dark"] .app-shell{background:var(--surface);}
     [data-theme="dark"] .card, [data-theme="dark"] .summary-strip{background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08);}
     .map-pane-desktop{flex:1; width:100%; display:flex !important; flex-direction:column; border-radius:0; overflow:hidden; box-shadow:none;}
@@ -324,6 +326,7 @@
 
 <div class="frame"><div class="screen" id="screen">
   <div class="app-shell">
+  <div class="app-shell-scroll">
   <div class="mode-banner" id="mode-banner"></div>
   <div class="loc-banner" id="loc-banner" style="display:none;">
     <span id="loc-banner-text"></span>
@@ -365,6 +368,7 @@
     <button id="nav-feed" class="active" onclick="setTab('feed')"><i class="ti ti-list"></i>Feed</button>
     <button id="nav-map" onclick="setTab('map')"><i class="ti ti-map-2"></i>Map</button>
     <button id="nav-report" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>
+  </div>
   </div>
   <div class="promo-card">
     <p>Help improve Pulse</p>
