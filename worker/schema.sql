@@ -17,8 +17,33 @@ CREATE TABLE IF NOT EXISTS locations (
   owner_owned INTEGER DEFAULT 0,
   owner_verified INTEGER DEFAULT 0,
   note TEXT,
+  photo_url TEXT,                -- optional, set by owner via /api/owner-update
   x INTEGER, y INTEGER
 );
+
+-- Every check-in is now logged individually (not just aggregated into
+-- locations.confirms) so /api/feed can compute a real "how many people
+-- have checked in recently" live-crowd figure per place, instead of a
+-- fake number.
+CREATE TABLE IF NOT EXISTS checkins (
+  id INTEGER PRIMARY KEY,
+  location_id INTEGER NOT NULL REFERENCES locations(id),
+  minutes INTEGER,
+  status TEXT,
+  created_at INTEGER NOT NULL
+);
+
+-- Live-user tracking: each browser pings /api/heartbeat every 30s with a
+-- random session id it generates once and stores in localStorage. "Live
+-- users" is computed as distinct sessions seen in the last 2 minutes —
+-- a real number, not a placeholder.
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  last_seen INTEGER NOT NULL
+);
+
+-- MIGRATION — if pulse-db already exists, just run:
+--   CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, last_seen INTEGER NOT NULL);
 
 CREATE TABLE IF NOT EXISTS road_reports (
   id INTEGER PRIMARY KEY,
