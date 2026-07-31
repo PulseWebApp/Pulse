@@ -64,7 +64,9 @@
   .badge-owner{font-size:10px; background:var(--blue-bg); color:var(--blue-text); padding:2px 7px; border-radius:20px; display:inline-flex; align-items:center; gap:3px; font-family:'Inter',sans-serif; font-weight:500;}
   .status-dot{width:7px; height:7px; border-radius:50%; display:inline-block; animation:breathe 1.8s ease-in-out infinite;}
 
-  .section-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; padding:6px 6px 2px;}
+  .section-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; padding:6px 6px 2px; scroll-margin-top:10px;}
+  .jump-nav{display:flex; gap:6px; padding:2px 0 8px; position:sticky; top:0; background:var(--surface); z-index:5;}
+  .jump-nav button{font-size:11px; padding:6px 12px; border-radius:14px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-secondary); cursor:pointer; font-family:'Inter',sans-serif;}
 
   .bottomnav{display:flex; border-top:1px solid var(--border); background:var(--surface);}
   .bottomnav button{flex:1; border:none; background:none; padding:12px 0 10px; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; color:var(--ink-muted); cursor:pointer; font-family:'Inter',sans-serif;}
@@ -114,6 +116,14 @@
 
   svg text{font-family:'Inter',sans-serif;}
   .map-pin{cursor:pointer;}
+  .search-bar-wrap{position:relative; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0;}
+  .search-input{width:100%; padding:10px 14px; border-radius:20px; border:1px solid var(--border); font-size:13px; font-family:'Inter',sans-serif; background:var(--surface-2); color:var(--ink);}
+  .search-results{position:absolute; left:14px; right:14px; top:52px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(18,35,59,0.15); z-index:1250; max-height:240px; overflow-y:auto; display:none;}
+  .search-results.show{display:block;}
+  .search-result-item{padding:11px 14px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--border);}
+  .search-result-item:last-child{border-bottom:none;}
+  .search-result-item:hover{background:var(--surface-2);}
+
   .legend{position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,0.96); border-top:1px solid var(--border); padding:10px 14px; display:flex; flex-wrap:wrap; gap:10px 14px;}
   .legend span{font-size:10px; color:var(--ink-secondary); display:flex; align-items:center; gap:5px;}
   .legend .dot{width:8px; height:8px; border-radius:50%;}
@@ -125,6 +135,7 @@
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
   .pin-dot i{transform:rotate(45deg); font-size:12px; color:#fff;}
   .badge-demo{font-size:9px; background:var(--surface-1); color:var(--ink-muted); padding:1px 6px; border-radius:20px; font-family:'IBM Plex Mono',monospace;}
+  .badge-real{font-size:9px; background:var(--blue-bg); color:var(--blue-text); padding:1px 6px; border-radius:20px; font-family:'IBM Plex Mono',monospace;}
   .layers-btn{position:absolute; top:14px; right:14px; z-index:400; background:var(--ink); color:#fff; border:none; border-radius:24px; padding:12px 18px; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 4px 14px rgba(18,35,59,0.4); font-family:'Inter',sans-serif;}
   .layers-btn .filter-dot{width:8px; height:8px; border-radius:50%; background:var(--coral-fill);}
   .layer-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:6px;}
@@ -135,10 +146,11 @@
 
   /* Adaptive desktop layout: side-by-side list + map instead of tabs */
   @media (min-width:900px){
-    .frame{max-width:1100px;}
-    .screen{flex-direction:row;}
-    .app-shell{display:flex; flex-direction:column; flex:1; min-width:380px; max-width:420px; border-right:1px solid var(--border);}
-    .map-pane-desktop{flex:1; display:block !important;}
+    body{padding:0;}
+    .frame{max-width:none; width:100%; padding:0; box-shadow:none; border-radius:0; background:var(--surface);}
+    .screen{flex-direction:row; height:100vh; border-radius:0; box-shadow:none;}
+    .app-shell{display:flex; flex-direction:column; flex:1; min-width:380px; max-width:440px; border-right:1px solid var(--border);}
+    .map-pane-desktop{flex:1; display:flex !important; flex-direction:column;}
     #bottomnav{display:none;}
   }
 </style>
@@ -174,7 +186,11 @@
   </div>
 
   <div class="map-pane-desktop" id="map-pane-desktop" style="display:none;">
-    <div class="map-wrap" style="height:100%;">
+    <div class="search-bar-wrap">
+      <input type="text" id="search-input-desktop" class="search-input" placeholder="Search a location..." oninput="onSearchInput(this.value,'desktop')">
+      <div id="search-results-desktop" class="search-results"></div>
+    </div>
+    <div class="map-wrap" style="flex:1;">
       <div id="leaflet-map"></div>
       <button class="layers-btn" id="layers-btn-desktop" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
     </div>
@@ -275,6 +291,52 @@ function getUserLocation(){
       {timeout: 15000}
     );
   });
+}
+
+let searchDebounce = null;
+function onSearchInput(q, which){
+  clearTimeout(searchDebounce);
+  const resultsEl = document.getElementById('search-results-'+which);
+  if(!q || q.trim().length < 3){ resultsEl.classList.remove('show'); return; }
+  searchDebounce = setTimeout(async ()=>{
+    try{
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q);
+      const res = await fetch(url);
+      const results = await res.json();
+      if(!results.length){
+        resultsEl.innerHTML = `<div class="search-result-item" style="color:var(--ink-muted);">No matches found</div>`;
+        resultsEl.classList.add('show');
+        return;
+      }
+      resultsEl.innerHTML = results.map((r,i)=>
+        `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lon},${JSON.stringify(r.display_name)},"${which}")'>${r.display_name}</div>`
+      ).join('');
+      resultsEl.classList.add('show');
+    }catch(e){
+      resultsEl.classList.remove('show');
+    }
+  }, 400);
+}
+
+async function selectSearchResult(lat, lng, label, which){
+  document.getElementById('search-results-'+which).classList.remove('show');
+  const input = document.getElementById('search-input-'+which);
+  if(input) input.value = label.split(',')[0];
+
+  userLoc = {lat, lng};
+  usingRealLocation = true;
+  document.getElementById('loc-banner').style.display = 'none';
+
+  locations = locations.filter(l => !l.osm); // drop previous real-place results
+  osmPlaces = [];
+  render();
+
+  if(leafletMap) leafletMap.setView([lat, lng], 15);
+
+  const places = await fetchNearbyPlaces(lat, lng);
+  osmPlaces = places;
+  locations = locations.concat(places);
+  render();
 }
 
 async function fetchNearbyPlaces(lat, lng){
@@ -538,21 +600,26 @@ function renderFeed(content){
   let roads = (filter==='all' || filter==='road') ? roadReports : [];
 
   let html = '';
+  html += `<div class="jump-nav">
+    <button onclick="document.getElementById('sec-waits')?.scrollIntoView({behavior:'smooth'})">Wait times</button>
+    <button onclick="document.getElementById('sec-roads')?.scrollIntoView({behavior:'smooth'})">Roads</button>
+    <button onclick="document.getElementById('sec-signals')?.scrollIntoView({behavior:'smooth'})">Signals</button>
+  </div>`;
   if(waits.length){
-    html += `<div class="section-label">Nearby wait times</div>`;
+    html += `<div class="section-label" id="sec-waits">Nearby wait times</div>`;
     html += waits.map(l=>{
       const c = statusColors[l.status];
       return `<div class="card" onclick="openDetail('${l.id}')">
         <div class="card-row">
           <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${l.icon}"></i></div>
           <div class="card-body">
-            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''} ${l.osm?'<span class="badge-demo">Real place</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
+            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''} ${l.osm?'<span class="badge-real">Real place</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
             <p class="card-sub">${l.distance} · ${l.osm ? 'no reports yet — be the first' : (l.confirms>0? l.confirms+' check-ins':'owner reported')}</p>
           </div>
           <div class="card-right">
             <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
               <span class="status-dot" style="background:${c.fill};"></span>
-              <span class="card-metric" style="color:${c.text};">${l.minutes==null ? '—' : l.minutes+' min'}</span>
+              <span class="card-metric" style="color:${c.text};">${l.minutes==null ? 'No data' : l.minutes+' min'}</span>
             </div>
             <div class="card-label">${c.label}</div>
           </div>
@@ -561,7 +628,7 @@ function renderFeed(content){
     }).join('');
   }
   if(roads.length){
-    html += `<div class="section-label">Road & area reports</div>`;
+    html += `<div class="section-label" id="sec-roads">Road & area reports</div>`;
     html += roads.map(r=>{
       const c = typeColors[r.type] || {bg:'var(--surface-1)', text:'var(--ink-secondary)'};
       return `<div class="card" onclick="openRoadDetail(${r.id})">
@@ -578,7 +645,7 @@ function renderFeed(content){
   }
   let sigs = (filter==='all' || filter==='road') ? signals : [];
   if(sigs.length){
-    html += `<div class="section-label">Signal reports</div>`;
+    html += `<div class="section-label" id="sec-signals">Signal reports</div>`;
     html += sigs.map(s=>{
       const c = s.color==='red' ? statusColors.red : statusColors.green;
       return `<div class="card" onclick="openSignalDetail(${s.id})">
@@ -617,7 +684,11 @@ const iconGlyphs = {
 
 function renderMap(content){
   content.innerHTML = `
-  <div class="map-wrap" style="margin:0 -14px; height:460px; position:relative;" id="mobile-map-wrap">
+  <div class="search-bar-wrap" style="margin:0 -14px 10px;">
+    <input type="text" id="search-input-mobile" class="search-input" placeholder="Search a location..." oninput="onSearchInput(this.value,'mobile')">
+    <div id="search-results-mobile" class="search-results"></div>
+  </div>
+  <div class="map-wrap" style="margin:0 -14px; height:420px; position:relative;" id="mobile-map-wrap">
     <button class="layers-btn" id="layers-btn-mobile" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
   </div>
   <div class="legend" style="position:static; margin-top:8px;">
@@ -680,7 +751,7 @@ function openDetail(id){
         <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
       </div>
       <div class="big-metric">
-        <div class="num" style="color:${c.text};">${l.minutes==null ? '—' : l.minutes+' min'}</div>
+        <div class="num" style="color:${c.text}; font-size:${l.minutes==null?'26px':'40px'};">${l.minutes==null ? 'No reports yet' : l.minutes+' min'}</div>
         <div class="cap">${c.label.toUpperCase()}</div>
       </div>
       <p style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">How long did you actually wait?</p>
