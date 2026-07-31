@@ -217,6 +217,10 @@
 
   .desktop-nav{display:none;}
   .promo-card{display:none;}
+  .zoom-group{display:flex; flex-direction:column; background:rgba(255,255,255,.88); backdrop-filter:blur(14px); border-radius:14px; overflow:hidden; box-shadow:0 10px 26px rgba(15,23,42,.14);}
+  [data-theme="dark"] .zoom-group{background:rgba(26,36,54,.75);}
+  .zoom-group button{width:44px; height:38px; border:none; background:none; cursor:pointer; color:var(--ink-secondary); font-size:16px;}
+  .zoom-group button:first-child{border-bottom:1px solid var(--border);}
   @media (min-width:900px){
     .desktop-nav{display:flex; flex-direction:column; gap:2px; padding:2px 4px 12px;}
     .desktop-nav .nav-item{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; font-size:13px; font-weight:500; color:var(--ink-secondary); cursor:pointer;}
@@ -227,10 +231,6 @@
     .promo-card p{font-size:12px; font-weight:700; margin:0 0 3px;}
     .promo-card span{font-size:10.5px; opacity:.85; display:block; margin-bottom:10px;}
     .promo-card button{width:100%; background:#fff; color:#3B5BFF; border:none; border-radius:9px; padding:8px; font-size:12px; font-weight:700; cursor:pointer;}
-    .zoom-group{display:flex; flex-direction:column; background:rgba(255,255,255,.88); backdrop-filter:blur(14px); border-radius:14px; overflow:hidden; box-shadow:0 10px 26px rgba(15,23,42,.14);}
-    [data-theme="dark"] .zoom-group{background:rgba(26,36,54,.75);}
-    .zoom-group button{width:44px; height:38px; border:none; background:none; cursor:pointer; color:var(--ink-secondary); font-size:16px;}
-    .zoom-group button:first-child{border-bottom:1px solid var(--border);}
   }
 
   /* Adaptive desktop layout: side-by-side list + map instead of tabs */
@@ -607,7 +607,7 @@ function initMapIfNeeded(){
   if(leafletMap || typeof L === 'undefined') return;
   const center = userLoc || {lat:33.6, lng:73.0};
   const worldBounds = L.latLngBounds([-85,-185],[85,185]);
-  leafletMap = L.map(leafletMapDiv, {zoomControl:true, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0}).setView([center.lat, center.lng], 15);
+  leafletMap = L.map(leafletMapDiv, {zoomControl:false, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0}).setView([center.lat, center.lng], 15);
   baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
   }).addTo(leafletMap);
@@ -905,6 +905,10 @@ function renderMap(content){
       <button class="map-control" onclick="retryLocation()" title="Refresh location">\u{1F9ED}</button>
       <button class="map-control" onclick="toggleSatellite()" title="Toggle satellite view">\u{1F5FA}\uFE0F</button>
       <button class="map-control" onclick="toggleTheme()" title="Toggle dark mode"><span class="theme-toggle-emoji">${document.documentElement.dataset.theme==='dark'?'\u2600\uFE0F':'\u{1F319}'}</span></button>
+      <div class="zoom-group">
+        <button onclick="leafletMap && leafletMap.zoomIn()" title="Zoom in"><i class="ti ti-plus"></i></button>
+        <button onclick="leafletMap && leafletMap.zoomOut()" title="Zoom out"><i class="ti ti-minus"></i></button>
+      </div>
     </div>
     <div class="heat-toggle" onclick="toggleHeatmap()">
       <i class="ti ti-flame" style="color:#F59E0B; font-size:15px;"></i>Heatmap
@@ -1261,23 +1265,25 @@ const WEATHER_CODE_ICON = {
   95:['ti-cloud-bolt','Thunderstorm'], 96:['ti-cloud-bolt','Thunderstorm'], 99:['ti-cloud-bolt','Thunderstorm'],
 };
 async function fetchWeather(lat, lng){
+  let wx = null, aq = null;
   try{
-    const [wxRes, aqRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code`),
-      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=us_aqi`),
-    ]);
-    const wx = wxRes.ok ? await wxRes.json() : null;
-    const aq = aqRes.ok ? await aqRes.json() : null;
-    if(!wx || !wx.current) return;
-    const temp = Math.round(wx.current.temperature_2m);
-    const [icon, label] = WEATHER_CODE_ICON[wx.current.weather_code] || ['ti-cloud', 'Weather'];
-    const aqi = aq && aq.current ? Math.round(aq.current.us_aqi) : null;
-    const html = `<i class="ti ${icon}"></i><div><div class="t">${temp}\u00B0C</div><div class="d">${label}${aqi!=null?' \u00B7 AQI '+aqi:''}</div></div>`;
-    ['weather-card-desktop','weather-card-mobile'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el){ el.innerHTML = html; el.classList.add('show'); }
-    });
-  }catch(e){ /* weather is best-effort — silently skip if it fails */ }
+    const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code`);
+    if(wxRes.ok) wx = await wxRes.json();
+  }catch(e){ console.warn('Weather fetch failed', e); }
+  try{
+    const aqRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=us_aqi`);
+    if(aqRes.ok) aq = await aqRes.json();
+  }catch(e){ console.warn('AQI fetch failed', e); }
+
+  if(!wx || !wx.current) return;
+  const temp = Math.round(wx.current.temperature_2m);
+  const [icon, label] = WEATHER_CODE_ICON[wx.current.weather_code] || ['ti-cloud', 'Weather'];
+  const aqi = aq && aq.current ? Math.round(aq.current.us_aqi) : null;
+  const html = `<i class="ti ${icon}"></i><div><div class="t">${temp}\u00B0C</div><div class="d">${label}${aqi!=null?' \u00B7 AQI '+aqi:''}</div></div>`;
+  ['weather-card-desktop','weather-card-mobile'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){ el.innerHTML = html; el.classList.add('show'); }
+  });
 }
 
 function retryLocation(){
