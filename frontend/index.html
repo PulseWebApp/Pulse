@@ -125,7 +125,8 @@
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
   .pin-dot i{transform:rotate(45deg); font-size:12px; color:#fff;}
   .badge-demo{font-size:9px; background:var(--surface-1); color:var(--ink-muted); padding:1px 6px; border-radius:20px; font-family:'IBM Plex Mono',monospace;}
-  .layers-btn{position:absolute; top:12px; right:12px; z-index:400; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:8px 14px; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 2px 8px rgba(18,35,59,0.15); font-family:'Inter',sans-serif; color:var(--ink);}
+  .layers-btn{position:absolute; top:14px; right:14px; z-index:400; background:var(--ink); color:#fff; border:none; border-radius:24px; padding:12px 18px; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 4px 14px rgba(18,35,59,0.4); font-family:'Inter',sans-serif;}
+  .layers-btn .filter-dot{width:8px; height:8px; border-radius:50%; background:var(--coral-fill);}
   .layer-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:6px;}
   .layer-opt{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:12px; border:1.5px solid var(--border); cursor:pointer; font-size:11px; color:var(--ink-secondary); background:var(--surface);}
   .layer-opt.on{border-color:var(--ink); background:var(--surface-2); color:var(--ink);}
@@ -175,7 +176,7 @@
   <div class="map-pane-desktop" id="map-pane-desktop" style="display:none;">
     <div class="map-wrap" style="height:100%;">
       <div id="leaflet-map"></div>
-      <button class="layers-btn" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
+      <button class="layers-btn" id="layers-btn-desktop" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
     </div>
   </div>
   <div id="modal-holder"></div>
@@ -413,6 +414,16 @@ function updateMapMarkers(){
       L.marker([p.lat,p.lng], {icon:pinIcon('ti-traffic-lights', fill)}).addTo(markerLayers.signal).on('click', ()=>openSignalDetail(s.id));
     });
   }
+  updateLayersButtons();
+}
+
+function updateLayersButtons(){
+  const allOn = Object.values(activeLayers).every(v=>v);
+  const html = `<i class="ti ti-layers-2"></i>Layers ${allOn ? '' : '<span class="filter-dot"></span>'}`;
+  ['layers-btn-desktop','layers-btn-mobile'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = html;
+  });
 }
 
 function openLayersPanel(){
@@ -426,6 +437,7 @@ function openLayersPanel(){
     {k:'police',icon:'ti-shield',label:'Police'},
     {k:'signal',icon:'ti-traffic-lights',label:'Signals'},
   ];
+  const allOn = Object.values(activeLayers).every(v=>v);
   document.getElementById('modal-holder').innerHTML = `
   <div class="overlay" onclick="if(event.target===this) closeModal()">
     <div class="sheet">
@@ -436,11 +448,17 @@ function openLayersPanel(){
       <div class="layer-grid">
         ${defs.map(d=>`<div class="layer-opt ${activeLayers[d.k]?'on':''}" onclick="toggleLayer('${d.k}')"><i class="ti ${d.icon}"></i><span>${d.label}</span></div>`).join('')}
       </div>
+      ${allOn ? '' : `<button class="primary-btn" style="margin-top:4px;" onclick="showAllLayers()">Show everything</button>`}
     </div>
   </div>`;
 }
 function toggleLayer(k){
   activeLayers[k] = !activeLayers[k];
+  updateMapMarkers();
+  openLayersPanel();
+}
+function showAllLayers(){
+  Object.keys(activeLayers).forEach(k=>activeLayers[k]=true);
   updateMapMarkers();
   openLayersPanel();
 }
@@ -600,7 +618,7 @@ const iconGlyphs = {
 function renderMap(content){
   content.innerHTML = `
   <div class="map-wrap" style="margin:0 -14px; height:460px; position:relative;" id="mobile-map-wrap">
-    <button class="layers-btn" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
+    <button class="layers-btn" id="layers-btn-mobile" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
   </div>
   <div class="legend" style="position:static; margin-top:8px;">
     <span style="width:100%; color:var(--ink-muted);">Tap Layers to filter what's shown</span>
@@ -669,6 +687,9 @@ function openDetail(id){
       <button class="opt-btn" onclick="checkin('${l.id}', 3, 'green')">Under 10 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
+      <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:12px;">
+        <button class="opt-btn" style="border-style:dashed;" onclick="closeModal(); openReportModal();"><i class="ti ti-alert-triangle" style="font-size:15px;"></i>&nbsp; Report something wrong here <i class="ti ti-chevron-right"></i></button>
+      </div>
     </div>
   </div>`;
 }
