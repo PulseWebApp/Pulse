@@ -11,6 +11,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
   :root{
     --bg:#F3F6F5; --page:#E7ECEA; --surface:#FFFFFF; --surface-2:#FAFBFA;
@@ -21,6 +24,15 @@
     --coral-bg:#FAECE7; --coral-text:#99311D; --coral-fill:#D85A30;
     --blue-bg:#E6F1FB; --blue-text:#185FA5; --blue-fill:#378ADD;
     --radius:14px;
+  }
+  [data-theme="dark"]{
+    --bg:#0B1524; --page:#060C16; --surface:#12233B; --surface-2:#1A2C47;
+    --ink:#F3F6F5; --ink-secondary:#B9C4CE; --ink-muted:#8B98A3;
+    --border:#28405F; --border-strong:#3A5578;
+    --teal-bg:#0F3A2E; --teal-text:#5DCAA5; --teal-fill:#1D9E75;
+    --amber-bg:#4A3208; --amber-text:#F9C765; --amber-fill:#EF9F27;
+    --coral-bg:#4A2013; --coral-text:#F0997B; --coral-fill:#D85A30;
+    --blue-bg:#0C2A44; --blue-text:#85B7EB; --blue-fill:#378ADD;
   }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--page); font-family:'Inter',sans-serif; color:var(--ink); display:flex; justify-content:center;}
@@ -67,6 +79,10 @@
   .section-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; padding:6px 6px 2px; scroll-margin-top:10px;}
   .jump-nav{display:flex; gap:6px; padding:2px 0 8px; position:sticky; top:0; background:var(--surface); z-index:5;}
   .jump-nav button{font-size:11px; padding:6px 12px; border-radius:14px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-secondary); cursor:pointer; font-family:'Inter',sans-serif;}
+  .summary-strip{display:flex; gap:14px; padding:12px 6px; margin-bottom:4px; background:var(--surface-2); border-radius:12px; overflow-x:auto;}
+  .summary-stat{text-align:center; flex-shrink:0; min-width:52px;}
+  .summary-stat .n{font-size:18px; font-weight:600; font-family:'Space Grotesk',sans-serif;}
+  .summary-stat .l{font-size:10px; color:var(--ink-muted); margin-top:2px;}
 
   .bottomnav{display:flex; border-top:1px solid var(--border); background:var(--surface);}
   .bottomnav button{flex:1; border:none; background:none; padding:12px 0 10px; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; color:var(--ink-muted); cursor:pointer; font-family:'Inter',sans-serif;}
@@ -142,7 +158,7 @@
   .layer-opt{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:12px; border:1.5px solid var(--border); cursor:pointer; font-size:11px; color:var(--ink-secondary); background:var(--surface);}
   .layer-opt.on{border-color:var(--ink); background:var(--surface-2); color:var(--ink);}
   .layer-opt i{font-size:19px;}
-  .loc-banner{font-size:11px; text-align:center; padding:6px; background:var(--blue-bg); color:var(--blue-text); font-family:'IBM Plex Mono',monospace;}
+  .loc-banner{font-size:11px; text-align:center; padding:6px; background:var(--blue-bg); color:var(--blue-text); font-family:'IBM Plex Mono',monospace; align-items:center; justify-content:center;}
 
   /* Adaptive desktop layout: side-by-side list + map instead of tabs */
   @media (min-width:900px){
@@ -160,11 +176,17 @@
 <div class="frame"><div class="screen" id="screen">
   <div class="app-shell">
   <div class="mode-banner" id="mode-banner"></div>
-  <div class="loc-banner" id="loc-banner" style="display:none;"></div>
+  <div class="loc-banner" id="loc-banner" style="display:none;">
+    <span id="loc-banner-text"></span>
+    <button onclick="retryLocation()" style="margin-left:8px; font-size:11px; background:#fff; border:1px solid var(--blue-text); color:var(--blue-text); border-radius:12px; padding:2px 10px; cursor:pointer; font-family:'Inter',sans-serif;">Try again</button>
+  </div>
   <div class="topbar">
     <div class="brand">
       <div class="wordmark"><span class="pulse-dot"></span>Pulse</div>
-      <i class="ti ti-bell" style="font-size:19px; color:var(--ink-secondary);"></i>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <i class="ti ti-moon" id="theme-toggle" onclick="toggleTheme()" style="font-size:19px; color:var(--ink-secondary); cursor:pointer;"></i>
+        <i class="ti ti-bell" style="font-size:19px; color:var(--ink-secondary);"></i>
+      </div>
     </div>
     <div class="persona">
       <button id="persona-resident" class="active" onclick="setPersona('resident')">Resident</button>
@@ -440,7 +462,15 @@ function initMapIfNeeded(){
     maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
   }).addTo(leafletMap);
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
-    markerLayers[cat] = L.layerGroup().addTo(leafletMap);
+    markerLayers[cat] = L.markerClusterGroup({
+      maxClusterRadius: 50,
+      iconCreateFunction: function(cluster){
+        return L.divIcon({
+          html: `<div style="width:38px;height:38px;border-radius:50%;background:#12233B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;box-shadow:0 4px 12px rgba(18,35,59,0.4);border:2px solid #fff;">${cluster.getChildCount()}</div>`,
+          className: '', iconSize: [38,38]
+        });
+      }
+    }).addTo(leafletMap);
   });
   if(userLoc && usingRealLocation){
     L.circleMarker([userLoc.lat, userLoc.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
@@ -553,6 +583,22 @@ function setTab(t){
 }
 
 function setFilter(f){ filter = f; render(); }
+function dismissBadgeTip(){ localStorage.setItem('pulse_badges_dismissed', '1'); render(); }
+
+function toggleTheme(){
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = isDark ? 'light' : 'dark';
+  localStorage.setItem('pulse_theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-toggle').className = 'ti ' + (isDark ? 'ti-moon' : 'ti-sun');
+}
+(function applyStoredTheme(){
+  const saved = localStorage.getItem('pulse_theme');
+  if(saved === 'dark'){
+    document.documentElement.dataset.theme = 'dark';
+    const el = document.getElementById('theme-toggle');
+    if(el) el.className = 'ti ti-sun';
+  }
+})();
 
 function render(){
   const filters = document.getElementById('filters');
@@ -599,7 +645,27 @@ function renderFeed(content){
 
   let roads = (filter==='all' || filter==='road') ? roadReports : [];
 
+  const longWaitCount = locations.filter(l=>l.status==='red').length;
+  const roadIssueCount = roadReports.length;
+  const signalDownCount = signals.filter(s=>s.color==='red').length;
   let html = '';
+  if(!localStorage.getItem('pulse_badges_dismissed')){
+    html += `<div style="border:1px solid var(--blue-text); border-radius:12px; padding:12px 14px; background:var(--blue-bg); margin-bottom:10px; position:relative;">
+      <button onclick="dismissBadgeTip()" style="position:absolute; top:8px; right:10px; background:none; border:none; cursor:pointer; color:var(--blue-text);"><i class="ti ti-x"></i></button>
+      <p style="font-size:12px; font-weight:600; color:var(--blue-text); margin:0 0 6px;">What the badges mean</p>
+      <div style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--ink-secondary);">
+        <div><span class="badge-demo">Demo</span> seed data for testing</div>
+        <div><span class="badge-real">Real place</span> pulled live from OpenStreetMap</div>
+        <div><span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span> confirmed by the business itself</div>
+      </div>
+    </div>`;
+  }
+  html += `<div class="summary-strip">
+    <div class="summary-stat"><div class="n">${locations.length}</div><div class="l">nearby</div></div>
+    <div class="summary-stat"><div class="n" style="color:var(--coral-text);">${longWaitCount}</div><div class="l">long wait</div></div>
+    <div class="summary-stat"><div class="n" style="color:var(--amber-text);">${roadIssueCount}</div><div class="l">road issues</div></div>
+    <div class="summary-stat"><div class="n" style="color:var(--blue-text);">${signalDownCount}</div><div class="l">signals red</div></div>
+  </div>`;
   html += `<div class="jump-nav">
     <button onclick="document.getElementById('sec-waits')?.scrollIntoView({behavior:'smooth'})">Wait times</button>
     <button onclick="document.getElementById('sec-roads')?.scrollIntoView({behavior:'smooth'})">Roads</button>
@@ -915,10 +981,46 @@ setInterval(()=>{
   document.querySelectorAll('[data-ts]').forEach(el=>{ el.textContent = timeAgo(Number(el.dataset.ts)); });
 }, 1000);
 
+async function resolveLocation(){
+  const locBanner = document.getElementById('loc-banner');
+  const locBannerText = document.getElementById('loc-banner-text');
+  const loc = await getUserLocation();
+  const fallback = {lat: 33.6, lng: 73.0};
+  const gotRealLocation = loc && !loc.error;
+  const centerForPlaces = gotRealLocation ? loc : (userLoc || fallback);
+  if(gotRealLocation){
+    userLoc = loc; usingRealLocation = true;
+    locBanner.style.display = 'none';
+  } else {
+    if(!userLoc){ userLoc = fallback; usingRealLocation = false; }
+    const reasonText = {
+      permission_denied: 'Location permission denied',
+      position_unavailable: "This device can't get a location fix",
+      timeout: "Couldn't get a location fix (common on desktops without GPS)",
+      not_supported: "This browser doesn't support location",
+      unknown_error: 'Could not get location',
+    };
+    locBannerText.textContent = (reasonText[loc && loc.error] || 'Could not get location') + ' \u2014 try again, or just search your area above';
+    locBanner.style.display = 'flex';
+  }
+  render();
+  if(leafletMap) leafletMap.setView([centerForPlaces.lat, centerForPlaces.lng], 15);
+
+  locations = locations.filter(l => !l.osm);
+  const places = await fetchNearbyPlaces(centerForPlaces.lat, centerForPlaces.lng);
+  osmPlaces = places;
+  locations = locations.concat(places);
+  render();
+}
+
+function retryLocation(){
+  document.getElementById('loc-banner').style.display = 'none';
+  resolveLocation();
+}
+
 async function boot(){
   leafletMapDiv = document.getElementById('leaflet-map');
   const banner = document.getElementById('mode-banner');
-  const locBanner = document.getElementById('loc-banner');
 
   const data = await api('/api/feed');
   if(data){
@@ -932,32 +1034,7 @@ async function boot(){
   }
 
   render(); // show demo data immediately, don't block on location/Overpass
-
-  const loc = await getUserLocation();
-  const fallback = {lat: 33.6, lng: 73.0};
-  const gotRealLocation = loc && !loc.error;
-  const centerForPlaces = gotRealLocation ? loc : fallback;
-  if(gotRealLocation){
-    userLoc = loc; usingRealLocation = true;
-    locBanner.style.display = 'none';
-  } else {
-    userLoc = fallback; usingRealLocation = false;
-    const reasonText = {
-      permission_denied: 'Location permission denied',
-      position_unavailable: 'Location unavailable on this device',
-      timeout: 'Location request timed out',
-      not_supported: "This browser doesn't support location",
-      unknown_error: 'Could not get location',
-    };
-    locBanner.textContent = (reasonText[loc && loc.error] || 'Could not get location') + ' \u2014 using a default area, real nearby places still shown';
-    locBanner.style.display = 'block';
-  }
-  render(); // demo pins repositioned now that we know real/fallback center
-
-  const places = await fetchNearbyPlaces(centerForPlaces.lat, centerForPlaces.lng);
-  osmPlaces = places;
-  locations = locations.concat(places);
-  render(); // real nearby places now filled in
+  await resolveLocation();
 }
 boot();
 </script>
