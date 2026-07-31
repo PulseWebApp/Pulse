@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
     --bg:#F3F6F5; --page:#E7ECEA; --surface:#FFFFFF; --surface-2:#FAFBFA;
@@ -115,12 +117,37 @@
   .legend{position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,0.96); border-top:1px solid var(--border); padding:10px 14px; display:flex; flex-wrap:wrap; gap:10px 14px;}
   .legend span{font-size:10px; color:var(--ink-secondary); display:flex; align-items:center; gap:5px;}
   .legend .dot{width:8px; height:8px; border-radius:50%;}
+
+  /* Real map */
+  #leaflet-map{width:100%; height:100%; background:var(--surface-1, #EEF2F1);}
+  .map-wrap{position:relative; flex:1; min-height:0;}
+  .leaflet-div-icon{background:none; border:none;}
+  .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
+  .pin-dot i{transform:rotate(45deg); font-size:12px; color:#fff;}
+  .badge-demo{font-size:9px; background:var(--surface-1); color:var(--ink-muted); padding:1px 6px; border-radius:20px; font-family:'IBM Plex Mono',monospace;}
+  .layers-btn{position:absolute; top:12px; right:12px; z-index:400; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:8px 14px; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 2px 8px rgba(18,35,59,0.15); font-family:'Inter',sans-serif; color:var(--ink);}
+  .layer-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:6px;}
+  .layer-opt{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:12px; border:1.5px solid var(--border); cursor:pointer; font-size:11px; color:var(--ink-secondary); background:var(--surface);}
+  .layer-opt.on{border-color:var(--ink); background:var(--surface-2); color:var(--ink);}
+  .layer-opt i{font-size:19px;}
+  .loc-banner{font-size:11px; text-align:center; padding:6px; background:var(--blue-bg); color:var(--blue-text); font-family:'IBM Plex Mono',monospace;}
+
+  /* Adaptive desktop layout: side-by-side list + map instead of tabs */
+  @media (min-width:900px){
+    .frame{max-width:1100px;}
+    .screen{flex-direction:row;}
+    .app-shell{display:flex; flex-direction:column; flex:1; min-width:380px; max-width:420px; border-right:1px solid var(--border);}
+    .map-pane-desktop{flex:1; display:block !important;}
+    #bottomnav{display:none;}
+  }
 </style>
 </head>
 <body>
 
 <div class="frame"><div class="screen" id="screen">
+  <div class="app-shell">
   <div class="mode-banner" id="mode-banner"></div>
+  <div class="loc-banner" id="loc-banner" style="display:none;"></div>
   <div class="topbar">
     <div class="brand">
       <div class="wordmark"><span class="pulse-dot"></span>Pulse</div>
@@ -136,7 +163,6 @@
   <div id="content" class="content"></div>
 
   <div id="fab-holder"></div>
-  <div id="modal-holder"></div>
   <div id="toast" class="toast"></div>
 
   <div id="bottomnav" class="bottomnav">
@@ -144,6 +170,15 @@
     <button id="nav-map" onclick="setTab('map')"><i class="ti ti-map-2"></i>Map</button>
     <button id="nav-report" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>
   </div>
+  </div>
+
+  <div class="map-pane-desktop" id="map-pane-desktop" style="display:none;">
+    <div class="map-wrap" style="height:100%;">
+      <div id="leaflet-map"></div>
+      <button class="layers-btn" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
+    </div>
+  </div>
+  <div id="modal-holder"></div>
 </div></div>
 
 <script>
@@ -198,7 +233,8 @@ function timeAgo(ts){
 const statusColors = {
   green:{bg:'var(--teal-bg)', text:'var(--teal-text)', fill:'var(--teal-fill)', label:'short wait'},
   amber:{bg:'var(--amber-bg)', text:'var(--amber-text)', fill:'var(--amber-fill)', label:'building up'},
-  red:{bg:'var(--coral-bg)', text:'var(--coral-text)', fill:'var(--coral-fill)', label:'long wait'}
+  red:{bg:'var(--coral-bg)', text:'var(--coral-text)', fill:'var(--coral-fill)', label:'long wait'},
+  unknown:{bg:'var(--surface-1)', text:'var(--ink-muted)', fill:'#9AA6AE', label:'no reports yet'}
 };
 const typeColors = {
   hazard:{bg:'var(--coral-bg)', text:'var(--coral-text)'},
@@ -207,6 +243,69 @@ const typeColors = {
   police:{bg:'var(--blue-bg)', text:'var(--blue-text)'},
   camera:{bg:'var(--blue-bg)', text:'var(--blue-text)'}
 };
+
+// Real map / real location state
+let userLoc = null;           // {lat,lng} from device GPS, or a fallback
+let usingRealLocation = false;
+let leafletMap = null;
+let markerLayers = {};        // category -> Leaflet layerGroup
+let activeLayers = {food:true, fuel:true, health:true, service:true, errand:true, road:true, signal:true};
+let osmPlaces = [];            // real nearby places fetched from OpenStreetMap
+
+// Demo data lives on a small fixed grid (x:0-340, y:0-460). Convert
+// that into a tiny real-world offset near wherever the user actually
+// is, so the tested demo dataset still makes sense on a real map.
+function demoToLatLng(x, y){
+  if(!userLoc) return {lat:33.6, lng:73.0};
+  const dLat = (230 - y) / 230 * 0.01;
+  const dLng = (x - 170) / 170 * 0.01;
+  return {lat: userLoc.lat + dLat, lng: userLoc.lng + dLng};
+}
+
+function getUserLocation(){
+  return new Promise(resolve => {
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude}),
+      () => resolve(null),
+      {timeout: 8000}
+    );
+  });
+}
+
+async function fetchNearbyPlaces(lat, lng){
+  const query = `[out:json][timeout:15];(
+    node["amenity"="restaurant"](around:1500,${lat},${lng});
+    node["amenity"="cafe"](around:1500,${lat},${lng});
+    node["amenity"="fuel"](around:1500,${lat},${lng});
+    node["amenity"="pharmacy"](around:1500,${lat},${lng});
+    node["shop"="laundry"](around:1500,${lat},${lng});
+    node["shop"="hairdresser"](around:1500,${lat},${lng});
+  );out body 30;`;
+  try{
+    const res = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body: query});
+    if(!res.ok) return [];
+    const data = await res.json();
+    const catMap = {
+      restaurant:{category:'food', icon:'ti-tools-kitchen-2'},
+      cafe:{category:'food', icon:'ti-coffee'},
+      fuel:{category:'fuel', icon:'ti-gas-station'},
+      pharmacy:{category:'health', icon:'ti-first-aid-kit'},
+      laundry:{category:'errand', icon:'ti-wash'},
+      hairdresser:{category:'service', icon:'ti-scissors'},
+    };
+    return (data.elements || []).filter(el => el.tags && el.tags.name).map(el => {
+      const kind = el.tags.amenity || el.tags.shop;
+      const c = catMap[kind] || {category:'service', icon:'ti-map-pin'};
+      return {
+        id: 'osm_' + el.id, name: el.tags.name, category: c.category, icon: c.icon,
+        distance: 'nearby', status: 'unknown', minutes: null, confirms: 0,
+        updated: 'no reports yet', ownerOwned: false, ownerVerified: false,
+        osm: true, lat: el.lat, lng: el.lon,
+      };
+    });
+  }catch(e){ return []; }
+}
 
 let persona = 'resident';
 let tab = 'feed';
@@ -227,6 +326,113 @@ function setPersona(p){
   render();
 }
 
+let leafletMapDiv = null; // persistent node, never destroyed by innerHTML re-renders
+
+function roadFillColor(type){
+  if(type==='police' || type==='camera') return 'var(--blue-fill)';
+  if(type==='jam') return 'var(--amber-fill)';
+  return 'var(--coral-fill)';
+}
+function roadLayerFor(type){
+  return (type==='police' || type==='camera') ? 'police' : 'road';
+}
+
+function initMapIfNeeded(){
+  if(leafletMap || typeof L === 'undefined') return;
+  const center = userLoc || {lat:33.6, lng:73.0};
+  leafletMap = L.map(leafletMapDiv, {zoomControl:true}).setView([center.lat, center.lng], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(leafletMap);
+  ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
+    markerLayers[cat] = L.layerGroup().addTo(leafletMap);
+  });
+  if(userLoc){
+    L.circleMarker([userLoc.lat, userLoc.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
+  }
+}
+
+function pinIcon(iconClass, fill){
+  return L.divIcon({className:'', html:`<div class="pin-dot" style="background:${fill};"><i class="ti ${iconClass}"></i></div>`, iconSize:[26,26], iconAnchor:[13,26]});
+}
+
+function updateMapMarkers(){
+  if(!leafletMap) return;
+  Object.values(markerLayers).forEach(lg=>lg.clearLayers());
+
+  locations.forEach(l=>{
+    if(!activeLayers[l.category]) return;
+    const pos = l.osm ? [l.lat, l.lng] : (()=>{const p=demoToLatLng(l.x,l.y); return [p.lat,p.lng];})();
+    const c = statusColors[l.status];
+    L.marker(pos, {icon:pinIcon(l.icon, c.fill)}).addTo(markerLayers[l.category]).on('click', ()=>openDetail(l.id));
+  });
+
+  roadReports.forEach(r=>{
+    const layer = roadLayerFor(r.type);
+    if(!activeLayers[layer]) return;
+    const p = demoToLatLng(r.x, r.y);
+    L.marker([p.lat,p.lng], {icon:pinIcon(r.icon, roadFillColor(r.type))}).addTo(markerLayers[layer]).on('click', ()=>openRoadDetail(r.id));
+  });
+
+  if(activeLayers.signal){
+    signals.forEach(s=>{
+      const p = demoToLatLng(s.x, s.y);
+      const fill = s.color==='red' ? 'var(--coral-fill)' : 'var(--teal-fill)';
+      L.marker([p.lat,p.lng], {icon:pinIcon('ti-traffic-lights', fill)}).addTo(markerLayers.signal).on('click', ()=>openSignalDetail(s.id));
+    });
+  }
+}
+
+function openLayersPanel(){
+  const defs = [
+    {k:'food',icon:'ti-tools-kitchen-2',label:'Food'},
+    {k:'fuel',icon:'ti-gas-station',label:'Fuel'},
+    {k:'health',icon:'ti-first-aid-kit',label:'Health'},
+    {k:'service',icon:'ti-scissors',label:'Service'},
+    {k:'errand',icon:'ti-wash',label:'Errands'},
+    {k:'road',icon:'ti-road',label:'Roads'},
+    {k:'police',icon:'ti-shield',label:'Police'},
+    {k:'signal',icon:'ti-traffic-lights',label:'Signals'},
+  ];
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div><p class="sheet-title">Map layers</p><p class="sheet-sub">Toggle what shows on the map</p></div>
+        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="layer-grid">
+        ${defs.map(d=>`<div class="layer-opt ${activeLayers[d.k]?'on':''}" onclick="toggleLayer('${d.k}')"><i class="ti ${d.icon}"></i><span>${d.label}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function toggleLayer(k){
+  activeLayers[k] = !activeLayers[k];
+  updateMapMarkers();
+  openLayersPanel();
+}
+
+function positionMap(){
+  if(!leafletMapDiv) return;
+  const isDesktop = window.matchMedia('(min-width:900px)').matches;
+  if(isDesktop){
+    const wrap = document.querySelector('#map-pane-desktop .map-wrap');
+    document.getElementById('map-pane-desktop').style.display = 'block';
+    if(wrap && leafletMapDiv.parentElement !== wrap) wrap.appendChild(leafletMapDiv);
+  } else if(tab==='map'){
+    const wrap = document.getElementById('mobile-map-wrap');
+    if(wrap && leafletMapDiv.parentElement !== wrap) wrap.appendChild(leafletMapDiv);
+  } else {
+    return; // mobile, not on Map tab — leave the div wherever it last was, off-screen is fine
+  }
+  initMapIfNeeded();
+  updateMapMarkers();
+  setTimeout(()=>{ if(leafletMap) leafletMap.invalidateSize(); }, 50);
+}
+
+window.addEventListener('resize', ()=>{ positionMap(); });
+
 function setTab(t){
   tab = t;
   document.getElementById('nav-feed').classList.toggle('active', t==='feed');
@@ -240,11 +446,13 @@ function render(){
   const filters = document.getElementById('filters');
   const content = document.getElementById('content');
   const fabHolder = document.getElementById('fab-holder');
+  const isDesktop = window.matchMedia('(min-width:900px)').matches;
 
   if(persona==='owner'){
     filters.innerHTML='';
     fabHolder.innerHTML='';
     renderOwner(content);
+    if(isDesktop) document.getElementById('map-pane-desktop').style.display = 'none';
     return;
   }
 
@@ -253,6 +461,13 @@ function render(){
     {k:'service', label:'Service'}, {k:'errand', label:'Errands'}, {k:'road', label:'Roads'}
   ];
   filters.innerHTML = chipDefs.map(c=>`<button class="chip ${filter===c.k?'active':''}" onclick="setFilter('${c.k}')">${c.label}</button>`).join('');
+
+  if(isDesktop){
+    renderFeed(content);
+    fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
+    positionMap();
+    return;
+  }
 
   if(tab==='map'){
     fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
@@ -277,12 +492,12 @@ function renderFeed(content){
     html += `<div class="section-label">Nearby wait times</div>`;
     html += waits.map(l=>{
       const c = statusColors[l.status];
-      return `<div class="card" onclick="openDetail(${l.id})">
+      return `<div class="card" onclick="openDetail('${l.id}')">
         <div class="card-row">
           <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${l.icon}"></i></div>
           <div class="card-body">
-            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''}</p>
-            <p class="card-sub">${l.distance} · ${l.confirms>0? l.confirms+' check-ins':'owner reported'}</p>
+            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''} ${l.osm?'<span class="badge-demo">Real place</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
+            <p class="card-sub">${l.distance} · ${l.osm ? 'no reports yet — be the first' : (l.confirms>0? l.confirms+' check-ins':'owner reported')}</p>
           </div>
           <div class="card-right">
             <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
@@ -351,75 +566,14 @@ const iconGlyphs = {
 };
 
 function renderMap(content){
-  const pins = locations.map(l=>{
-    const c = statusColors[l.status];
-    return `<g class="map-pin" transform="translate(${l.x},${l.y})" onclick="openDetail(${l.id})">
-      <path d="M 0 0 C -11 -11 -11 -27 0 -33 C 11 -27 11 -11 0 0 Z" fill="${c.fill}"></path>
-      <circle cx="0" cy="-21" r="8" fill="#fff"></circle>
-    </g>`;
-  }).join('');
-  const pinGlyphs = locations.map(l=>{
-    const glyph = (iconGlyphs[l.icon] || iconGlyphs['ti-map-pin'])(statusColors[l.status].fill);
-    return `<g transform="translate(${l.x},${l.y-21})" style="pointer-events:none;">${glyph}</g>`;
-  }).join('');
-  const roadPins = roadReports.map(r=>{
-    const c = typeColors[r.type];
-    return `<g class="map-pin" transform="translate(${r.x},${r.y})" onclick="openRoadDetail(${r.id})">
-      <rect x="-10" y="-10" width="20" height="20" rx="6" fill="${r.type==='police'||r.type==='camera'?'var(--blue-fill)':(r.type==='jam'?'var(--amber-fill)':'var(--coral-fill)')}"></rect>
-      <text x="0" y="4" text-anchor="middle" font-size="11" fill="#fff"><tspan></tspan></text>
-    </g>`;
-  }).join('');
-  const signalPins = signals.map(s=>{
-    const fill = s.color==='red' ? 'var(--coral-fill)' : 'var(--teal-fill)';
-    return `<g class="map-pin" transform="translate(${s.x},${s.y})" onclick="openSignalDetail(${s.id})">
-      <rect x="-10" y="-10" width="20" height="20" rx="6" fill="${fill}"></rect>
-      <path d="M -3 -6 L 3 -6 M -3 0 L 3 0 M -3 6 L 3 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"></path>
-    </g>`;
-  }).join('');
-
   content.innerHTML = `
-  <div style="position:relative; margin:0 -14px;">
-    <svg viewBox="0 0 340 460" style="width:100%; display:block;">
-      <rect x="0" y="0" width="340" height="460" fill="#EEF2F1"></rect>
-      <path d="M 250 0 L 340 60 L 340 220 L 300 260 L 260 460 L 200 460 L 240 220 L 260 100 Z" fill="#CFE3F2"></path>
-      <path d="M 20 20 Q 60 10 90 40 Q 100 70 70 90 Q 30 95 15 60 Z" fill="#D8EAC0"></path>
-
-      <rect x="65" y="30" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
-      <rect x="70" y="165" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
-      <rect x="205" y="285" width="80" height="80" rx="6" fill="#F7F9F8"></rect>
-      <rect x="65" y="390" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
-      <rect x="210" y="20" width="80" height="80" rx="6" fill="#F7F9F8"></rect>
-      <rect x="22" y="295" width="70" height="80" rx="6" fill="#F7F9F8"></rect>
-      <rect x="160" y="90" width="40" height="50" rx="6" fill="#F7F9F8"></rect>
-      <rect x="100" y="280" width="45" height="60" rx="6" fill="#F7F9F8"></rect>
-
-      <line x1="150" y1="0" x2="150" y2="460" stroke="#CBD3D2" stroke-width="4"></line>
-      <line x1="0" y1="150" x2="340" y2="150" stroke="#CBD3D2" stroke-width="4"></line>
-      <line x1="60" y1="0" x2="40" y2="460" stroke="#DCE1DF" stroke-width="2"></line>
-      <line x1="0" y1="400" x2="340" y2="380" stroke="#DCE1DF" stroke-width="2"></line>
-      <line x1="0" y1="300" x2="340" y2="190" stroke="#CBD3D2" stroke-width="7"></line>
-
-      <text x="156" y="26" font-size="9" fill="var(--ink-secondary)">Main St</text>
-      <text x="10" y="144" font-size="9" fill="var(--ink-secondary)">2nd Ave</text>
-      <text x="66" y="20" font-size="9" fill="var(--ink-secondary)">9th St</text>
-      <text x="8" y="392" font-size="9" fill="var(--ink-secondary)">Elm St</text>
-      <text x="150" y="228" font-size="9" fill="var(--ink-secondary)" transform="rotate(-18 150 228)">Highway 9</text>
-
-      ${pins}
-      ${pinGlyphs}
-      ${roadPins}
-      ${signalPins}
-      <circle cx="150" cy="280" r="6" fill="var(--blue-fill)" stroke="#fff" stroke-width="2.5"></circle>
-    </svg>
-    <div class="legend">
-      <span style="width:100%; color:var(--ink-muted);">Icon shows what it is, color shows current status</span>
-      <span><span class="dot" style="background:var(--teal-fill);"></span>Short wait</span>
-      <span><span class="dot" style="background:var(--amber-fill);"></span>Building up</span>
-      <span><span class="dot" style="background:var(--coral-fill);"></span>Long wait / hazard</span>
-      <span><span class="dot" style="background:var(--blue-fill);"></span>Police / camera</span>
-      <span><i class="ti ti-traffic-lights" style="font-size:11px; color:var(--ink-secondary);"></i>Signal, reported color</span>
-    </div>
+  <div class="map-wrap" style="margin:0 -14px; height:460px; position:relative;" id="mobile-map-wrap">
+    <button class="layers-btn" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
+  </div>
+  <div class="legend" style="position:static; margin-top:8px;">
+    <span style="width:100%; color:var(--ink-muted);">Tap Layers to filter what's shown</span>
   </div>`;
+  positionMap();
 }
 
 function renderOwner(content){
@@ -463,7 +617,7 @@ function ownerSave(id){
 }
 
 function openDetail(id){
-  const l = locations.find(x=>x.id===id);
+  const l = locations.find(x=>String(x.id)===String(id));
   const c = statusColors[l.status];
   document.getElementById('modal-holder').innerHTML = `
   <div class="overlay" onclick="if(event.target===this) closeModal()">
@@ -476,21 +630,25 @@ function openDetail(id){
         <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
       </div>
       <div class="big-metric">
-        <div class="num" style="color:${c.text};">${l.minutes} min</div>
+        <div class="num" style="color:${c.text};">${l.minutes==null ? '—' : l.minutes+' min'}</div>
         <div class="cap">${c.label.toUpperCase()}</div>
       </div>
       <p style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">How long did you actually wait?</p>
-      <button class="opt-btn" onclick="checkin(${l.id}, 3, 'green')">Under 10 min <i class="ti ti-chevron-right"></i></button>
-      <button class="opt-btn" onclick="checkin(${l.id}, 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
-      <button class="opt-btn" onclick="checkin(${l.id}, 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
+      <button class="opt-btn" onclick="checkin('${l.id}', 3, 'green')">Under 10 min <i class="ti ti-chevron-right"></i></button>
+      <button class="opt-btn" onclick="checkin('${l.id}', 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
+      <button class="opt-btn" onclick="checkin('${l.id}', 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
     </div>
   </div>`;
 }
 
-function checkin(id, minutes, status){
-  const l = locations.find(x=>x.id===id);
+async function checkin(id, minutes, status){
+  let l = locations.find(x=>String(x.id)===String(id));
+  if(l.osm){
+    const res = await api('/api/report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kind:'wait', name:l.name, x:100, y:70})});
+    if(res && res.id){ l.id = res.id; l.osm = false; }
+  }
   l.minutes = minutes; l.status = status; l.confirms += 1; l.updated = 'just now';
-  api('/api/checkin', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({locationId:id, minutes, status})});
+  api('/api/checkin', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({locationId:l.id, minutes, status})});
   closeModal();
   toast('Thanks, check-in added.');
   render();
@@ -634,7 +792,10 @@ setInterval(()=>{
 }, 1000);
 
 async function boot(){
+  leafletMapDiv = document.getElementById('leaflet-map');
   const banner = document.getElementById('mode-banner');
+  const locBanner = document.getElementById('loc-banner');
+
   const data = await api('/api/feed');
   if(data){
     locations = data.locations;
@@ -645,6 +806,19 @@ async function boot(){
     banner.textContent = API_BASE ? 'Could not reach the API \u2014 showing demo data' : 'Demo mode \u2014 showing sample data';
     banner.classList.add('show');
   }
+
+  const loc = await getUserLocation();
+  if(loc){
+    userLoc = loc; usingRealLocation = true;
+    locBanner.style.display = 'none';
+    const places = await fetchNearbyPlaces(loc.lat, loc.lng);
+    osmPlaces = places;
+    locations = locations.concat(places);
+  } else {
+    locBanner.textContent = 'Location access not available \u2014 showing demo data near a default area';
+    locBanner.style.display = 'block';
+  }
+
   render();
 }
 boot();
