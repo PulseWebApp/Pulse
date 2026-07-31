@@ -236,6 +236,7 @@
   .wait-badge .d{width:6px; height:6px; border-radius:50%; animation:breathe 1.8s ease-in-out infinite;}
 
   .weather-card{position:absolute; bottom:14px; right:14px; z-index:450; background:var(--surface); border-radius:16px; padding:10px 14px; box-shadow:var(--shadow-card); display:none; align-items:center; gap:9px;}
+  .leaflet-bottom.leaflet-right{right:auto !important; left:0 !important;}
   [data-theme="dark"] .weather-card{background:var(--surface);}
   .weather-card.show{display:flex;}
   .weather-card i{font-size:22px; color:var(--amber-fill);}
@@ -255,7 +256,7 @@
     #filters{display:none;}
     #content{display:none;}
     #fab-holder{display:none;}
-    .desktop-sidebar-body{display:block; padding:0 4px;}
+    .desktop-sidebar-body{display:block; padding:0 18px;}
     .ds-section-title{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink); margin-bottom:10px;}
     .ds-live-badge{display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--teal-text);}
     .ds-live-dot{width:6px; height:6px; border-radius:50%; background:var(--teal-fill); box-shadow:0 0 0 3px var(--teal-bg); animation:breathe 1.8s ease-in-out infinite;}
@@ -289,12 +290,12 @@
   .zoom-group button{width:44px; height:38px; border:none; background:none; cursor:pointer; color:var(--ink-secondary); font-size:16px;}
   .zoom-group button:first-child{border-bottom:1px solid var(--border);}
   @media (min-width:900px){
-    .desktop-nav{display:flex; flex-direction:column; gap:2px; padding:0 4px 18px;}
+    .desktop-nav{display:flex; flex-direction:column; gap:2px; padding:0 18px 18px;}
     .desktop-nav .nav-item{display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:500; color:var(--ink-secondary); cursor:pointer; transition:background .15s, color .15s;}
     .desktop-nav .nav-item i{font-size:18px; width:18px;}
     .desktop-nav .nav-item.active{background:var(--accent-bg); color:var(--accent-text); font-weight:600;}
     .desktop-nav .nav-item:hover:not(.active){background:var(--surface-2); color:var(--ink);}
-    .promo-card{display:block; margin:10px 14px 14px; background:linear-gradient(135deg,#6366F1 0%,#8B5CF6 55%,#A855F7 100%); border-radius:16px; padding:18px; color:#fff; position:relative; overflow:hidden;}
+    .promo-card{display:block; margin:10px 18px 6px; background:linear-gradient(135deg,#6366F1 0%,#8B5CF6 55%,#A855F7 100%); border-radius:16px; padding:18px; color:#fff; position:relative; overflow:hidden;}
     .promo-card::after{content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.12);}
     .promo-card p{font-size:14.5px; font-weight:700; margin:0 0 4px; position:relative;}
     .promo-card span{font-size:11.5px; opacity:.85; display:block; margin-bottom:14px; line-height:1.4; position:relative;}
@@ -306,7 +307,7 @@
     body{padding:0;}
     .frame{max-width:none; width:100%; padding:0; box-shadow:none; border-radius:0; background:var(--page);}
     .screen{flex-direction:row; height:100vh; border-radius:0; box-shadow:none; background:var(--page); padding:0; gap:0; position:relative;}
-    .app-shell{display:flex; flex-direction:column; position:fixed; top:24px; left:24px; bottom:24px; width:307px; z-index:1000; background:#fff; border:none; border-radius:40px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow-y:auto; padding:6px 0;}
+    .app-shell{display:flex; flex-direction:column; position:fixed; top:24px; left:24px; bottom:24px; width:307px; z-index:1000; background:#fff; border:none; border-radius:40px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow-y:auto; padding:20px 0 40px;}
     [data-theme="dark"] .app-shell{background:var(--surface);}
     [data-theme="dark"] .card, [data-theme="dark"] .summary-strip{background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08);}
     .map-pane-desktop{flex:1; width:100%; display:flex !important; flex-direction:column; border-radius:0; overflow:hidden; box-shadow:none;}
@@ -364,7 +365,7 @@
   <div class="promo-card">
     <p>Help improve Pulse</p>
     <span>Report wait times and help others.</span>
-    <button onclick="openReportModal()"><i class="ti ti-plus" style="font-size:13px; margin-right:5px; vertical-align:-2px;"></i>Report now</button>
+    <button onclick="openReportModal()">+ Report now</button>
   </div>
   </div>
 
@@ -389,8 +390,8 @@
         <button class="map-control" onclick="retryLocation()" title="Refresh location"><i class="fa-solid fa-compass"></i></button>
         <button class="map-control dark" onclick="toggleTheme()" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
         <div class="zoom-group">
-          <button onclick="leafletMap && leafletMap.zoomIn()" title="Zoom in"><i class="ti ti-plus"></i></button>
-          <button onclick="leafletMap && leafletMap.zoomOut()" title="Zoom out"><i class="ti ti-minus"></i></button>
+          <button onclick="leafletMap && leafletMap.zoomIn()" title="Zoom in" style="font-size:18px; font-weight:600;">+</button>
+          <button onclick="leafletMap && leafletMap.zoomOut()" title="Zoom out" style="font-size:20px; font-weight:600;">−</button>
         </div>
       </div>
       <div class="weather-card" id="weather-card-desktop"></div>
@@ -1052,8 +1053,8 @@ function renderMap(content){
       <button class="map-control" onclick="toggleSatellite()" title="Toggle satellite view">\u{1F5FA}\uFE0F</button>
       <button class="map-control" onclick="toggleTheme()" title="Toggle dark mode"><span class="theme-toggle-emoji">${document.documentElement.dataset.theme==='dark'?'\u2600\uFE0F':'\u{1F319}'}</span></button>
       <div class="zoom-group">
-        <button onclick="leafletMap && leafletMap.zoomIn()" title="Zoom in"><i class="ti ti-plus"></i></button>
-        <button onclick="leafletMap && leafletMap.zoomOut()" title="Zoom out"><i class="ti ti-minus"></i></button>
+        <button onclick="leafletMap && leafletMap.zoomIn()" title="Zoom in" style="font-size:18px; font-weight:600;">+</button>
+        <button onclick="leafletMap && leafletMap.zoomOut()" title="Zoom out" style="font-size:20px; font-weight:600;">−</button>
       </div>
     </div>
     <div class="heat-toggle" onclick="toggleHeatmap()">
