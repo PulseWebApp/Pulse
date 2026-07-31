@@ -67,19 +67,54 @@ export default {
     // GET /api/feed
     if (path === '/api/feed' && method === 'GET') {
       const crowdWindowStart = Date.now() - (2 * 60 * 60 * 1000); // last 2 hours
-      const [locs, roads, sigs] = await Promise.all([
+      const liveWindowStart = Date.now() - (2 * 60 * 1000); // last 2 minutes
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const todayStart = startOfToday.getTime();
+
+      const [locs, roads, sigs, liveUsersRow, reportsTodayRow, verifiedRow] = await Promise.all([
         env.DB.prepare(
           `SELECT l.*, (SELECT COUNT(*) FROM checkins c WHERE c.location_id = l.id AND c.created_at > ?) AS crowd_count
            FROM locations l ORDER BY l.id`
         ).bind(crowdWindowStart).all(),
         env.DB.prepare('SELECT * FROM road_reports ORDER BY id DESC').all(),
         env.DB.prepare('SELECT * FROM signals ORDER BY id').all(),
+        env.DB.prepare('SELECT COUNT(*) AS n FROM sessions WHERE last_seen > ?').bind(liveWindowStart).first(),
+        env.DB.prepare(
+          `SELECT
+             (SELECT COUNT(*) FROM checkins WHERE created_at > ?) +
+             (SELECT COUNT(*) FROM road_reports WHERE created_at > ?) +
+             (SELECT COUNT(*) FROM signals WHERE reported_at > ?) AS n`
+        ).bind(todayStart, todayStart, todayStart).first(),
+        env.DB.prepare(
+          `SELECT
+             (SELECT COUNT(*) FROM locations WHERE owner_verified = 1) AS verified,
+             (SELECT COUNT(*) FROM locations) AS total`
+        ).first(),
       ]);
+
+      const verifiedPct = verifiedRow.total > 0 ? Math.round((verifiedRow.verified / verifiedRow.total) * 100) : 0;
+
       return json({
         locations: locs.results.map(mapLocation),
         roadReports: roads.results.map(mapRoadReport),
         signals: sigs.results.map(mapSignal),
+        stats: {
+          liveUsers: liveUsersRow.n || 0,
+          reportsToday: reportsTodayRow.n || 0,
+          verifiedPct,
+        },
       });
+    }
+
+    // POST /api/heartbeat  { sessionId }
+    if (path === '/api/heartbeat' && method === 'POST') {
+      const body = await request.json();
+      if (!body.sessionId) return json({ error: 'sessionId required' }, 400);
+      await env.DB.prepare(
+        'INSERT INTO sessions (id, last_seen) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET last_seen = excluded.last_seen'
+      ).bind(body.sessionId, Date.now()).run();
+      return json({ ok: true });
     }
 
     // POST /api/checkin  { locationId, minutes, status }
