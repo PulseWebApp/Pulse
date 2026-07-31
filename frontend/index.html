@@ -187,8 +187,8 @@
 
   /* Real map */
   #leaflet-map{width:100%; height:100%; background:var(--surface-1, #EEF2F1);}
-  #leaflet-map .leaflet-tile-pane{filter:blur(12px) saturate(1.3) brightness(1.07); position:relative;}
-  #leaflet-map .leaflet-tile-pane::after{content:''; position:absolute; inset:0; pointer-events:none; background:rgba(255,255,255,.09);}
+  #leaflet-map .leaflet-tile-pane{filter:blur(4px) saturate(1.2) brightness(1.05); position:relative;}
+  #leaflet-map .leaflet-tile-pane::after{content:''; position:absolute; inset:0; pointer-events:none; background:rgba(255,255,255,.06);}
   .map-wrap{position:relative; flex:1; min-height:0; border-radius:20px; overflow:hidden; box-shadow:0 10px 34px rgba(15,23,42,.10);}
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -754,6 +754,15 @@ function initMapIfNeeded(){
   baseTileLayer = L.tileLayer(startDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(leafletMap);
+  let tileErrorCount = 0;
+  baseTileLayer.on('tileerror', ()=>{
+    tileErrorCount++;
+    if(tileErrorCount === 6 && !satelliteOn){ // CARTO seems down/rate-limited — fall back to standard OSM tiles
+      leafletMap.removeLayer(baseTileLayer);
+      baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}).addTo(leafletMap);
+      toast('Map tiles switched to a backup source');
+    }
+  });
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
     markerLayers[cat] = L.markerClusterGroup({
       maxClusterRadius: 80,
