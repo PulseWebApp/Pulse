@@ -154,7 +154,8 @@
   svg text{font-family:'Inter',sans-serif;}
   .map-pin{cursor:pointer;}
   .search-bar-wrap{position:absolute; top:14px; left:14px; right:130px; z-index:450; padding:0; border:none; background:none; flex-shrink:0; display:flex; align-items:center; gap:10px;}
-  .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0; position:absolute; left:18px; z-index:1; color:var(--ink-muted);}
+  .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0; position:absolute; left:18px; top:50%; transform:translateY(-50%); z-index:2; color:var(--ink-muted); pointer-events:none;}
+  .search-kbd{position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:10px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:3px 7px; border-radius:6px; pointer-events:none; z-index:2;}
   .search-input{flex:1; padding:15px 16px 15px 44px; border-radius:18px; border:1px solid var(--border); font-size:14.5px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); transition:box-shadow .3s; outline:none;}
   .search-input:focus{box-shadow:var(--shadow-card), 0 0 0 3px var(--accent-bg); border-color:var(--accent);}
   [data-theme="dark"] .search-input{background:var(--surface);}
@@ -381,8 +382,8 @@
     <div class="map-wrap" style="flex:1;">
       <div id="leaflet-map"></div>
       <div class="search-bar-wrap">
-        <span class="search-icon">🔍</span>        <input type="text" id="search-input-desktop" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')" style="padding-right:44px;">
-        <span style="position:absolute; right:26px; top:24px; font-size:10px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:2px 6px; border-radius:6px; pointer-events:none;">⌘K</span>
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>        <input type="text" id="search-input-desktop" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')" style="padding-right:44px;">
+        <span class="search-kbd">⌘K</span>
         <div id="search-results-desktop" class="search-results"></div>
       </div>
       <div class="top-right-controls">
@@ -543,7 +544,7 @@ function showRecentSearches(which){
   }
   if(suggestions.length){
     html += `<div class="search-panel-head" style="margin-top:${recent.length?'6px':'0'};"><span>Suggestions</span></div>`;
-    html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><i class="ti ti-map-pin" style="color:var(--ink-muted); margin-right:2px;"></i>${l.name}</div>`).join('');
+    html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><i class="fa-solid fa-location-dot" style="color:var(--ink-muted); margin-right:2px;"></i>${l.name}</div>`).join('');
   }
   if(!html) return;
   resultsEl.innerHTML = html;
@@ -1067,7 +1068,7 @@ function renderMap(content){
   content.innerHTML = `
   <div class="map-wrap" style="margin:0 -14px; height:calc(100vh - 230px); position:relative;" id="mobile-map-wrap">
     <div class="search-bar-wrap">
-      <span class="search-icon">🔍</span>
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
       <input type="text" id="search-input-mobile" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'mobile')" onfocus="if(!this.value) showRecentSearches('mobile')">
       <div id="search-results-mobile" class="search-results"></div>
     </div>
@@ -1198,7 +1199,10 @@ function openDetail(id){
         </div>
         <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
       </div>
-      <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; margin-bottom:10px;"><i class="ti ti-navigation"></i>Directions</button>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
+        <button class="opt-btn" onclick="closeModal(); openReportModal();" style="justify-content:center; gap:6px; flex:1; margin-bottom:0; border-color:var(--coral-fill); color:var(--coral-text);"><i class="fa-solid fa-flag"></i>Report</button>
+      </div>
       <div class="big-metric">
         <div class="num" style="color:${c.text}; font-size:${l.minutes==null?'26px':'40px'};">${l.minutes==null ? 'No reports yet' : l.minutes+' min'}</div>
         <div class="cap">${c.label.toUpperCase()}</div>
@@ -1227,7 +1231,6 @@ function openDetail(id){
         <div id="star-picker" style="display:flex; gap:6px; font-size:26px; margin-bottom:12px;">
           ${[1,2,3,4,5].map(n=>`<span onclick="rateLocation('${l.id}',${n})" style="cursor:pointer; color:${l.ratingCount && n<=Math.round(l.ratingAvg) ? '#F59E0B' : 'var(--border-strong)'};">\u2605</span>`).join('')}
         </div>
-        <button class="opt-btn" style="border-style:dashed;" onclick="closeModal(); openReportModal();"><i class="ti ti-alert-triangle" style="font-size:15px;"></i>&nbsp; Report something wrong here <i class="ti ti-chevron-right"></i></button>
       </div>
     </div>
   </div>`;
