@@ -167,6 +167,8 @@
   [data-theme="dark"] .map-control{background:rgba(26,36,54,.75);}
   .map-control:hover{transform:scale(1.08); color:var(--accent);}
   .map-control.on{background:var(--accent); color:#fff;}
+  .map-control.locate{background:var(--accent); color:#fff; box-shadow:0 10px 26px rgba(37,99,235,.35);}
+  .map-control.locate:hover{color:#fff; background:var(--accent-hover);}
   .live-pill{position:absolute; bottom:14px; right:14px; z-index:400; background:rgba(255,255,255,.88); backdrop-filter:blur(14px); padding:8px 14px; border-radius:20px; box-shadow:0 8px 22px rgba(15,23,42,.12); font-size:11.5px; font-weight:600; display:flex; align-items:center; gap:7px; color:var(--ink);}
   [data-theme="dark"] .live-pill{background:rgba(26,36,54,.75);}
   .live-pill .dot{width:8px; height:8px; background:#10B981; border-radius:50%; display:inline-block; animation:breathe 1.8s ease-in-out infinite;}
@@ -262,7 +264,7 @@
       <div class="live-pill"><span class="dot"></span>Live updates</div>
       <button class="layers-btn" id="layers-btn-desktop" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
       <div class="map-controls">
-        <button class="map-control" onclick="recenterOnMe()" title="Center on me">📍</button>
+        <button class="map-control locate" onclick="recenterOnMe()" title="Go to my location">📍</button>
         <button class="map-control" onclick="retryLocation()" title="Refresh location">🧭</button>
         <button class="map-control" onclick="toggleSatellite()" title="Toggle satellite view">🗺️</button>
         <button class="map-control" onclick="toggleTheme()" title="Toggle dark mode"><span class="theme-toggle-emoji">🌙</span></button>
@@ -533,13 +535,15 @@ let baseTileLayer = null;
 function initMapIfNeeded(){
   if(leafletMap || typeof L === 'undefined') return;
   const center = userLoc || {lat:33.6, lng:73.0};
-  leafletMap = L.map(leafletMapDiv, {zoomControl:true}).setView([center.lat, center.lng], 15);
+  const worldBounds = L.latLngBounds([-85,-185],[85,185]);
+  leafletMap = L.map(leafletMapDiv, {zoomControl:true, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0}).setView([center.lat, center.lng], 15);
   baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
   }).addTo(leafletMap);
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
     markerLayers[cat] = L.markerClusterGroup({
-      maxClusterRadius: 50,
+      maxClusterRadius: 80,
+      disableClusteringAtZoom: 18,
       iconCreateFunction: function(cluster){
         return L.divIcon({
           html: `<div style="width:38px;height:38px;border-radius:50%;background:#12233B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;box-shadow:0 4px 12px rgba(18,35,59,0.4);border:2px solid #fff;">${cluster.getChildCount()}</div>`,
@@ -659,7 +663,6 @@ function setTab(t){
 }
 
 function setFilter(f){ filter = f; render(); }
-function dismissBadgeTip(){ localStorage.setItem('pulse_badges_dismissed', '1'); render(); }
 
 function toggleTheme(){
   const isDark = document.documentElement.dataset.theme === 'dark';
@@ -723,22 +726,10 @@ function renderFeed(content){
   const roadIssueCount = roadReports.length;
   const signalDownCount = signals.filter(s=>s.color==='red').length;
   let html = '';
-  if(!localStorage.getItem('pulse_badges_dismissed')){
-    html += `<div style="border:1px solid var(--blue-text); border-radius:12px; padding:12px 14px; background:var(--blue-bg); margin-bottom:10px; position:relative;">
-      <button onclick="dismissBadgeTip()" style="position:absolute; top:8px; right:10px; background:none; border:none; cursor:pointer; color:var(--blue-text);"><i class="ti ti-x"></i></button>
-      <p style="font-size:12px; font-weight:600; color:var(--blue-text); margin:0 0 6px;">What the badges mean</p>
-      <div style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--ink-secondary);">
-        <div><span class="badge-demo">Demo</span> seed data for testing</div>
-        <div><span class="badge-real">Real place</span> pulled live from OpenStreetMap</div>
-        <div><span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span> confirmed by the business itself</div>
-      </div>
-    </div>`;
-  }
   html += `<div class="summary-strip">
-    <div class="summary-stat"><div class="n">${locations.length}</div><div class="l">nearby</div></div>
+    <div class="summary-stat"><div class="n">${waits.length}</div><div class="l">nearby</div></div>
     <div class="summary-stat"><div class="n" style="color:var(--coral-text);">${longWaitCount}</div><div class="l">long wait</div></div>
-    <div class="summary-stat"><div class="n" style="color:var(--amber-text);">${roadIssueCount}</div><div class="l">road issues</div></div>
-    <div class="summary-stat"><div class="n" style="color:var(--blue-text);">${signalDownCount}</div><div class="l">signals red</div></div>
+    <div class="summary-stat"><div class="n" style="color:var(--amber-text);">${roadIssueCount + signalDownCount}</div><div class="l">road issues</div></div>
   </div>`;
   html += `<div class="jump-nav">
     <button onclick="document.getElementById('sec-waits')?.scrollIntoView({behavior:'smooth'})">Wait times</button>
@@ -753,9 +744,9 @@ function renderFeed(content){
         <div class="card-row">
           <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><span>${emojiFor(l.icon)}</span></div>
           <div class="card-body">
-            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''} ${l.osm?'<span class="badge-real">Real place</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
-            <p class="card-sub">${l.distance} · ${l.osm ? 'no reports yet — be the first' : (l.confirms>0? l.confirms+' check-ins':'owner reported')}</p>
-            <p class="card-sub" style="margin-top:4px; display:flex; justify-content:space-between;"><span>${renderStars(l.ratingAvg, l.ratingCount)}</span><span>${l.updated}</span></p>
+            <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Verified</span>':''} ${l.osm?'<span class="badge-real">Real</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
+            <p class="card-sub">${l.distance} · ${l.osm ? 'be the first to report' : (l.confirms>0? l.confirms+' check-ins':'owner reported')} · ${l.updated}</p>
+            ${l.ratingCount ? `<p class="card-sub" style="margin-top:2px;">${renderStars(l.ratingAvg, l.ratingCount)}</p>` : ''}
           </div>
           <div class="card-right">
             <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
@@ -835,7 +826,7 @@ function renderMap(content){
     <div class="live-pill"><span class="dot"></span>Live updates</div>
     <button class="layers-btn" id="layers-btn-mobile" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
     <div class="map-controls">
-      <button class="map-control" onclick="recenterOnMe()" title="Center on me">\u{1F4CD}</button>
+      <button class="map-control locate" onclick="recenterOnMe()" title="Go to my location">\u{1F4CD}</button>
       <button class="map-control" onclick="retryLocation()" title="Refresh location">\u{1F9ED}</button>
       <button class="map-control" onclick="toggleSatellite()" title="Toggle satellite view">\u{1F5FA}\uFE0F</button>
       <button class="map-control" onclick="toggleTheme()" title="Toggle dark mode"><span class="theme-toggle-emoji">${document.documentElement.dataset.theme==='dark'?'\u2600\uFE0F':'\u{1F319}'}</span></button>
