@@ -556,7 +556,7 @@ function showRecentSearches(which){
   }
   if(suggestions.length){
     html += `<div class="search-panel-head" style="margin-top:${recent.length?'6px':'0'};"><span>Suggestions</span></div>`;
-    html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><i class="fa-solid fa-location-dot" style="color:var(--ink-muted); margin-right:2px;"></i>${l.name}</div>`).join('');
+    html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><span style="font-size:15px; width:18px; text-align:center; flex-shrink:0;">${emojiFor(l.icon)}</span>${l.name}</div>`).join('');
   }
   if(!html) return;
   resultsEl.innerHTML = html;
@@ -564,6 +564,20 @@ function showRecentSearches(which){
 }
 function closeSearchPanel(which){
   document.getElementById('search-results-'+which).classList.remove('show');
+}
+function iconForNominatim(cls, type){
+  const map = {
+    restaurant:'fa-utensils', fast_food:'fa-utensils', cafe:'fa-mug-saucer', bar:'fa-martini-glass',
+    fuel:'fa-gas-pump', hospital:'fa-hospital', clinic:'fa-suitcase-medical', pharmacy:'fa-suitcase-medical', doctors:'fa-suitcase-medical',
+    hotel:'fa-bed', guest_house:'fa-bed', resort:'fa-umbrella-beach', motel:'fa-bed',
+    bank:'fa-building-columns', atm:'fa-building-columns',
+    school:'fa-graduation-cap', university:'fa-graduation-cap', college:'fa-graduation-cap',
+    supermarket:'fa-cart-shopping', mall:'fa-cart-shopping', convenience:'fa-cart-shopping', shop:'fa-store',
+    bus_station:'fa-bus', railway:'fa-train', airport:'fa-plane',
+    park:'fa-tree', place_of_worship:'fa-place-of-worship', police:'fa-shield-halved',
+    hairdresser:'fa-scissors', barber:'fa-scissors', laundry:'fa-shirt',
+  };
+  return map[type] || map[cls] || 'fa-location-dot';
 }
 function onSearchInput(q, which){
   clearTimeout(searchDebounce);
@@ -583,7 +597,7 @@ function onSearchInput(q, which){
         return;
       }
       resultsEl.innerHTML = results.map((r,i)=>
-        `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lon},${JSON.stringify(r.display_name)},"${which}")'>${r.display_name}</div>`
+        `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lon},${JSON.stringify(r.display_name)},"${which}")'><i class="fa-solid ${iconForNominatim(r.class, r.type)}" style="color:var(--ink-muted); width:15px; flex-shrink:0;"></i>${r.display_name}</div>`
       ).join('');
       resultsEl.classList.add('show');
     }catch(e){
