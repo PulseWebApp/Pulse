@@ -73,7 +73,8 @@
   .card-title{font-size:14px; font-weight:600; margin:0; display:flex; align-items:center; gap:6px;}
   .card-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
   .card-right{text-align:right; flex-shrink:0;}
-  .card-metric{font-family:'Inter',sans-serif; font-size:17px; font-weight:700;}
+  .card-metric{font-family:'Inter',sans-serif; font-size:17px; font-weight:700; animation:num-pulse 2.4s ease-in-out infinite;}
+  @keyframes num-pulse{0%,100%{opacity:1;} 50%{opacity:.75;}}
   .card-label{font-size:10px; color:var(--ink-muted); margin-top:2px; font-family:'IBM Plex Mono',monospace; letter-spacing:.02em;}
   .badge-owner{font-size:10px; background:var(--blue-bg); color:var(--blue-text); padding:2px 7px; border-radius:20px; display:inline-flex; align-items:center; gap:3px; font-family:'Inter',sans-serif; font-weight:500;}
   .status-dot{width:7px; height:7px; border-radius:50%; display:inline-block; animation:breathe 1.8s ease-in-out infinite;}
@@ -95,7 +96,8 @@
 
   .overlay{position:absolute; inset:0; background:rgba(18,35,59,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:1300;}
   .overlay .sheet{max-width:460px;}
-  .sheet{background:var(--surface); width:100%; border-radius:22px 22px 0 0; padding:18px; max-height:90%; overflow-y:auto;}
+  .sheet{background:var(--surface); width:100%; border-radius:22px 22px 0 0; padding:18px; max-height:90%; overflow-y:auto; transform:translateY(100%); transition:transform .3s cubic-bezier(.2,.9,.3,1);}
+  .sheet.in{transform:translateY(0);}
   .sheet-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
   .sheet-title{font-family:'Inter',sans-serif; font-size:16px; font-weight:700; margin:0;}
   .sheet-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
@@ -138,6 +140,7 @@
   .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0;}
   .search-input{flex:1; padding:12px 16px; border-radius:14px; border:1px solid var(--border); font-size:14px; font-family:'Inter',sans-serif; background:var(--surface-2); color:var(--ink); box-shadow:0 4px 14px rgba(0,0,0,.04);}
   .search-results{position:absolute; left:14px; right:14px; top:52px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(18,35,59,0.15); z-index:1250; max-height:240px; overflow-y:auto; display:none;}
+  [data-theme="dark"] .search-results{background:rgba(26,36,54,.85); backdrop-filter:blur(20px);}
   .search-results.show{display:block;}
   .search-result-item{padding:11px 14px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--border);}
   .search-result-item:last-child{border-bottom:none;}
@@ -173,7 +176,11 @@
     body{padding:0;}
     .frame{max-width:none; width:100%; padding:0; box-shadow:none; border-radius:0; background:var(--surface);}
     .screen{flex-direction:row; height:100vh; border-radius:0; box-shadow:none;}
-    .app-shell{display:flex; flex-direction:column; flex:1; min-width:380px; max-width:440px; border-right:1px solid var(--border);}
+    .app-shell{display:flex; flex-direction:column; flex:1; min-width:380px; max-width:440px; border-right:1px solid var(--border); position:relative; z-index:2;}
+    [data-theme="dark"] .screen{background:radial-gradient(circle at 25% 15%, #1a2842 0%, #0B1220 65%);}
+    [data-theme="dark"] .app-shell{background:rgba(26,36,54,.55); backdrop-filter:blur(24px); border-right:1px solid rgba(255,255,255,.08);}
+    [data-theme="dark"] .topbar, [data-theme="dark"] .filters, [data-theme="dark"] .content{background:transparent;}
+    [data-theme="dark"] .card, [data-theme="dark"] .summary-strip{background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08); backdrop-filter:blur(10px);}
     .map-pane-desktop{flex:1; display:flex !important; flex-direction:column;}
     #bottomnav{display:none;}
   }
@@ -1042,6 +1049,13 @@ function submitReport(){
 }
 
 function closeModal(){ document.getElementById('modal-holder').innerHTML=''; }
+
+new MutationObserver(()=>{
+  const sheet = document.querySelector('#modal-holder .sheet');
+  if(sheet && !sheet.classList.contains('in')){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>sheet.classList.add('in')));
+  }
+}).observe(document.getElementById('modal-holder'), {childList:true});
 
 setInterval(()=>{
   document.querySelectorAll('[data-ts]').forEach(el=>{ el.textContent = timeAgo(Number(el.dataset.ts)); });
