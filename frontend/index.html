@@ -263,9 +263,9 @@
     body{padding:0;}
     .frame{max-width:none; width:100%; padding:0; box-shadow:none; border-radius:0; background:var(--page);}
     .screen{flex-direction:row; height:100vh; border-radius:0; box-shadow:none; background:var(--page); padding:0; gap:0;}
-    .app-shell{display:flex; flex-direction:column; flex:0 0 272px; width:272px; position:relative; z-index:2; background:var(--surface); border-right:1px solid var(--border); border-radius:0; box-shadow:none; overflow-y:auto;}
-    [data-theme="dark"] .card, [data-theme="dark"] .summary-strip{background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08);}
+    .app-shell{display:none;}
     .map-pane-desktop{flex:1; display:flex !important; flex-direction:column; border-radius:0; overflow:hidden; box-shadow:none;}
+    .search-bar-wrap, .map-controls, .layers-btn, .live-pill, .heat-toggle, .weather-card{display:none !important;}
     #bottomnav{display:none;}
   }
 </style>
