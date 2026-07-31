@@ -277,25 +277,46 @@ function getUserLocation(){
 }
 
 async function fetchNearbyPlaces(lat, lng){
-  const query = `[out:json][timeout:15];(
-    node["amenity"="restaurant"](around:1500,${lat},${lng});
-    node["amenity"="cafe"](around:1500,${lat},${lng});
-    node["amenity"="fuel"](around:1500,${lat},${lng});
-    node["amenity"="pharmacy"](around:1500,${lat},${lng});
-    node["shop"="laundry"](around:1500,${lat},${lng});
-    node["shop"="hairdresser"](around:1500,${lat},${lng});
-  );out body 30;`;
+  const r = 2000;
+  const query = `[out:json][timeout:20];(
+    node["amenity"="restaurant"](around:${r},${lat},${lng});
+    node["amenity"="fast_food"](around:${r},${lat},${lng});
+    node["amenity"="cafe"](around:${r},${lat},${lng});
+    node["shop"="bakery"](around:${r},${lat},${lng});
+    node["amenity"="fuel"](around:${r},${lat},${lng});
+    node["amenity"="pharmacy"](around:${r},${lat},${lng});
+    node["amenity"="clinic"](around:${r},${lat},${lng});
+    node["amenity"="hospital"](around:${r},${lat},${lng});
+    node["amenity"="dentist"](around:${r},${lat},${lng});
+    node["shop"="hairdresser"](around:${r},${lat},${lng});
+    node["shop"="car_repair"](around:${r},${lat},${lng});
+    node["amenity"="bank"](around:${r},${lat},${lng});
+    node["shop"="laundry"](around:${r},${lat},${lng});
+    node["shop"="dry_cleaning"](around:${r},${lat},${lng});
+    node["shop"="supermarket"](around:${r},${lat},${lng});
+    node["shop"="convenience"](around:${r},${lat},${lng});
+  );out body 100;`;
   try{
     const res = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body: query});
     if(!res.ok) return [];
     const data = await res.json();
     const catMap = {
       restaurant:{category:'food', icon:'ti-tools-kitchen-2'},
+      fast_food:{category:'food', icon:'ti-burger'},
       cafe:{category:'food', icon:'ti-coffee'},
+      bakery:{category:'food', icon:'ti-bread'},
       fuel:{category:'fuel', icon:'ti-gas-station'},
       pharmacy:{category:'health', icon:'ti-first-aid-kit'},
-      laundry:{category:'errand', icon:'ti-wash'},
+      clinic:{category:'health', icon:'ti-stethoscope'},
+      hospital:{category:'health', icon:'ti-building-hospital'},
+      dentist:{category:'health', icon:'ti-stethoscope'},
       hairdresser:{category:'service', icon:'ti-scissors'},
+      car_repair:{category:'service', icon:'ti-car'},
+      bank:{category:'service', icon:'ti-building-bank'},
+      laundry:{category:'errand', icon:'ti-wash'},
+      dry_cleaning:{category:'errand', icon:'ti-wash'},
+      supermarket:{category:'errand', icon:'ti-shopping-cart'},
+      convenience:{category:'errand', icon:'ti-shopping-cart'},
     };
     const mapped = (data.elements || []).filter(el => el.tags && el.tags.name).map(el => {
       const kind = el.tags.amenity || el.tags.shop;
@@ -818,6 +839,8 @@ async function boot(){
     banner.classList.add('show');
   }
 
+  render(); // show demo data immediately, don't block on location/Overpass
+
   const loc = await getUserLocation();
   const fallback = {lat: 33.6, lng: 73.0};
   const gotRealLocation = loc && !loc.error;
@@ -837,11 +860,12 @@ async function boot(){
     locBanner.textContent = (reasonText[loc && loc.error] || 'Could not get location') + ' \u2014 using a default area, real nearby places still shown';
     locBanner.style.display = 'block';
   }
+  render(); // demo pins repositioned now that we know real/fallback center
+
   const places = await fetchNearbyPlaces(centerForPlaces.lat, centerForPlaces.lng);
   osmPlaces = places;
   locations = locations.concat(places);
-
-  render();
+  render(); // real nearby places now filled in
 }
 boot();
 </script>
