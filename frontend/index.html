@@ -639,8 +639,8 @@ function initMapIfNeeded(){
   const center = userLoc || {lat:33.6, lng:73.0};
   const worldBounds = L.latLngBounds([-85,-185],[85,185]);
   leafletMap = L.map(leafletMapDiv, {zoomControl:false, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0}).setView([center.lat, center.lng], 15);
-  baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+  baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(leafletMap);
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
     markerLayers[cat] = L.markerClusterGroup({
@@ -1393,7 +1393,7 @@ function toggleSatellite(){
   satelliteOn = !satelliteOn;
   baseTileLayer = satelliteOn
     ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri'})
-    : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'});
+    : L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'});
   baseTileLayer.addTo(leafletMap);
   baseTileLayer.bringToBack();
   toast(satelliteOn ? 'Satellite view' : 'Street view');
