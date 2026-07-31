@@ -263,6 +263,7 @@
     .ds-stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:22px;}
     .ds-stat-card{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px 7px;}
     .ds-stat-icon{width:24px; height:24px; border-radius:7px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; font-size:11px;}
+    .ds-stat-icon-round{width:30px; height:30px; border-radius:50%; font-size:13px;}
     .ds-stat-value{font-size:17px; font-weight:800; font-family:'Sora',sans-serif; color:var(--ink); letter-spacing:-.02em;}
     .ds-stat-label{font-size:9.5px; color:var(--ink-secondary); margin:1px 0 4px;}
     .ds-stat-delta{font-size:9.5px; font-weight:700;}
@@ -874,12 +875,10 @@ function renderDesktopSidebar(){
   const holder = document.getElementById('desktop-sidebar-body');
   if(!holder) return;
 
-  const longWaitCount = locations.filter(l=>l.status==='red').length;
-  const roadIssueCount = roadReports.length;
-  const signalDownCount = signals.filter(s=>s.color==='red').length;
-  const roadTotal = roadIssueCount + signalDownCount;
-  const nearbyCount = locations.length;
-  if(!statBaseline) statBaseline = {nearby: nearbyCount, longWait: longWaitCount, road: roadTotal};
+  const liveUsers = realStats ? realStats.liveUsers : null;
+  const reportsToday = realStats ? realStats.reportsToday : null;
+  const verifiedPct = realStats ? realStats.verifiedPct : null;
+  if(realStats && !statBaseline) statBaseline = {liveUsers, reportsToday, verifiedPct};
 
   const nearby = locations.slice().sort((a,b)=>(a.minutes==null?999:a.minutes)-(b.minutes==null?999:b.minutes)).slice(0,6);
 
@@ -887,22 +886,22 @@ function renderDesktopSidebar(){
     <div class="ds-section-title">Live Overview <span class="ds-live-badge"><span class="ds-live-dot"></span>Live</span></div>
     <div class="ds-stat-grid">
       <div class="ds-stat-card">
-        <div class="ds-stat-icon" style="background:var(--accent-bg); color:var(--accent-text);"><i class="fa-solid fa-location-dot"></i></div>
-        <div class="ds-stat-value">${nearbyCount}</div>
-        <div class="ds-stat-label">Nearby</div>
-        ${deltaLabel(nearbyCount, statBaseline.nearby) ? `<div class="ds-stat-delta">${deltaLabel(nearbyCount, statBaseline.nearby)}</div>` : ''}
+        <div class="ds-stat-icon ds-stat-icon-round" style="background:var(--accent-bg); color:var(--accent-text);"><i class="fa-solid fa-wave-square"></i></div>
+        <div class="ds-stat-value">${liveUsers==null ? '\u2014' : liveUsers}</div>
+        <div class="ds-stat-label">Live Users</div>
+        ${statBaseline && deltaLabel(liveUsers, statBaseline.liveUsers) ? `<div class="ds-stat-delta">${deltaLabel(liveUsers, statBaseline.liveUsers)}</div>` : ''}
       </div>
       <div class="ds-stat-card">
-        <div class="ds-stat-icon" style="background:var(--coral-bg); color:var(--coral-text);"><i class="fa-regular fa-clock"></i></div>
-        <div class="ds-stat-value" style="color:var(--coral-text);">${longWaitCount}</div>
-        <div class="ds-stat-label">Long wait</div>
-        ${deltaLabel(longWaitCount, statBaseline.longWait) ? `<div class="ds-stat-delta">${deltaLabel(longWaitCount, statBaseline.longWait)}</div>` : ''}
+        <div class="ds-stat-icon ds-stat-icon-round" style="background:var(--teal-bg); color:var(--teal-text);"><i class="fa-solid fa-box-archive"></i></div>
+        <div class="ds-stat-value">${reportsToday==null ? '\u2014' : reportsToday}</div>
+        <div class="ds-stat-label">Reports Today</div>
+        ${statBaseline && deltaLabel(reportsToday, statBaseline.reportsToday) ? `<div class="ds-stat-delta">${deltaLabel(reportsToday, statBaseline.reportsToday)}</div>` : ''}
       </div>
       <div class="ds-stat-card">
-        <div class="ds-stat-icon" style="background:var(--amber-bg); color:var(--amber-text);"><i class="fa-solid fa-flag"></i></div>
-        <div class="ds-stat-value" style="color:var(--amber-text);">${roadTotal}</div>
-        <div class="ds-stat-label">Road issues</div>
-        ${deltaLabel(roadTotal, statBaseline.road) ? `<div class="ds-stat-delta">${deltaLabel(roadTotal, statBaseline.road)}</div>` : ''}
+        <div class="ds-stat-icon ds-stat-icon-round" style="background:var(--purple-bg); color:var(--purple);"><i class="fa-solid fa-bullseye"></i></div>
+        <div class="ds-stat-value">${verifiedPct==null ? '\u2014' : verifiedPct+'%'}</div>
+        <div class="ds-stat-label">Verified spots</div>
+        ${statBaseline && deltaLabel(verifiedPct, statBaseline.verifiedPct) ? `<div class="ds-stat-delta">${deltaLabel(verifiedPct, statBaseline.verifiedPct)}</div>` : ''}
       </div>
     </div>
     <div class="ds-section-title">Nearby Places <span class="ds-view-all" onclick="toast('Coming soon')">View all</span></div>
@@ -1496,6 +1495,20 @@ function toggleSatellite(){
   toast(satelliteOn ? 'Satellite view' : 'Street view');
 }
 
+let realStats = null; // {liveUsers, reportsToday, verifiedPct} — real numbers from the server, null until first feed load
+
+function getSessionId(){
+  let id = localStorage.getItem('pulse_session_id');
+  if(!id){
+    id = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('pulse_session_id', id);
+  }
+  return id;
+}
+function sendHeartbeat(){
+  api('/api/heartbeat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sessionId: getSessionId()})});
+}
+
 async function boot(){
   leafletMapDiv = document.getElementById('leaflet-map');
   const banner = document.getElementById('mode-banner');
@@ -1505,6 +1518,7 @@ async function boot(){
     locations = data.locations;
     roadReports = data.roadReports;
     signals = data.signals;
+    realStats = data.stats || null;
     banner.classList.remove('show');
   } else {
     banner.textContent = API_BASE ? 'Could not reach the API \u2014 showing demo data' : 'Demo mode \u2014 showing sample data';
@@ -1513,6 +1527,13 @@ async function boot(){
 
   render(); // show demo data immediately, don't block on location/Overpass
   await resolveLocation();
+
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 30000);
+  setInterval(async ()=>{
+    const fresh = await api('/api/feed');
+    if(fresh && fresh.stats){ realStats = fresh.stats; render(); }
+  }, 30000);
 }
 boot();
 
