@@ -26,12 +26,15 @@ function timeAgo(ms) {
 }
 
 function mapLocation(row) {
+  const ratingCount = row.rating_count || 0;
+  const ratingAvg = ratingCount > 0 ? Math.round((row.rating_sum / ratingCount) * 10) / 10 : null;
   return {
     id: row.id, name: row.name, category: row.category, icon: row.icon,
     distance: row.distance, status: row.status, minutes: row.minutes,
     confirms: row.confirms, updated: timeAgo(row.updated_at),
     ownerOwned: !!row.owner_owned, ownerVerified: !!row.owner_verified,
     note: row.note, x: row.x, y: row.y,
+    ratingAvg, ratingCount,
   };
 }
 function mapRoadReport(row) {
@@ -144,6 +147,16 @@ export default {
       await env.DB.prepare(
         'UPDATE locations SET status=?, note=?, updated_at=?, owner_verified=1 WHERE id=?'
       ).bind(body.status, body.note, Date.now(), body.locationId).run();
+      return json({ ok: true });
+    }
+
+    // POST /api/rate  { locationId, stars }  — stars is 1-5
+    if (path === '/api/rate' && method === 'POST') {
+      const body = await request.json();
+      const stars = Math.max(1, Math.min(5, Math.round(body.stars)));
+      await env.DB.prepare(
+        'UPDATE locations SET rating_sum=rating_sum+?, rating_count=rating_count+1 WHERE id=?'
+      ).bind(stars, body.locationId).run();
       return json({ ok: true });
     }
 
