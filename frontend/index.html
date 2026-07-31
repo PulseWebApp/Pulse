@@ -161,7 +161,7 @@
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
   @media (min-width:900px){
-    .search-bar-wrap{top:22px; left:22px; right:auto; width:min(500px, 50%);}
+    .search-bar-wrap{top:24px; left:355px; right:auto; width:min(500px, 50%);}
     .search-input{font-size:14.5px;}
   }
   .search-panel-head{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink); padding:4px 8px 8px;}
@@ -903,7 +903,7 @@ function renderDesktopSidebar(){
   const verifiedPct = realStats ? realStats.verifiedPct : null;
   if(realStats && !statBaseline) statBaseline = {liveUsers, reportsToday, verifiedPct};
 
-  const nearby = locations.slice().sort((a,b)=>(a.minutes==null?999:a.minutes)-(b.minutes==null?999:b.minutes)).slice(0,3);
+  const nearby = locations.slice().sort((a,b)=>(a.minutes==null?999:a.minutes)-(b.minutes==null?999:b.minutes)).slice(0,4);
 
   holder.innerHTML = `
     <div class="ds-section-title">Live Overview <span class="ds-live-badge"><span class="ds-live-dot"></span>Live</span></div>
