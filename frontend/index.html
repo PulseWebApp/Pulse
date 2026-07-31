@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#12233B">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
@@ -16,23 +16,25 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
   :root{
-    --bg:#F3F6F5; --page:#E7ECEA; --surface:#FFFFFF; --surface-2:#FAFBFA;
-    --ink:#12233B; --ink-secondary:#5B6B7C; --ink-muted:#8B98A3;
-    --border:#E2E6E5; --border-strong:#CBD3D2;
-    --teal-bg:#E1F5EE; --teal-text:#0F6E56; --teal-fill:#1D9E75;
-    --amber-bg:#FAEEDA; --amber-text:#854F0B; --amber-fill:#EF9F27;
-    --coral-bg:#FAECE7; --coral-text:#99311D; --coral-fill:#D85A30;
-    --blue-bg:#E6F1FB; --blue-text:#185FA5; --blue-fill:#378ADD;
+    --bg:#F6F8FB; --page:#F6F8FB; --surface:#FFFFFF; --surface-2:#F1F5F9;
+    --ink:#0F172A; --ink-secondary:#64748B; --ink-muted:#94A3B8;
+    --border:#E2E8F0; --border-strong:#CBD5E1;
+    --accent:#2563EB; --accent-hover:#1D4ED8; --accent-bg:#DBEAFE; --accent-text:#1D4ED8;
+    --teal-bg:#DCFCE7; --teal-text:#15803D; --teal-fill:#22C55E;
+    --amber-bg:#FEF3C7; --amber-text:#B45309; --amber-fill:#F59E0B;
+    --coral-bg:#FEE2E2; --coral-text:#B91C1C; --coral-fill:#EF4444;
+    --blue-bg:#DBEAFE; --blue-text:#1D4ED8; --blue-fill:#2563EB;
     --radius:14px;
   }
   [data-theme="dark"]{
-    --bg:#0B1524; --page:#060C16; --surface:#12233B; --surface-2:#1A2C47;
-    --ink:#F3F6F5; --ink-secondary:#B9C4CE; --ink-muted:#8B98A3;
-    --border:#28405F; --border-strong:#3A5578;
-    --teal-bg:#0F3A2E; --teal-text:#5DCAA5; --teal-fill:#1D9E75;
-    --amber-bg:#4A3208; --amber-text:#F9C765; --amber-fill:#EF9F27;
-    --coral-bg:#4A2013; --coral-text:#F0997B; --coral-fill:#D85A30;
-    --blue-bg:#0C2A44; --blue-text:#85B7EB; --blue-fill:#378ADD;
+    --bg:#0F172A; --page:#0B1220; --surface:#1A2436; --surface-2:#212D42;
+    --ink:#F1F5F9; --ink-secondary:#B0BAC9; --ink-muted:#8B98A3;
+    --border:#2E3B52; --border-strong:#40506D;
+    --accent:#3B82F6; --accent-hover:#60A5FA; --accent-bg:#1E3A5F; --accent-text:#93C5FD;
+    --teal-bg:#0F3A2E; --teal-text:#5DCAA5; --teal-fill:#22C55E;
+    --amber-bg:#4A3208; --amber-text:#F9C765; --amber-fill:#F59E0B;
+    --coral-bg:#4A2013; --coral-text:#F0997B; --coral-fill:#EF4444;
+    --blue-bg:#1E3A5F; --blue-text:#93C5FD; --blue-fill:#3B82F6;
   }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--page); font-family:'Inter',sans-serif; color:var(--ink); display:flex; justify-content:center;}
@@ -48,30 +50,30 @@
 
   .topbar{padding:18px 18px 10px;}
   .brand{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
-  .wordmark{font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:600; display:flex; align-items:center; gap:8px;}
+  .wordmark{font-family:'Inter',sans-serif; font-size:22px; font-weight:800; color:var(--accent); display:flex; align-items:center; gap:8px;}
   .pulse-dot{width:9px; height:9px; border-radius:50%; background:var(--teal-fill); animation:breathe 1.8s ease-in-out infinite;}
   @keyframes breathe{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.4; transform:scale(0.75);}}
 
   .persona{display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px;}
   .persona button{flex:1; border:none; background:none; padding:7px 8px; font-family:'Inter',sans-serif; font-size:12px; font-weight:500; color:var(--ink-secondary); border-radius:8px; cursor:pointer;}
-  .persona button.active{background:var(--ink); color:#fff;}
+  .persona button.active{background:var(--surface); color:var(--accent); box-shadow:0 3px 12px rgba(0,0,0,.08);}
 
   .filters{display:flex; gap:6px; overflow-x:auto; padding:0 18px 12px; }
   .filters::-webkit-scrollbar{display:none;}
-  .chip{white-space:nowrap; font-size:12px; padding:7px 13px; border-radius:20px; border:1px solid var(--border); color:var(--ink-secondary); background:var(--surface); cursor:pointer; font-family:'Inter',sans-serif;}
-  .chip.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .chip{white-space:nowrap; font-size:13px; padding:9px 15px; border-radius:20px; border:none; color:var(--ink-secondary); background:var(--surface-2); cursor:pointer; font-family:'Inter',sans-serif; font-weight:500; transition:.15s;}
+  .chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
 
   .content{flex:1; overflow-y:auto; padding:0 14px 14px; display:flex; flex-direction:column; gap:10px;}
 
-  .card{background:var(--surface-2); border-radius:var(--radius); padding:13px; cursor:pointer; border:1px solid transparent; transition:border-color .15s;}
-  .card:hover{border-color:var(--border-strong);}
+  .card{background:var(--surface); border-radius:18px; padding:16px; cursor:pointer; border:1px solid var(--border); transition:transform .2s, box-shadow .2s;}
+  .card:hover{transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.08); border-color:var(--border-strong);}
   .card-row{display:flex; gap:11px; align-items:flex-start;}
   .icon-badge{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:17px;}
   .card-body{flex:1; min-width:0;}
   .card-title{font-size:14px; font-weight:600; margin:0; display:flex; align-items:center; gap:6px;}
   .card-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
   .card-right{text-align:right; flex-shrink:0;}
-  .card-metric{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600;}
+  .card-metric{font-family:'Inter',sans-serif; font-size:17px; font-weight:700;}
   .card-label{font-size:10px; color:var(--ink-muted); margin-top:2px; font-family:'IBM Plex Mono',monospace; letter-spacing:.02em;}
   .badge-owner{font-size:10px; background:var(--blue-bg); color:var(--blue-text); padding:2px 7px; border-radius:20px; display:inline-flex; align-items:center; gap:3px; font-family:'Inter',sans-serif; font-weight:500;}
   .status-dot{width:7px; height:7px; border-radius:50%; display:inline-block; animation:breathe 1.8s ease-in-out infinite;}
@@ -81,7 +83,7 @@
   .jump-nav button{font-size:11px; padding:6px 12px; border-radius:14px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-secondary); cursor:pointer; font-family:'Inter',sans-serif;}
   .summary-strip{display:flex; gap:14px; padding:12px 6px; margin-bottom:4px; background:var(--surface-2); border-radius:12px; overflow-x:auto;}
   .summary-stat{text-align:center; flex-shrink:0; min-width:52px;}
-  .summary-stat .n{font-size:18px; font-weight:600; font-family:'Space Grotesk',sans-serif;}
+  .summary-stat .n{font-size:18px; font-weight:700; font-family:'Inter',sans-serif;}
   .summary-stat .l{font-size:10px; color:var(--ink-muted); margin-top:2px;}
 
   .bottomnav{display:flex; border-top:1px solid var(--border); background:var(--surface);}
@@ -89,18 +91,18 @@
   .bottomnav button i{font-size:20px;}
   .bottomnav button.active{color:var(--ink);}
 
-  .fab{position:absolute; right:16px; bottom:78px; z-index:1200; background:var(--ink); color:#fff; border:none; border-radius:24px; padding:11px 18px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:6px; cursor:pointer; font-family:'Inter',sans-serif; box-shadow:0 8px 20px rgba(18,35,59,0.25);}
+  .fab{position:absolute; right:16px; bottom:78px; z-index:1200; background:var(--accent); color:#fff; border:none; border-radius:24px; padding:11px 18px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; cursor:pointer; font-family:'Inter',sans-serif; box-shadow:0 15px 35px rgba(37,99,235,.35);}
 
   .overlay{position:absolute; inset:0; background:rgba(18,35,59,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:1300;}
   .overlay .sheet{max-width:460px;}
   .sheet{background:var(--surface); width:100%; border-radius:22px 22px 0 0; padding:18px; max-height:90%; overflow-y:auto;}
   .sheet-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
-  .sheet-title{font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600; margin:0;}
+  .sheet-title{font-family:'Inter',sans-serif; font-size:16px; font-weight:700; margin:0;}
   .sheet-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
   .close-btn{background:var(--surface-2); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-secondary);}
 
   .big-metric{text-align:center; padding:14px 0;}
-  .big-metric .num{font-family:'Space Grotesk',sans-serif; font-size:40px; font-weight:600; line-height:1;}
+  .big-metric .num{font-family:'Inter',sans-serif; font-size:40px; font-weight:800; line-height:1;}
   .big-metric .cap{font-size:11px; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; margin-top:6px;}
 
   .opt-btn{width:100%; text-align:left; padding:13px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-family:'Inter',sans-serif; color:var(--ink);}
@@ -110,11 +112,11 @@
   .type-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:14px;}
   .type-opt{padding:14px 6px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-size:11px; color:var(--ink-secondary); background:var(--surface);}
   .type-opt i{font-size:20px;}
-  .type-opt.selected{border-color:var(--ink); background:var(--surface-2); color:var(--ink);}
+  .type-opt.selected{border-color:var(--accent); background:var(--accent-bg); color:var(--accent-text);}
 
   select, input[type=text]{width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); margin-bottom:12px;}
 
-  .primary-btn{width:100%; padding:13px; background:var(--ink); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif;}
+  .primary-btn{width:100%; padding:13px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;}
   .status-set{display:flex; gap:8px; margin-bottom:12px;}
   .status-set button{flex:1; padding:11px 4px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); font-size:12px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif; color:var(--ink-secondary);}
   .status-set button.sel-green.selected{border-color:var(--teal-fill); background:var(--teal-bg); color:var(--teal-text);}
@@ -132,8 +134,9 @@
 
   svg text{font-family:'Inter',sans-serif;}
   .map-pin{cursor:pointer;}
-  .search-bar-wrap{position:relative; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0;}
-  .search-input{width:100%; padding:10px 14px; border-radius:20px; border:1px solid var(--border); font-size:13px; font-family:'Inter',sans-serif; background:var(--surface-2); color:var(--ink);}
+  .search-bar-wrap{position:relative; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; display:flex; align-items:center; gap:10px;}
+  .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0;}
+  .search-input{flex:1; padding:12px 16px; border-radius:14px; border:1px solid var(--border); font-size:14px; font-family:'Inter',sans-serif; background:var(--surface-2); color:var(--ink); box-shadow:0 4px 14px rgba(0,0,0,.04);}
   .search-results{position:absolute; left:14px; right:14px; top:52px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(18,35,59,0.15); z-index:1250; max-height:240px; overflow-y:auto; display:none;}
   .search-results.show{display:block;}
   .search-result-item{padding:11px 14px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--border);}
@@ -152,11 +155,16 @@
   .pin-dot i{transform:rotate(45deg); font-size:12px; color:#fff;}
   .badge-demo{font-size:9px; background:var(--surface-1); color:var(--ink-muted); padding:1px 6px; border-radius:20px; font-family:'IBM Plex Mono',monospace;}
   .badge-real{font-size:9px; background:var(--blue-bg); color:var(--blue-text); padding:1px 6px; border-radius:20px; font-family:'IBM Plex Mono',monospace;}
-  .layers-btn{position:absolute; top:14px; right:14px; z-index:400; background:var(--ink); color:#fff; border:none; border-radius:24px; padding:12px 18px; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 4px 14px rgba(18,35,59,0.4); font-family:'Inter',sans-serif;}
+  .layers-btn{position:absolute; top:14px; right:14px; z-index:400; background:var(--surface); color:var(--ink); border:none; border-radius:18px; padding:12px 18px; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 8px 25px rgba(0,0,0,.1); font-family:'Inter',sans-serif;}
+  .map-controls{position:absolute; right:14px; top:66px; z-index:400; display:flex; flex-direction:column; gap:12px;}
+  .map-control{width:48px; height:48px; background:var(--surface); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 8px 20px rgba(0,0,0,.1); cursor:pointer; border:none; transition:.15s;}
+  .map-control:hover{transform:scale(1.06);}
+  .live-pill{position:absolute; top:14px; left:14px; z-index:400; background:var(--surface); padding:8px 14px; border-radius:20px; box-shadow:0 8px 20px rgba(0,0,0,.1); font-size:12px; font-weight:500; display:flex; align-items:center; gap:7px; color:var(--ink);}
+  .live-pill .dot{width:8px; height:8px; background:#10B981; border-radius:50%; display:inline-block;}
   .layers-btn .filter-dot{width:8px; height:8px; border-radius:50%; background:var(--coral-fill);}
   .layer-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:6px;}
   .layer-opt{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:12px; border:1.5px solid var(--border); cursor:pointer; font-size:11px; color:var(--ink-secondary); background:var(--surface);}
-  .layer-opt.on{border-color:var(--ink); background:var(--surface-2); color:var(--ink);}
+  .layer-opt.on{border-color:var(--accent); background:var(--accent-bg); color:var(--accent-text);}
   .layer-opt i{font-size:19px;}
   .loc-banner{font-size:11px; text-align:center; padding:6px; background:var(--blue-bg); color:var(--blue-text); font-family:'IBM Plex Mono',monospace; align-items:center; justify-content:center;}
 
@@ -184,7 +192,7 @@
     <div class="brand">
       <div class="wordmark"><span class="pulse-dot"></span>Pulse</div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <i class="ti ti-moon" id="theme-toggle" onclick="toggleTheme()" style="font-size:19px; color:var(--ink-secondary); cursor:pointer;"></i>
+        <i class="ti ti-moon theme-toggle-icon" id="theme-toggle" onclick="toggleTheme()" style="font-size:19px; color:var(--ink-secondary); cursor:pointer;"></i>
         <i class="ti ti-bell" style="font-size:19px; color:var(--ink-secondary);"></i>
       </div>
     </div>
@@ -209,12 +217,19 @@
 
   <div class="map-pane-desktop" id="map-pane-desktop" style="display:none;">
     <div class="search-bar-wrap">
-      <input type="text" id="search-input-desktop" class="search-input" placeholder="Search a location..." oninput="onSearchInput(this.value,'desktop')">
+      <span class="search-icon">🔍</span>      <input type="text" id="search-input-desktop" class="search-input" placeholder="Search a location..." oninput="onSearchInput(this.value,'desktop')">
       <div id="search-results-desktop" class="search-results"></div>
     </div>
     <div class="map-wrap" style="flex:1;">
       <div id="leaflet-map"></div>
+      <div class="live-pill"><span class="dot"></span>Live updates</div>
       <button class="layers-btn" id="layers-btn-desktop" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
+      <div class="map-controls">
+        <button class="map-control" onclick="recenterOnMe()" title="Center on me">📍</button>
+        <button class="map-control" onclick="retryLocation()" title="Refresh location">🧭</button>
+        <button class="map-control" onclick="toggleSatellite()" title="Toggle satellite view">🗺️</button>
+        <button class="map-control" onclick="toggleTheme()" title="Toggle dark mode"><span class="theme-toggle-emoji">🌙</span></button>
+      </div>
     </div>
   </div>
   <div id="modal-holder"></div>
@@ -267,6 +282,25 @@ function timeAgo(ts){
   const m = Math.round(s/60);
   if(m<60) return m+' min ago';
   return Math.round(m/60)+' hr ago';
+}
+
+const EMOJI_MAP = {
+  'ti-first-aid-kit': '\u{1F48A}', 'ti-stethoscope': '\u{1FA7A}', 'ti-building-hospital': '\u{1F3E5}',
+  'ti-building-bank': '\u{1F3E6}', 'ti-wash': '\u{1F9FA}', 'ti-gas-station': '\u26FD',
+  'ti-scissors': '\u2702\uFE0F', 'ti-tools-kitchen-2': '\u{1F354}', 'ti-burger': '\u{1F354}',
+  'ti-bread': '\u{1F956}', 'ti-coffee': '\u2615', 'ti-car': '\u{1F697}', 'ti-shopping-cart': '\u{1F6D2}',
+  'ti-map-pin': '\u{1F4CD}', 'ti-traffic-cone': '\u{1F6A7}', 'ti-road-off': '\u{1F6AB}',
+  'ti-road': '\u{1F6E3}\uFE0F', 'ti-shield': '\u{1F46E}', 'ti-camera': '\u{1F4F7}',
+  'ti-traffic-lights': '\u{1F6A6}', 'ti-clock-plus': '\u23F1\uFE0F',
+};
+function emojiFor(tiClass){ return EMOJI_MAP[tiClass] || '\u{1F4CD}'; }
+
+function renderStars(avg, count){
+  if(!count) return `<span style="color:var(--ink-muted);">No ratings yet</span>`;
+  const full = Math.round(avg);
+  let stars = '';
+  for(let i=1;i<=5;i++) stars += i<=full ? '\u2605' : '\u2606';
+  return `<span style="color:#F59E0B;">${stars}</span> <span style="color:var(--ink-secondary);">${avg}</span>`;
 }
 
 const statusColors = {
@@ -454,11 +488,12 @@ function roadLayerFor(type){
   return (type==='police' || type==='camera') ? 'police' : 'road';
 }
 
+let baseTileLayer = null;
 function initMapIfNeeded(){
   if(leafletMap || typeof L === 'undefined') return;
   const center = userLoc || {lat:33.6, lng:73.0};
   leafletMap = L.map(leafletMapDiv, {zoomControl:true}).setView([center.lat, center.lng], 15);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
   }).addTo(leafletMap);
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
@@ -478,7 +513,7 @@ function initMapIfNeeded(){
 }
 
 function pinIcon(iconClass, fill){
-  return L.divIcon({className:'', html:`<div class="pin-dot" style="background:${fill};"><i class="ti ${iconClass}"></i></div>`, iconSize:[26,26], iconAnchor:[13,26]});
+  return L.divIcon({className:'', html:`<div class="pin-dot" style="background:${fill};"><span style="font-size:13px;">${emojiFor(iconClass)}</span></div>`, iconSize:[26,26], iconAnchor:[13,26]});
 }
 
 function updateMapMarkers(){
@@ -538,7 +573,7 @@ function openLayersPanel(){
         <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
       </div>
       <div class="layer-grid">
-        ${defs.map(d=>`<div class="layer-opt ${activeLayers[d.k]?'on':''}" onclick="toggleLayer('${d.k}')"><i class="ti ${d.icon}"></i><span>${d.label}</span></div>`).join('')}
+        ${defs.map(d=>`<div class="layer-opt ${activeLayers[d.k]?'on':''}" onclick="toggleLayer('${d.k}')"><span style="font-size:19px;">${emojiFor(d.icon)}</span><span>${d.label}</span></div>`).join('')}
       </div>
       ${allOn ? '' : `<button class="primary-btn" style="margin-top:4px;" onclick="showAllLayers()">Show everything</button>`}
     </div>
@@ -589,14 +624,15 @@ function toggleTheme(){
   const isDark = document.documentElement.dataset.theme === 'dark';
   document.documentElement.dataset.theme = isDark ? 'light' : 'dark';
   localStorage.setItem('pulse_theme', isDark ? 'light' : 'dark');
-  document.getElementById('theme-toggle').className = 'ti ' + (isDark ? 'ti-moon' : 'ti-sun');
+  document.querySelectorAll('.theme-toggle-icon').forEach(el=>{ el.className = 'ti theme-toggle-icon ' + (isDark ? 'ti-moon' : 'ti-sun'); });
+  document.querySelectorAll('.theme-toggle-emoji').forEach(el=>{ el.textContent = isDark ? '\u{1F319}' : '\u2600\uFE0F'; });
 }
 (function applyStoredTheme(){
   const saved = localStorage.getItem('pulse_theme');
   if(saved === 'dark'){
     document.documentElement.dataset.theme = 'dark';
-    const el = document.getElementById('theme-toggle');
-    if(el) el.className = 'ti ti-sun';
+    document.querySelectorAll('.theme-toggle-icon').forEach(el=>{ el.className = 'ti theme-toggle-icon ti-sun'; });
+    document.querySelectorAll('.theme-toggle-emoji').forEach(el=>{ el.textContent = '\u2600\uFE0F'; });
   }
 })();
 
@@ -622,18 +658,18 @@ function render(){
 
   if(isDesktop){
     renderFeed(content);
-    fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
+    fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><span style="font-size:16px; font-weight:700;">+</span>Report</button>`;
     positionMap();
     return;
   }
 
   if(tab==='map'){
-    fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
+    fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><span style="font-size:16px; font-weight:700;">+</span>Report</button>`;
     renderMap(content);
     return;
   }
 
-  fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><i class="ti ti-alert-triangle"></i>Report</button>`;
+  fabHolder.innerHTML = `<button class="fab" onclick="openReportModal()"><span style="font-size:16px; font-weight:700;">+</span>Report</button>`;
   renderFeed(content);
 }
 
@@ -677,10 +713,11 @@ function renderFeed(content){
       const c = statusColors[l.status];
       return `<div class="card" onclick="openDetail('${l.id}')">
         <div class="card-row">
-          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${l.icon}"></i></div>
+          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><span>${emojiFor(l.icon)}</span></div>
           <div class="card-body">
             <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Owner verified</span>':''} ${l.osm?'<span class="badge-real">Real place</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
             <p class="card-sub">${l.distance} · ${l.osm ? 'no reports yet — be the first' : (l.confirms>0? l.confirms+' check-ins':'owner reported')}</p>
+            <p class="card-sub" style="margin-top:4px; display:flex; justify-content:space-between;"><span>${renderStars(l.ratingAvg, l.ratingCount)}</span><span>${l.updated}</span></p>
           </div>
           <div class="card-right">
             <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
@@ -699,7 +736,7 @@ function renderFeed(content){
       const c = typeColors[r.type] || {bg:'var(--surface-1)', text:'var(--ink-secondary)'};
       return `<div class="card" onclick="openRoadDetail(${r.id})">
         <div class="card-row">
-          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${r.icon}"></i></div>
+          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><span>${emojiFor(r.icon)}</span></div>
           <div class="card-body">
             <p class="card-title">${r.name}</p>
             <p class="card-sub">${r.detail} · ${r.updated}</p>
@@ -716,7 +753,7 @@ function renderFeed(content){
       const c = s.color==='red' ? statusColors.red : statusColors.green;
       return `<div class="card" onclick="openSignalDetail(${s.id})">
         <div class="card-row">
-          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ti-traffic-lights"></i></div>
+          <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><span>${emojiFor('ti-traffic-lights')}</span></div>
           <div class="card-body">
             <p class="card-title">${s.name}</p>
             <p class="card-sub">${s.confirms} confirms</p>
@@ -751,11 +788,19 @@ const iconGlyphs = {
 function renderMap(content){
   content.innerHTML = `
   <div class="search-bar-wrap" style="margin:0 -14px 10px;">
+    <span class="search-icon">🔍</span>
     <input type="text" id="search-input-mobile" class="search-input" placeholder="Search a location..." oninput="onSearchInput(this.value,'mobile')">
     <div id="search-results-mobile" class="search-results"></div>
   </div>
   <div class="map-wrap" style="margin:0 -14px; height:420px; position:relative;" id="mobile-map-wrap">
+    <div class="live-pill"><span class="dot"></span>Live updates</div>
     <button class="layers-btn" id="layers-btn-mobile" onclick="openLayersPanel()"><i class="ti ti-layers-2"></i>Layers</button>
+    <div class="map-controls">
+      <button class="map-control" onclick="recenterOnMe()" title="Center on me">\u{1F4CD}</button>
+      <button class="map-control" onclick="retryLocation()" title="Refresh location">\u{1F9ED}</button>
+      <button class="map-control" onclick="toggleSatellite()" title="Toggle satellite view">\u{1F5FA}\uFE0F</button>
+      <button class="map-control" onclick="toggleTheme()" title="Toggle dark mode"><span class="theme-toggle-emoji">${document.documentElement.dataset.theme==='dark'?'\u2600\uFE0F':'\u{1F319}'}</span></button>
+    </div>
   </div>
   <div class="legend" style="position:static; margin-top:8px;">
     <span style="width:100%; color:var(--ink-muted);">Tap Layers to filter what's shown</span>
@@ -769,7 +814,7 @@ function renderOwner(content){
     const c = statusColors[l.status];
     return `<div class="owner-card">
       <div class="owner-card-head">
-        <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><i class="ti ${l.icon}"></i></div>
+        <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><span>${emojiFor(l.icon)}</span></div>
         <div>
           <p style="font-weight:600; font-size:14px; margin:0;">${l.name}</p>
           <p style="font-size:11px; color:var(--ink-muted); margin:2px 0 0;">${l.updated}</p>
@@ -825,10 +870,31 @@ function openDetail(id){
       <button class="opt-btn" onclick="checkin('${l.id}', 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
       <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:12px;">
+        <p style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">Rate this place</p>
+        <div id="star-picker" style="display:flex; gap:6px; font-size:26px; margin-bottom:12px;">
+          ${[1,2,3,4,5].map(n=>`<span onclick="rateLocation('${l.id}',${n})" style="cursor:pointer; color:${l.ratingCount && n<=Math.round(l.ratingAvg) ? '#F59E0B' : 'var(--border-strong)'};">\u2605</span>`).join('')}
+        </div>
         <button class="opt-btn" style="border-style:dashed;" onclick="closeModal(); openReportModal();"><i class="ti ti-alert-triangle" style="font-size:15px;"></i>&nbsp; Report something wrong here <i class="ti ti-chevron-right"></i></button>
       </div>
     </div>
   </div>`;
+}
+
+async function rateLocation(id, stars){
+  let l = locations.find(x=>String(x.id)===String(id));
+  if(!l) return;
+  if(l.osm){
+    const res = await api('/api/report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kind:'wait', name:l.name, x:100, y:70})});
+    if(res && res.id){ l.id = res.id; l.osm = false; id = res.id; }
+  }
+  const oldCount = l.ratingCount || 0;
+  const oldSum = (l.ratingAvg || 0) * oldCount;
+  l.ratingCount = oldCount + 1;
+  l.ratingAvg = Math.round(((oldSum + stars) / l.ratingCount) * 10) / 10;
+  api('/api/rate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({locationId:id, stars})});
+  toast('Thanks for rating!');
+  closeModal();
+  render();
 }
 
 async function checkin(id, minutes, status){
@@ -922,7 +988,7 @@ function openReportModal(){
       </div>
       <div class="type-grid" id="type-grid">
         ${['signal|ti-traffic-cone|Signal down','signalstate|ti-traffic-lights|Signal color','closure|ti-road-off|Road closed','jam|ti-car|Traffic jam','police|ti-shield|Police','camera|ti-camera|Camera','wait|ti-clock-plus|Wait time']
-          .map(t=>{const [k,icon,label]=t.split('|'); return `<div class="type-opt" data-k="${k}" onclick="selectType('${k}')"><i class="ti ${icon}"></i><span>${label}</span></div>`;}).join('')}
+          .map(t=>{const [k,icon,label]=t.split('|'); return `<div class="type-opt" data-k="${k}" onclick="selectType('${k}')"><span style="font-size:20px;">${emojiFor(icon)}</span><span>${label}</span></div>`;}).join('')}
       </div>
       <div id="report-extra"></div>
       <button class="primary-btn" onclick="submitReport()">Submit report</button>
@@ -1016,6 +1082,26 @@ async function resolveLocation(){
 function retryLocation(){
   document.getElementById('loc-banner').style.display = 'none';
   resolveLocation();
+}
+
+function recenterOnMe(){
+  if(!leafletMap){ toast('Open the map first'); return; }
+  if(!userLoc){ toast('Location not available yet'); return; }
+  leafletMap.setView([userLoc.lat, userLoc.lng], 15);
+  toast(usingRealLocation ? 'Centered on your location' : 'Centered on the default area');
+}
+
+let satelliteOn = false;
+function toggleSatellite(){
+  if(!leafletMap || !baseTileLayer) return;
+  leafletMap.removeLayer(baseTileLayer);
+  satelliteOn = !satelliteOn;
+  baseTileLayer = satelliteOn
+    ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri'})
+    : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'});
+  baseTileLayer.addTo(leafletMap);
+  baseTileLayer.bringToBack();
+  toast(satelliteOn ? 'Satellite view' : 'Street view');
 }
 
 async function boot(){
