@@ -114,9 +114,17 @@
   .sheet-title{font-family:'Sora',sans-serif; font-size:16px; font-weight:700; margin:0;}
   .sheet-sub{font-size:12px; color:var(--ink-secondary); margin:3px 0 0;}
   .close-btn{background:var(--surface-2); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-secondary);}
+  .detail-grid{display:block;}
+  .dg-header{display:flex; gap:12px; align-items:center;}
   @media (min-width:900px){
     .overlay .sheet.place-detail{max-width:900px; border-radius:20px;}
     .sheet.place-detail .sheet-title{font-size:20px;}
+    .place-detail .detail-grid{display:grid; grid-template-columns:1.4fr 1fr; grid-template-areas:"header crowd" "wait actions"; gap:20px 24px; align-items:start;}
+    .place-detail .dg-header{grid-area:header;}
+    .place-detail .dg-crowd{grid-area:crowd;}
+    .place-detail .dg-wait{grid-area:wait;}
+    .place-detail .dg-actions{grid-area:actions; align-self:end;}
+    .place-detail .d-photo{width:96px; height:96px;}
   }
 
   .big-metric{text-align:center; padding:14px 0;}
@@ -153,12 +161,13 @@
 
   svg text{font-family:'Inter',sans-serif;}
   .map-pin{cursor:pointer;}
-  .search-bar-wrap{position:absolute; top:14px; left:14px; right:130px; z-index:450; padding:0; border:none; background:none; flex-shrink:0; display:flex; align-items:center; gap:10px;}
-  .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0; position:absolute; left:18px; top:50%; transform:translateY(-50%); z-index:2; color:var(--ink-muted); pointer-events:none;}
-  .search-kbd{position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:10px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:3px 7px; border-radius:6px; pointer-events:none; z-index:2;}
-  .search-input{flex:1; padding:15px 16px 15px 44px; border-radius:18px; border:1px solid var(--border); font-size:14.5px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); transition:box-shadow .3s; outline:none;}
-  .search-input:focus{box-shadow:var(--shadow-card), 0 0 0 3px var(--accent-bg); border-color:var(--accent);}
-  [data-theme="dark"] .search-input{background:var(--surface);}
+  .search-bar-wrap{position:absolute; top:14px; left:14px; right:130px; z-index:450; flex-shrink:0;}
+  .search-pill{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-card); padding:0 14px; transition:box-shadow .3s, border-color .3s;}
+  .search-pill:focus-within{box-shadow:var(--shadow-card), 0 0 0 3px var(--accent-bg); border-color:var(--accent);}
+  .search-pill .search-icon{font-size:15px; flex-shrink:0; color:var(--ink-muted); pointer-events:none;}
+  .search-kbd{flex-shrink:0; font-size:10px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:3px 7px; border-radius:6px; pointer-events:none;}
+  .search-input{flex:1; min-width:0; padding:15px 0; border:none; font-size:14.5px; font-family:'Inter',sans-serif; background:none; color:var(--ink); outline:none;}
+  [data-theme="dark"] .search-pill{background:var(--surface);}
   .search-results{position:absolute; left:0; right:0; top:calc(100% + 10px); background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); z-index:1250; max-height:340px; overflow-y:auto; display:none; padding:14px;}
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
@@ -382,8 +391,11 @@
     <div class="map-wrap" style="flex:1;">
       <div id="leaflet-map"></div>
       <div class="search-bar-wrap">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>        <input type="text" id="search-input-desktop" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')" style="padding-right:44px;">
-        <span class="search-kbd">⌘K</span>
+        <div class="search-pill">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="search-input-desktop" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')">
+          <span class="search-kbd">⌘K</span>
+        </div>
         <div id="search-results-desktop" class="search-results"></div>
       </div>
       <div class="top-right-controls">
@@ -1068,8 +1080,10 @@ function renderMap(content){
   content.innerHTML = `
   <div class="map-wrap" style="margin:0 -14px; height:calc(100vh - 230px); position:relative;" id="mobile-map-wrap">
     <div class="search-bar-wrap">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" id="search-input-mobile" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'mobile')" onfocus="if(!this.value) showRecentSearches('mobile')">
+      <div class="search-pill">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="search-input-mobile" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'mobile')" onfocus="if(!this.value) showRecentSearches('mobile')">
+      </div>
       <div id="search-results-mobile" class="search-results"></div>
     </div>
     <div class="live-pill"><span class="dot"></span>Live updates</div>
@@ -1189,43 +1203,48 @@ function openDetail(id){
   document.getElementById('modal-holder').innerHTML = `
   <div class="overlay" onclick="if(event.target===this) closeModal()">
     <div class="sheet place-detail">
-      <div class="sheet-head">
-        <div style="display:flex; gap:12px; align-items:center;">
+      <div style="display:flex; gap:6px; position:absolute; top:18px; right:18px; z-index:5;">
+        <button class="close-btn" onclick="closeModal(); openReportModal();" title="Report something wrong" style="color:var(--coral-text);"><i class="fa-solid fa-flag" style="font-size:13px;"></i></button>
+        <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="detail-grid">
+        <div class="dg-header">
           <div class="d-photo" style="${l.photoUrl ? `background-image:url('${l.photoUrl}');` : `background:${c.bg}; color:${c.text};`}">${l.photoUrl ? '' : emojiFor(l.icon)}</div>
           <div>
             <p class="sheet-title">${l.name}</p>
             <p class="sheet-sub">${l.ownerVerified? 'Reported by the owner · '+l.updated : 'Based on '+l.confirms+' check-ins · '+l.updated}</p>
+            ${l.ratingCount ? `<p class="sheet-sub" style="margin-top:4px;">${renderStars(l.ratingAvg, l.ratingCount)}</p>` : ''}
           </div>
         </div>
-        <div style="display:flex; gap:6px;">
-          <button class="close-btn" onclick="closeModal(); openReportModal();" title="Report something wrong" style="color:var(--coral-text);"><i class="fa-solid fa-flag" style="font-size:13px;"></i></button>
-          <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+        <div class="dg-crowd">
+          ${l.crowdLevel ? `<div class="d-crowd-panel" style="margin-top:0; height:100%;">
+            <div class="d-crowd-panel-head">
+              <span class="d-crowd-panel-title">Live crowd</span>
+              <span class="crowd-badge" style="background:${crowdColors[l.crowdLevel].bg}; color:${crowdColors[l.crowdLevel].text};">${l.crowdLevel}</span>
+            </div>
+            <div style="display:flex; gap:4px; margin-bottom:8px;">
+              ${Array.from({length:8}, (_,i)=>{
+                const level = l.crowdLevel==='High' ? 6 : l.crowdLevel==='Medium' ? 4 : 2;
+                const active = i < level;
+                return `<i class="ti ti-user" style="font-size:15px; color:${active ? crowdColors[l.crowdLevel].text : 'var(--border-strong)'};"></i>`;
+              }).join('')}
+            </div>
+            <p style="font-size:11.5px; color:var(--ink-secondary); margin:0;">${l.crowdCount} check-in${l.crowdCount===1?'':'s'} in the last 2 hours</p>
+          </div>` : ''}
+        </div>
+        <div class="dg-wait">
+          <div class="big-metric" style="text-align:left; padding:14px 0 0;">
+            <div class="num" style="color:${c.text}; font-size:${l.minutes==null?'22px':'34px'};">${l.minutes==null ? 'No reports yet' : l.minutes+' min'}</div>
+            <div class="cap" style="text-align:left;">${c.label.toUpperCase()}</div>
+          </div>
+          <div id="wait-sparkline-${l.id}"></div>
+        </div>
+        <div class="dg-actions" style="display:flex; gap:8px;">
+          <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
+          <button class="primary-btn" onclick="document.getElementById('checkin-section-${l.id}').scrollIntoView({behavior:'smooth', block:'nearest'})" style="flex:1; margin-bottom:0; display:flex; align-items:center; justify-content:center; gap:6px;"><i class="fa-solid fa-check"></i>Check In</button>
         </div>
       </div>
-      <div style="display:flex; gap:8px; margin-bottom:10px;">
-        <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
-        <button class="primary-btn" onclick="document.getElementById('checkin-section-${l.id}').scrollIntoView({behavior:'smooth', block:'nearest'})" style="flex:1; margin-bottom:0; display:flex; align-items:center; justify-content:center; gap:6px;"><i class="fa-solid fa-check"></i>Check In</button>
-      </div>
-      <div class="big-metric">
-        <div class="num" style="color:${c.text}; font-size:${l.minutes==null?'26px':'40px'};">${l.minutes==null ? 'No reports yet' : l.minutes+' min'}</div>
-        <div class="cap">${c.label.toUpperCase()}</div>
-      </div>
-      <div id="wait-sparkline-${l.id}"></div>
-      ${l.crowdLevel ? `<div class="d-crowd-panel">
-        <div class="d-crowd-panel-head">
-          <span class="d-crowd-panel-title">Live crowd</span>
-          <span class="crowd-badge" style="background:${crowdColors[l.crowdLevel].bg}; color:${crowdColors[l.crowdLevel].text};">${l.crowdLevel}</span>
-        </div>
-        <div style="display:flex; gap:4px; margin-bottom:8px;">
-          ${Array.from({length:8}, (_,i)=>{
-            const level = l.crowdLevel==='High' ? 6 : l.crowdLevel==='Medium' ? 4 : 2;
-            const active = i < level;
-            return `<i class="ti ti-user" style="font-size:15px; color:${active ? crowdColors[l.crowdLevel].text : 'var(--border-strong)'};"></i>`;
-          }).join('')}
-        </div>
-        <p style="font-size:11.5px; color:var(--ink-secondary); margin:0;">${l.crowdCount} check-in${l.crowdCount===1?'':'s'} in the last 2 hours</p>
-      </div>` : ''}
-      <p id="checkin-section-${l.id}" style="font-size:12px; color:var(--ink-muted); margin:0 0 8px;">How long did you actually wait?</p>
+      <p id="checkin-section-${l.id}" style="font-size:12px; color:var(--ink-muted); margin:14px 0 8px;">How long did you actually wait?</p>
       <button class="opt-btn" onclick="checkin('${l.id}', 3, 'green')">Under 10 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 22, 'amber')">10 to 30 min <i class="ti ti-chevron-right"></i></button>
       <button class="opt-btn" onclick="checkin('${l.id}', 50, 'red')">Over 30 min <i class="ti ti-chevron-right"></i></button>
