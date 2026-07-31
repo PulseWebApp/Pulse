@@ -154,18 +154,21 @@
   svg text{font-family:'Inter',sans-serif;}
   .map-pin{cursor:pointer;}
   .search-bar-wrap{position:absolute; top:14px; left:14px; right:130px; z-index:450; padding:0; border:none; background:none; flex-shrink:0; display:flex; align-items:center; gap:10px;}
-  .search-bar-wrap .search-icon{font-size:15px; flex-shrink:0; position:absolute; left:16px; z-index:1; color:var(--ink-muted);}
-  .search-input{flex:1; padding:13px 16px 13px 40px; border-radius:14px; border:1px solid var(--border); font-size:14px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); transition:box-shadow .3s;}
+  .search-bar-wrap .search-icon{font-size:16px; flex-shrink:0; position:absolute; left:18px; z-index:1; color:var(--ink-muted);}
+  .search-input{flex:1; padding:15px 16px 15px 44px; border-radius:18px; border:1px solid var(--border); font-size:14.5px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); transition:box-shadow .3s;}
   [data-theme="dark"] .search-input{background:var(--surface);}
-  .search-results{position:absolute; left:0; right:0; top:calc(100% + 8px); background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-lg); z-index:1250; max-height:280px; overflow-y:auto; display:none; padding:8px;}
+  .search-results{position:absolute; left:0; right:0; top:calc(100% + 10px); background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); z-index:1250; max-height:340px; overflow-y:auto; display:none; padding:14px;}
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
   @media (min-width:900px){
-    .search-bar-wrap{top:22px; left:22px; right:auto; width:min(430px, 46%);}
-    .search-input{font-size:13.5px;}
+    .search-bar-wrap{top:22px; left:22px; right:auto; width:min(500px, 50%);}
+    .search-input{font-size:14.5px;}
   }
-  .search-result-item{padding:8px 10px; font-size:13.5px; cursor:pointer; border-radius:9px;}
+  .search-panel-head{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink); padding:4px 8px 8px;}
+  .search-clear{font-size:12px; font-weight:700; color:var(--accent-text); cursor:pointer;}
+  .search-result-item{padding:9px 10px; font-size:13.5px; cursor:pointer; border-radius:9px; display:flex; align-items:center; gap:10px;}
   .search-result-item:hover{background:var(--surface-2);}
+  .search-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0; display:inline-block;}
 
   .legend{position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,0.96); border-top:1px solid var(--border); padding:10px 14px; display:flex; flex-wrap:wrap; gap:10px 14px;}
   .legend span{font-size:10px; color:var(--ink-secondary); display:flex; align-items:center; gap:5px;}
@@ -518,13 +521,31 @@ let searchDebounce = null;
 function getRecentSearches(){
   try{ return JSON.parse(localStorage.getItem('pulse_recent_searches') || '[]'); }catch(e){ return []; }
 }
+function clearRecentSearches(which){
+  localStorage.removeItem('pulse_recent_searches');
+  showRecentSearches(which);
+}
+const RECENT_DOT_COLORS = ['var(--accent)','var(--teal-fill)','var(--amber-fill)','var(--coral-fill)','var(--purple)'];
 function showRecentSearches(which){
   const resultsEl = document.getElementById('search-results-'+which);
   const recent = getRecentSearches();
-  if(!recent.length) return;
-  resultsEl.innerHTML = `<div class="search-result-item" style="font-size:10px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.04em; cursor:default;">Recent searches</div>` +
-    recent.map(r => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'>${r.label}</div>`).join('');
+  const suggestions = locations.filter(l=>!l.osm).slice(0,4);
+
+  let html = '';
+  if(recent.length){
+    html += `<div class="search-panel-head"><span>Recent Searches</span><span class="search-clear" onclick="clearRecentSearches('${which}')">Clear</span></div>`;
+    html += recent.map((r,i) => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'><span class="search-dot" style="background:${RECENT_DOT_COLORS[i % RECENT_DOT_COLORS.length]};"></span>${r.label}</div>`).join('');
+  }
+  if(suggestions.length){
+    html += `<div class="search-panel-head" style="margin-top:${recent.length?'6px':'0'};"><span>Suggestions</span></div>`;
+    html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><i class="ti ti-map-pin" style="color:var(--ink-muted); margin-right:2px;"></i>${l.name}</div>`).join('');
+  }
+  if(!html) return;
+  resultsEl.innerHTML = html;
   resultsEl.classList.add('show');
+}
+function closeSearchPanel(which){
+  document.getElementById('search-results-'+which).classList.remove('show');
 }
 function onSearchInput(q, which){
   clearTimeout(searchDebounce);
