@@ -268,7 +268,7 @@ function getUserLocation(){
     navigator.geolocation.getCurrentPosition(
       pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude}),
       () => resolve(null),
-      {timeout: 8000}
+      {timeout: 15000}
     );
   });
 }
@@ -347,7 +347,7 @@ function initMapIfNeeded(){
   ['food','fuel','health','service','errand','road','police','signal'].forEach(cat=>{
     markerLayers[cat] = L.layerGroup().addTo(leafletMap);
   });
-  if(userLoc){
+  if(userLoc && usingRealLocation){
     L.circleMarker([userLoc.lat, userLoc.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
   }
 }
@@ -808,16 +808,19 @@ async function boot(){
   }
 
   const loc = await getUserLocation();
+  const fallback = {lat: 33.6, lng: 73.0};
+  const centerForPlaces = loc || fallback;
   if(loc){
     userLoc = loc; usingRealLocation = true;
     locBanner.style.display = 'none';
-    const places = await fetchNearbyPlaces(loc.lat, loc.lng);
-    osmPlaces = places;
-    locations = locations.concat(places);
   } else {
-    locBanner.textContent = 'Location access not available \u2014 showing demo data near a default area';
+    userLoc = fallback; usingRealLocation = false;
+    locBanner.textContent = 'Using a default area \u2014 real nearby places shown, but not your exact location';
     locBanner.style.display = 'block';
   }
+  const places = await fetchNearbyPlaces(centerForPlaces.lat, centerForPlaces.lng);
+  osmPlaces = places;
+  locations = locations.concat(places);
 
   render();
 }
