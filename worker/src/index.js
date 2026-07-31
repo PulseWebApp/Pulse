@@ -171,6 +171,16 @@ export default {
       return json({ ok: true });
     }
 
+    // GET /api/location-history?locationId=X — last 8 real check-ins for the wait-time sparkline
+    if (path === '/api/location-history' && method === 'GET') {
+      const locationId = url.searchParams.get('locationId');
+      const rows = await env.DB.prepare(
+        'SELECT minutes, created_at FROM checkins WHERE location_id=? ORDER BY created_at DESC LIMIT 8'
+      ).bind(locationId).all();
+      const points = rows.results.reverse().map(r => ({ minutes: r.minutes, createdAt: r.created_at }));
+      return json({ points });
+    }
+
     return json({ error: 'not found', path }, 404);
   },
 };
