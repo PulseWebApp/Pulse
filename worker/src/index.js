@@ -249,6 +249,54 @@ export default {
       });
     }
 
+    // GET /api/directions?from=lat,lng&to=lat,lng&profile=driving-car
+    // Proxies OpenRouteService so the API key never ships to the browser.
+    // Requires a Worker secret: `wrangler secret put ORS_API_KEY` (free key from openrouteservice.org).
+    if (path === '/api/directions' && method === 'GET') {
+      if (!env.ORS_API_KEY) return json({ error: 'Routing not configured — missing ORS_API_KEY secret' }, 500);
+
+      const from = url.searchParams.get('from');
+      const to = url.searchParams.get('to');
+      const profile = url.searchParams.get('profile') || 'driving-car';
+      if (!from || !to) return json({ error: 'from and to query params are required, format lat,lng' }, 400);
+
+      const [fromLat, fromLng] = from.split(',').map(Number);
+      const [toLat, toLng] = to.split(',').map(Number);
+      if ([fromLat, fromLng, toLat, toLng].some(n => Number.isNaN(n))) {
+        return json({ error: 'invalid coordinates' }, 400);
+      }
+
+      try {
+        const orsRes = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}/geojson`, {
+          method: 'POST',
+          headers: { 'Authorization': env.ORS_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coordinates: [[fromLng, fromLat], [toLng, toLat]] }),
+        });
+        if (!orsRes.ok) {
+          const detail = await orsRes.text();
+          return json({ error: 'Routing service error', detail: detail.slice(0, 300) }, 502);
+        }
+        const data = await orsRes.json();
+        const feature = data.features && data.features[0];
+        if (!feature) return json({ error: 'No route found' }, 404);
+
+        const summary = feature.properties.summary || {};
+        const steps = (feature.properties.segments || [])
+          .flatMap(seg => seg.steps || [])
+          .map(s => ({ instruction: s.instruction, distance: s.distance, duration: s.duration }));
+        const geometry = feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]); // GeoJSON is [lng,lat]; Leaflet wants [lat,lng]
+
+        return json({
+          distanceMeters: Math.round(summary.distance || 0),
+          durationSeconds: Math.round(summary.duration || 0),
+          geometry,
+          steps,
+        });
+      } catch (e) {
+        return json({ error: 'Routing request failed', detail: String(e) }, 500);
+      }
+    }
+
     return json({ error: 'not found', path }, 404);
   },
 };
