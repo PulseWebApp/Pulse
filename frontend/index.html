@@ -318,6 +318,21 @@
   .np-toggle-slider::before{content:''; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
   .np-toggle input:checked + .np-toggle-slider{background:var(--accent);}
   .np-toggle input:checked + .np-toggle-slider::before{transform:translateX(18px);}
+  .np-sort-wrap{position:relative;}
+  .np-sort-btn{display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:9px; border:1px solid var(--border); font-size:12.5px; font-weight:600; color:var(--ink); background:var(--surface); cursor:pointer;}
+  .np-sort-btn i{font-size:9px; color:var(--ink-muted);}
+  .np-sort-menu{position:absolute; top:calc(100% + 6px); right:0; min-width:140px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:20;}
+  .np-sort-opt{padding:9px 10px; border-radius:8px; font-size:12.5px; font-weight:600; color:var(--ink-secondary); cursor:pointer;}
+  .np-sort-opt:hover{background:var(--surface-2);}
+  .np-sort-opt.active{background:var(--accent-bg); color:var(--accent-text);}
+  .np-range-wrap{position:relative; height:22px; display:flex; align-items:center;}
+  .np-range-track{position:absolute; left:0; right:0; height:4px; border-radius:4px; background:var(--surface-2);}
+  .np-range-fill{position:absolute; height:4px; border-radius:4px; background:var(--accent);}
+  .np-range-wrap input[type=range]{position:absolute; left:0; right:0; width:100%; margin:0; background:none; -webkit-appearance:none; appearance:none; pointer-events:none;}
+  .np-range-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; pointer-events:auto; width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.25); cursor:pointer; margin-top:0;}
+  .np-range-wrap input[type=range]::-moz-range-thumb{pointer-events:auto; width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.25); cursor:pointer;}
+  .np-range-wrap input[type=range]::-webkit-slider-runnable-track{background:none;}
+  .np-range-wrap input[type=range]::-moz-range-track{background:none;}
   .app-shell.collapsed ~ .map-pane-desktop .nearby-page{left:132px;}
   [data-theme="dark"] .nearby-page{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
   .np-search{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:28px; height:54px; box-sizing:border-box; padding:0 20px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04);}
@@ -463,6 +478,9 @@
     .app-shell.collapsed .brand-collapse-desktop i{transform:rotate(180deg);}
     .app-shell.collapsed .persona{display:none !important;}
     .app-shell.collapsed .brand{justify-content:center;}
+    .brand{position:relative; justify-content:flex-start; padding-left:26px;}
+    .brand-collapse-desktop{position:absolute; right:0; top:50%; transform:translateY(-50%);}
+    .app-shell.collapsed .brand-collapse-desktop{position:static; transform:none;}
     .app-shell-scroll{flex:1; min-height:0; overflow-y:auto; padding:20px 0 6px; scrollbar-width:none; -ms-overflow-style:none;}
     .app-shell-scroll::-webkit-scrollbar{display:none;}
     [data-theme="dark"] .app-shell{background:rgba(24,34,52,.68); border-color:rgba(255,255,255,.08);}
@@ -2729,7 +2747,7 @@ function isOpenNow(l){
   }
   return isOpen;
 }
-let npFilters = { category:'all', minRating:0, sortBy:'distance', maxDistance:5, openNow:false };
+let npFilters = { category:'all', minRating:0, sortBy:'distance', minDistance:0, maxDistance:20, openNow:false };
 let npShowAll = false;
 function setNearbyFilter(f){ nearbyFilter = f; npShowAll = false; renderNearbyPage(); }
 function openFiltersModal(){
@@ -2746,19 +2764,39 @@ function setNpRating(r){
   npFilters.minRating = r;
   document.querySelectorAll('.np-rating-btn').forEach(b=>b.classList.toggle('active', Number(b.dataset.r)===r));
 }
-function setNpDistance(v){
-  npFilters.maxDistance = Number(v);
+function setNpDistanceRange(which, v){
+  v = Number(v);
+  if(which==='min') npFilters.minDistance = Math.min(v, npFilters.maxDistance - 0.1);
+  else npFilters.maxDistance = Math.max(v, npFilters.minDistance + 0.1);
+  const minEl = document.getElementById('np-distance-min');
+  const maxEl = document.getElementById('np-distance-max');
+  if(minEl) minEl.value = npFilters.minDistance;
+  if(maxEl) maxEl.value = npFilters.maxDistance;
+  const pct = x => (x - 0) / (20 - 0) * 100;
+  const fill = document.getElementById('np-range-fill');
+  if(fill){ fill.style.left = pct(npFilters.minDistance)+'%'; fill.style.right = (100-pct(npFilters.maxDistance))+'%'; }
   const label = document.getElementById('np-distance-value');
-  if(label) label.textContent = 'Up to ' + Number(v).toFixed(1) + ' mi';
+  if(label) label.textContent = npFilters.minDistance.toFixed(1) + ' mi \u2013 ' + npFilters.maxDistance.toFixed(1) + ' mi';
+}
+function toggleNpSortMenu(e){
+  e.stopPropagation();
+  const menu = document.getElementById('np-sort-menu');
+  menu.style.display = menu.style.display==='block' ? 'none' : 'block';
+}
+function setNpSort(v){
+  npFilters.sortBy = v;
+  const label = document.getElementById('np-sort-label');
+  if(label) label.textContent = ({distance:'Distance', rating:'Rating', wait:'Wait time'})[v];
+  document.querySelectorAll('.np-sort-opt').forEach(o=>o.classList.toggle('active', o.dataset.v===v));
+  document.getElementById('np-sort-menu').style.display = 'none';
 }
 function applyNpFilters(){
-  npFilters.sortBy = document.getElementById('np-sort-select').value;
   closeFiltersModal();
   npShowAll = false;
   renderNearbyPage();
 }
 function resetNpFilters(){
-  npFilters = { category:'all', minRating:0, sortBy:'distance', maxDistance:5, openNow:false };
+  npFilters = { category:'all', minRating:0, sortBy:'distance', minDistance:0, maxDistance:20, openNow:false };
   npShowAll = false;
   closeFiltersModal();
   renderNearbyPage();
@@ -2780,7 +2818,7 @@ function renderNearbyPage(q){
   if(npFilters.minRating > 0){
     items = items.filter(l => l.ratingCount && l.ratingAvg >= npFilters.minRating);
   }
-  items = items.filter(l => realDistanceMi(l).miles <= npFilters.maxDistance);
+  items = items.filter(l => { const d = realDistanceMi(l).miles; return d >= npFilters.minDistance && d <= npFilters.maxDistance; });
   if(npFilters.openNow) items = items.filter(l => isOpenNow(l) === true);
   if(npFilters.sortBy==='rating') items = items.slice().sort((a,b)=>(b.ratingAvg||0)-(a.ratingAvg||0));
   else if(npFilters.sortBy==='wait') items = items.slice().sort((a,b)=>(a.minutes==null?999:a.minutes)-(b.minutes==null?999:b.minutes));
@@ -2797,7 +2835,7 @@ function renderNearbyPage(q){
       <div class="np-search" style="flex:1; margin-bottom:0;"><i class="fa-solid fa-magnifying-glass" style="color:var(--ink-muted);"></i><input id="np-search-input" placeholder="Search places, businesses, addresses" value="${q||''}" oninput="renderNearbyPage(this.value)"></div>
       <button onclick="openFiltersModal()" style="display:flex; align-items:center; gap:8px; height:54px; padding:0 20px; border-radius:28px; border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,.04);"><i class="fa-solid fa-sliders"></i>Filters</button>
     </div>
-    <div class="np-chips">${chips.map(c=>`<div class="np-chip ${nearbyFilter===c.k?'active':''}" onclick="setNearbyFilter('${c.k}')">${c.label}</div>`).join('')}<div class="np-chip" onclick="openFiltersModal()">More <i class="fa-solid fa-chevron-down" style="font-size:9px; margin-left:4px;"></i></div></div>
+    <div class="np-chips">${chips.map(c=>`<div class="np-chip ${nearbyFilter===c.k?'active':''}" onclick="setNearbyFilter('${c.k}')">${c.label}</div>`).join('')}</div>
     <div class="np-grid">
       ${visibleItems.length ? visibleItems.map(l=>{
         const c = statusColors[l.status];
@@ -2824,11 +2862,16 @@ function renderNearbyPage(q){
         <div class="np-cat-grid">
           ${NP_CATEGORIES.map(c=>`<div class="np-cat-btn ${npFilters.category===c.k?'active':''}" data-k="${c.k}" onclick="setNpCategory('${c.k}')"><i class="fa-solid ${c.icon}"></i><span>${c.label}</span></div>`).join('')}
         </div>
-        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Distance <span id="np-distance-value" style="font-weight:600; color:var(--ink);">Up to ${npFilters.maxDistance.toFixed(1)} mi</span></p>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:11px; color:var(--ink-muted);">0.1 mi</span>
-          <input type="range" min="0.1" max="5" step="0.1" value="${npFilters.maxDistance}" oninput="setNpDistance(this.value)" style="flex:1;">
-          <span style="font-size:11px; color:var(--ink-muted);">5 mi</span>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Distance <span id="np-distance-value" style="font-weight:600; color:var(--ink);">${npFilters.minDistance.toFixed(1)} mi \u2013 ${npFilters.maxDistance.toFixed(1)} mi</span></p>
+        <div class="np-range-wrap">
+          <div class="np-range-track"></div>
+          <div class="np-range-fill" id="np-range-fill" style="left:${((npFilters.minDistance-0)/(20-0)*100).toFixed(2)}%; right:${(100-(npFilters.maxDistance-0)/(20-0)*100).toFixed(2)}%;"></div>
+          <input type="range" id="np-distance-min" min="0" max="20" step="0.1" value="${npFilters.minDistance}" oninput="setNpDistanceRange('min', this.value)">
+          <input type="range" id="np-distance-max" min="0" max="20" step="0.1" value="${npFilters.maxDistance}" oninput="setNpDistanceRange('max', this.value)">
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:2px;">
+          <span style="font-size:11px; color:var(--ink-muted);">0 mi</span>
+          <span style="font-size:11px; color:var(--ink-muted);">20 mi</span>
         </div>
         <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Rating</p>
         <div style="display:flex; gap:8px;">
@@ -2843,11 +2886,14 @@ function renderNearbyPage(q){
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px;">
           <p style="font-size:13px; font-weight:600; margin:0;">Sort By</p>
-          <select id="np-sort-select" style="padding:8px 12px; border-radius:9px; border:1px solid var(--border); font-size:12.5px;">
-            <option value="distance" ${npFilters.sortBy==='distance'?'selected':''}>Distance</option>
-            <option value="rating" ${npFilters.sortBy==='rating'?'selected':''}>Rating</option>
-            <option value="wait" ${npFilters.sortBy==='wait'?'selected':''}>Wait time</option>
-          </select>
+          <div class="np-sort-wrap">
+            <button type="button" class="np-sort-btn" onclick="toggleNpSortMenu(event)"><span id="np-sort-label">${({distance:'Distance', rating:'Rating', wait:'Wait time'})[npFilters.sortBy]}</span><i class="fa-solid fa-chevron-down"></i></button>
+            <div class="np-sort-menu" id="np-sort-menu" style="display:none;">
+              <div class="np-sort-opt ${npFilters.sortBy==='distance'?'active':''}" data-v="distance" onclick="setNpSort('distance')">Distance</div>
+              <div class="np-sort-opt ${npFilters.sortBy==='rating'?'active':''}" data-v="rating" onclick="setNpSort('rating')">Rating</div>
+              <div class="np-sort-opt ${npFilters.sortBy==='wait'?'active':''}" data-v="wait" onclick="setNpSort('wait')">Wait time</div>
+            </div>
+          </div>
         </div>
         <div style="display:flex; gap:10px; margin-top:22px;">
           <button onclick="resetNpFilters()" style="flex:1; padding:12px; border-radius:11px; border:1px solid var(--border); background:var(--surface); font-weight:600; font-size:13px; cursor:pointer;">Reset</button>
@@ -2869,6 +2915,10 @@ document.addEventListener('click', (e)=>{
       panel.classList.remove('show');
     }
   });
+  const sortMenu = document.getElementById('np-sort-menu');
+  if(sortMenu && sortMenu.style.display==='block' && !sortMenu.closest('.np-sort-wrap').contains(e.target)){
+    sortMenu.style.display = 'none';
+  }
 });
 
 document.addEventListener('keydown', (e)=>{
