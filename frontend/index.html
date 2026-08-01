@@ -585,16 +585,16 @@ async function api(path, opts){
 }
 
 let locations = [
-  {id:1, name:'Eastside pharmacy', category:'health', icon:'ti-first-aid-kit', distance:'0.4 mi', status:'green', minutes:4, confirms:6, updated:'40 sec ago', ownerOwned:false, ownerVerified:false, x:100, y:70},
-  {id:2, name:'City DMV branch', category:'service', icon:'ti-building-bank', distance:'1.1 mi', status:'amber', minutes:38, confirms:21, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:105, y:205},
-  {id:3, name:'Riverside urgent care', category:'health', icon:'ti-stethoscope', distance:'0.8 mi', status:'red', minutes:57, confirms:14, updated:'5 min ago', ownerOwned:false, ownerVerified:false, x:245, y:325},
-  {id:4, name:'Northgate laundromat', category:'errand', icon:'ti-wash', distance:'0.6 mi', status:'green', minutes:2, confirms:3, updated:'6 min ago', ownerOwned:false, ownerVerified:false, x:100, y:430},
-  {id:5, name:'Shell station, Main St', category:'fuel', icon:'ti-gas-station', distance:'0.5 mi', status:'amber', minutes:12, confirms:0, updated:'1 min ago', ownerOwned:true, ownerVerified:true, note:'2 pumps closed for maintenance', x:250, y:70},
-  {id:6, name:'Bilal barbershop', category:'service', icon:'ti-scissors', distance:'0.3 mi', status:'red', minutes:45, confirms:0, updated:'3 min ago', ownerOwned:true, ownerVerified:true, note:'3 people ahead, walk-ins only', x:57, y:335},
-  {id:7, name:'Ranchers Restaurant', category:'food', icon:'ti-tools-kitchen-2', distance:'0.3 mi', status:'green', minutes:5, confirms:8, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:180, y:115},
-  {id:8, name:'Layers Bakeshop', category:'food', icon:'ti-bread', distance:'0.5 mi', status:'amber', minutes:15, confirms:4, updated:'3 min ago', ownerOwned:false, ownerVerified:false, x:122, y:310},
-  {id:9, name:'Zenith Coffee House', category:'food', icon:'ti-coffee', distance:'0.2 mi', status:'green', minutes:3, confirms:9, updated:'1 min ago', ownerOwned:false, ownerVerified:false, x:150, y:180},
-  {id:10, name:'Circle K, Airport Rd', category:'fuel', icon:'ti-gas-station', distance:'0.9 mi', status:'green', minutes:2, confirms:5, updated:'4 min ago', ownerOwned:false, ownerVerified:false, x:210, y:260},
+  {id:1, name:'Eastside pharmacy', category:'health', icon:'ti-first-aid-kit', distance:'0.4 mi', status:'green', minutes:4, confirms:6, updated:'40 sec ago', ownerOwned:false, ownerVerified:false, hours:'Mo-Su 08:00-22:00', x:100, y:70},
+  {id:2, name:'City DMV branch', category:'service', icon:'ti-building-bank', distance:'1.1 mi', status:'amber', minutes:38, confirms:21, updated:'2 min ago', ownerOwned:false, ownerVerified:false, hours:'Mo-Fr 09:00-17:00', x:105, y:205},
+  {id:3, name:'Riverside urgent care', category:'health', icon:'ti-stethoscope', distance:'0.8 mi', status:'red', minutes:57, confirms:14, updated:'5 min ago', ownerOwned:false, ownerVerified:false, hours:'24/7', x:245, y:325},
+  {id:4, name:'Northgate laundromat', category:'errand', icon:'ti-wash', distance:'0.6 mi', status:'green', minutes:2, confirms:3, updated:'6 min ago', ownerOwned:false, ownerVerified:false, hours:'Mo-Su 06:00-23:00', x:100, y:430},
+  {id:5, name:'Shell station, Main St', category:'fuel', icon:'ti-gas-station', distance:'0.5 mi', status:'amber', minutes:12, confirms:0, updated:'1 min ago', ownerOwned:true, ownerVerified:true, note:'2 pumps closed for maintenance', hours:'24/7', x:250, y:70},
+  {id:6, name:'Bilal barbershop', category:'service', icon:'ti-scissors', distance:'0.3 mi', status:'red', minutes:45, confirms:0, updated:'3 min ago', ownerOwned:true, ownerVerified:true, note:'3 people ahead, walk-ins only', hours:'Mo-Sa 10:00-20:00; Su off', x:57, y:335},
+  {id:7, name:'Ranchers Restaurant', category:'food', icon:'ti-tools-kitchen-2', distance:'0.3 mi', status:'green', minutes:5, confirms:8, updated:'2 min ago', ownerOwned:false, ownerVerified:false, hours:'Mo-Su 11:00-22:00', x:180, y:115},
+  {id:8, name:'Layers Bakeshop', category:'food', icon:'ti-bread', distance:'0.5 mi', status:'amber', minutes:15, confirms:4, updated:'3 min ago', ownerOwned:false, ownerVerified:false, hours:'Mo-Sa 07:00-19:00; Su 08:00-14:00', x:122, y:310},
+  {id:9, name:'Zenith Coffee House', category:'food', icon:'ti-coffee', distance:'0.2 mi', status:'green', minutes:3, confirms:9, updated:'1 min ago', ownerOwned:false, ownerVerified:false, hours:'Mo-Su 07:00-21:00', x:150, y:180},
+  {id:10, name:'Circle K, Airport Rd', category:'fuel', icon:'ti-gas-station', distance:'0.9 mi', status:'green', minutes:2, confirms:5, updated:'4 min ago', ownerOwned:false, ownerVerified:false, hours:'24/7', x:210, y:260},
   {id:11, name:'Total Fuel Station', category:'fuel', icon:'ti-gas-station', distance:'1.3 mi', status:'red', minutes:22, confirms:2, updated:'6 min ago', ownerOwned:false, ownerVerified:false, x:80, y:150},
   {id:12, name:'Northgate Pharmacy', category:'health', icon:'ti-first-aid-kit', distance:'0.6 mi', status:'amber', minutes:11, confirms:7, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:190, y:400},
   {id:13, name:'Willow Dental Clinic', category:'health', icon:'ti-stethoscope', distance:'1.0 mi', status:'green', minutes:6, confirms:3, updated:'5 min ago', ownerOwned:false, ownerVerified:false, x:260, y:190},
@@ -866,6 +866,22 @@ function demoToLatLng(x, y){
   const dLng = (x - 170) / 170 * 0.01;
   return {lat: userLoc.lat + dLat, lng: userLoc.lng + dLng};
 }
+function locLatLng(l){
+  return l.osm ? {lat:l.lat, lng:l.lng} : demoToLatLng(l.x, l.y);
+}
+function haversineMiles(lat1, lng1, lat2, lng2){
+  const R = 3958.8; // Earth radius in miles
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function realDistanceMi(l){
+  const origin = userLoc || {lat:33.6, lng:73.0};
+  const p = locLatLng(l);
+  const miles = haversineMiles(origin.lat, origin.lng, p.lat, p.lng);
+  return { miles, label: miles < 0.1 ? '<0.1 mi' : miles.toFixed(1)+' mi' };
+}
 
 function getUserLocation(){
   return new Promise(resolve => {
@@ -1047,6 +1063,7 @@ async function fetchNearbyPlaces(lat, lng){
         distance: 'nearby', status: 'unknown', minutes: null, confirms: 0,
         updated: 'no reports yet', ownerOwned: false, ownerVerified: false,
         osm: true, lat: el.lat, lng: el.lon,
+        hours: el.tags.opening_hours || null, // real OSM tag when contributors have added it — null means genuinely unknown
       };
     });
     // De-dupe: OSM sometimes has two nodes for the same real place.
@@ -2651,7 +2668,68 @@ const NP_CATEGORIES = [
   {k:'gym', label:'Gyms', icon:'fa-dumbbell'},
   {k:'more', label:'More', icon:'fa-ellipsis'},
 ];
-let npFilters = { category:'all', minRating:0, sortBy:'distance' };
+// ---------- Opening hours (standard OSM opening_hours syntax — real data,
+// either the actual OSM tag on live places, or hand-set on the demo seed
+// data above. Anything missing or too exotic to parse returns null
+// ("unknown") rather than guessing open or closed. ----------
+const OH_DAY_MAP = {Mo:1, Tu:2, We:3, Th:4, Fr:5, Sa:6, Su:0};
+function ohParseDayPart(part){
+  const days = new Set();
+  const tokens = part.split(',').map(t=>t.trim()).filter(Boolean);
+  for(const t of tokens){
+    const range = t.match(/^([A-Za-z]{2})-([A-Za-z]{2})$/);
+    if(range){
+      const a = OH_DAY_MAP[range[1]], b = OH_DAY_MAP[range[2]];
+      if(a==null || b==null) return null;
+      let d = a;
+      while(true){ days.add(d); if(d===b) break; d=(d+1)%7; }
+    } else {
+      const d = OH_DAY_MAP[t];
+      if(d==null) return null;
+      days.add(d);
+    }
+  }
+  return days.size ? [...days] : null;
+}
+function parseOpeningHours(spec){
+  if(!spec) return null;
+  const s = spec.trim();
+  if(/^24\/7$/i.test(s)) return [{days:[0,1,2,3,4,5,6], open:'00:00', close:'24:00'}];
+  const rules = [];
+  for(const g of s.split(';').map(x=>x.trim()).filter(Boolean)){
+    if(/\boff\b|\bclosed\b/i.test(g) && !/\d/.test(g)){
+      const days = ohParseDayPart(g.replace(/\boff\b|\bclosed\b/i,'').trim());
+      if(!days) return null;
+      rules.push({days, closed:true});
+      continue;
+    }
+    const m = g.match(/^([A-Za-z,\-\s]+?)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+    if(!m) return null; // unrecognized format — unknown, not guessed
+    const days = ohParseDayPart(m[1]);
+    if(!days) return null;
+    rules.push({days, open:m[2], close:m[3]});
+  }
+  return rules.length ? rules : null;
+}
+function isOpenNow(l){
+  if(!l.hours) return null;
+  const rules = parseOpeningHours(l.hours);
+  if(!rules) return null;
+  const now = new Date();
+  const day = now.getDay();
+  const mins = now.getHours()*60 + now.getMinutes();
+  let isOpen = false; // a day with no matching rule is implicitly closed, not unknown
+  for(const r of rules){
+    if(!r.days.includes(day)) continue;
+    if(r.closed){ isOpen = false; continue; }
+    const [oh,om] = r.open.split(':').map(Number);
+    const [ch,cm] = r.close.split(':').map(Number);
+    const openMins = oh*60+om, closeMins = ch*60+cm;
+    isOpen = closeMins > openMins ? (mins>=openMins && mins<closeMins) : (mins>=openMins || mins<closeMins);
+  }
+  return isOpen;
+}
+let npFilters = { category:'all', minRating:0, sortBy:'distance', maxDistance:5, openNow:false };
 let npShowAll = false;
 function setNearbyFilter(f){ nearbyFilter = f; npShowAll = false; renderNearbyPage(); }
 function openFiltersModal(){
@@ -2668,6 +2746,11 @@ function setNpRating(r){
   npFilters.minRating = r;
   document.querySelectorAll('.np-rating-btn').forEach(b=>b.classList.toggle('active', Number(b.dataset.r)===r));
 }
+function setNpDistance(v){
+  npFilters.maxDistance = Number(v);
+  const label = document.getElementById('np-distance-value');
+  if(label) label.textContent = 'Up to ' + Number(v).toFixed(1) + ' mi';
+}
 function applyNpFilters(){
   npFilters.sortBy = document.getElementById('np-sort-select').value;
   closeFiltersModal();
@@ -2675,7 +2758,7 @@ function applyNpFilters(){
   renderNearbyPage();
 }
 function resetNpFilters(){
-  npFilters = { category:'all', minRating:0, sortBy:'distance' };
+  npFilters = { category:'all', minRating:0, sortBy:'distance', maxDistance:5, openNow:false };
   npShowAll = false;
   closeFiltersModal();
   renderNearbyPage();
@@ -2688,6 +2771,7 @@ function renderNearbyPage(q){
   let items = locations.filter(l => l.name.toLowerCase().includes(query));
   if(nearbyFilter==='under10') items = items.filter(l=>l.minutes!=null && l.minutes<10);
   if(nearbyFilter==='verified') items = items.filter(l=>l.ownerVerified);
+  if(nearbyFilter==='walking') items = items.filter(l=>realDistanceMi(l).miles <= 1);
 
   const catMap = {health:'health', service:'service', health2:'health', fuel:'fuel', food:'food', errand:'errand', food2:'food', gym:'service'};
   if(npFilters.category!=='all' && npFilters.category!=='more' && catMap[npFilters.category]){
@@ -2696,12 +2780,14 @@ function renderNearbyPage(q){
   if(npFilters.minRating > 0){
     items = items.filter(l => l.ratingCount && l.ratingAvg >= npFilters.minRating);
   }
+  items = items.filter(l => realDistanceMi(l).miles <= npFilters.maxDistance);
+  if(npFilters.openNow) items = items.filter(l => isOpenNow(l) === true);
   if(npFilters.sortBy==='rating') items = items.slice().sort((a,b)=>(b.ratingAvg||0)-(a.ratingAvg||0));
   else if(npFilters.sortBy==='wait') items = items.slice().sort((a,b)=>(a.minutes==null?999:a.minutes)-(b.minutes==null?999:b.minutes));
-  // 'distance' sort left in natural order — we don't have precise numeric distance to sort by reliably
+  else if(npFilters.sortBy==='distance') items = items.slice().sort((a,b)=>realDistanceMi(a).miles-realDistanceMi(b).miles);
 
   const chips = [
-    {k:'all', label:'All'}, {k:'openNow', label:'Open Now'}, {k:'under10', label:'Under 10 min'},
+    {k:'all', label:'All'}, {k:'under10', label:'Under 10 min'},
     {k:'verified', label:'Verified'}, {k:'walking', label:'Walking Distance'},
   ];
   const visibleItems = npShowAll ? items : items.slice(0, 8);
@@ -2719,8 +2805,8 @@ function renderNearbyPage(q){
           <div class="np-photo" style="${l.photoUrl ? `background-image:url('${l.photoUrl}');` : `background:${c.bg}; color:${c.text};`}">${l.photoUrl ? '' : emojiFor(l.icon)}</div>
           <div class="np-body">
             <div class="np-name">${l.name}</div>
-            <div class="np-meta-row"><i class="fa-solid fa-arrow-down" style="font-size:9px; color:${c.text};"></i><span style="color:${c.text}; font-weight:700;">${l.minutes==null ? 'No data' : l.minutes+' min wait'}</span><span style="color:var(--ink-muted);">\u00B7 ${l.distance||'nearby'}</span></div>
-            <div class="np-rating">${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : 'No ratings yet'}${l.ownerVerified ? ' \u00B7 <span style="color:var(--teal-text);">Verified</span>' : ''}</div>
+            <div class="np-meta-row"><i class="fa-solid fa-arrow-down" style="font-size:9px; color:${c.text};"></i><span style="color:${c.text}; font-weight:700;">${l.minutes==null ? 'No data' : l.minutes+' min wait'}</span><span style="color:var(--ink-muted);">\u00B7 ${realDistanceMi(l).label}</span></div>
+            <div class="np-rating">${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : 'No ratings yet'}${l.ownerVerified ? ' \u00B7 <span style="color:var(--teal-text);">Verified</span>' : ''}${isOpenNow(l)===true ? ' \u00B7 <span style="color:var(--teal-text);">Open now</span>' : isOpenNow(l)===false ? ' \u00B7 <span style="color:var(--coral-text);">Closed</span>' : ''}</div>
             <button class="np-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
           </div>
         </div>`;
@@ -2738,24 +2824,24 @@ function renderNearbyPage(q){
         <div class="np-cat-grid">
           ${NP_CATEGORIES.map(c=>`<div class="np-cat-btn ${npFilters.category===c.k?'active':''}" data-k="${c.k}" onclick="setNpCategory('${c.k}')"><i class="fa-solid ${c.icon}"></i><span>${c.label}</span></div>`).join('')}
         </div>
-        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Distance</p>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Distance <span id="np-distance-value" style="font-weight:600; color:var(--ink);">Up to ${npFilters.maxDistance.toFixed(1)} mi</span></p>
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:11px; color:var(--ink-muted);">0.1 mi</span>
-          <input type="range" min="1" max="50" value="25" style="flex:1;">
+          <input type="range" min="0.1" max="5" step="0.1" value="${npFilters.maxDistance}" oninput="setNpDistance(this.value)" style="flex:1;">
           <span style="font-size:11px; color:var(--ink-muted);">5 mi</span>
         </div>
         <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Rating</p>
         <div style="display:flex; gap:8px;">
-          <div class="np-rating-btn" data-r="4" onclick="setNpRating(4)">4+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
-          <div class="np-rating-btn" data-r="3" onclick="setNpRating(3)">3+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
-          <div class="np-rating-btn" data-r="2" onclick="setNpRating(2)">2+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
-          <div class="np-rating-btn active" data-r="0" onclick="setNpRating(0)">Any</div>
+          <div class="np-rating-btn ${npFilters.minRating===4?'active':''}" data-r="4" onclick="setNpRating(4)">4+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
+          <div class="np-rating-btn ${npFilters.minRating===3?'active':''}" data-r="3" onclick="setNpRating(3)">3+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
+          <div class="np-rating-btn ${npFilters.minRating===2?'active':''}" data-r="2" onclick="setNpRating(2)">2+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
+          <div class="np-rating-btn ${npFilters.minRating===0?'active':''}" data-r="0" onclick="setNpRating(0)">Any</div>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px;">
-          <p style="font-size:13px; font-weight:600; margin:0;">Open Now</p>
-          <label class="np-toggle"><input type="checkbox"><span class="np-toggle-slider"></span></label>
+          <div><p style="font-size:13px; font-weight:600; margin:0;">Open Now</p><p style="font-size:11px; color:var(--ink-muted); margin:2px 0 0;">Only for places with real hours on file</p></div>
+          <label class="np-toggle"><input type="checkbox" ${npFilters.openNow?'checked':''} onchange="npFilters.openNow=this.checked"><span class="np-toggle-slider"></span></label>
         </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px;">
           <p style="font-size:13px; font-weight:600; margin:0;">Sort By</p>
           <select id="np-sort-select" style="padding:8px 12px; border-radius:9px; border:1px solid var(--border); font-size:12.5px;">
             <option value="distance" ${npFilters.sortBy==='distance'?'selected':''}>Distance</option>
