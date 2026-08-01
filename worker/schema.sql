@@ -66,15 +66,84 @@ CREATE TABLE IF NOT EXISTS signals (
 );
 
 -- Owner claims: who can post owner-verified updates for which location.
--- Not wired into the Worker yet (Day 1 owner-update route trusts the
--- request); add a real check here when there's time for it. Note in
--- the demo/pitch that this is the known gap if a judge asks.
+-- user_id links a claim to a real account (see users/auth_tokens below) —
+-- this closes the gap the comment used to flag; /api/owner-update now
+-- checks this table against the bearer token before allowing an update.
 CREATE TABLE IF NOT EXISTS owner_claims (
   id INTEGER PRIMARY KEY,
   location_id INTEGER NOT NULL REFERENCES locations(id),
   owner_contact TEXT NOT NULL,  -- phone or email used to claim it
+  user_id INTEGER REFERENCES users(id),
   verified INTEGER DEFAULT 0
 );
+
+-- ---------- Accounts (login/signup, guest mode stays fully unauthenticated) ----------
+-- Passwords are hashed with PBKDF2-SHA256 (Web Crypto, native to Workers —
+-- no external library). role='business' accounts can claim locations via
+-- owner_claims above and post real owner-verified updates for just those.
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  password_salt TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',  -- 'user' | 'business'
+  name TEXT,
+  email_verified INTEGER DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+
+-- 6-digit codes, short-lived. Sent via email once a domain + RESEND_API_KEY
+-- are configured (see worker/src/index.js sendVerificationEmail) — until
+-- then, signup returns the code directly in the response so the flow is
+-- fully testable without real email delivery.
+CREATE TABLE IF NOT EXISTS verification_codes (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  code TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  used INTEGER DEFAULT 0
+);
+
+-- Bearer tokens (sent as Authorization: Bearer <token>), not cookies —
+-- avoids cross-subdomain SameSite issues since the frontend and API
+-- Workers live on different *.workers.dev hosts.
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+
+-- Saved places, now per-account instead of only localStorage. A saved item
+-- is either a real location_id, or a custom typed/geocoded address
+-- (custom_name/custom_lat/custom_lng), matching the frontend's existing
+-- Saved Places data model 1:1.
+CREATE TABLE IF NOT EXISTS saved_items (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  collection TEXT NOT NULL,          -- 'Favorites' | 'Home' | 'Work' | custom
+  location_id TEXT,
+  custom_name TEXT, custom_lat REAL, custom_lng REAL,
+  saved_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS recent_searches (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  label TEXT NOT NULL, lat REAL, lng REAL,
+  searched_at INTEGER NOT NULL
+);
+
+-- MIGRATION — if pulse-db already exists, run just these (schema.sql's
+-- CREATE TABLE IF NOT EXISTS statements are safe to re-run wholesale too):
+--   CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, password_salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user', name TEXT, email_verified INTEGER DEFAULT 0, created_at INTEGER NOT NULL);
+--   CREATE TABLE IF NOT EXISTS auth_tokens (token TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL);
+--   CREATE TABLE IF NOT EXISTS saved_items (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), collection TEXT NOT NULL, location_id TEXT, custom_name TEXT, custom_lat REAL, custom_lng REAL, saved_at INTEGER NOT NULL);
+--   CREATE TABLE IF NOT EXISTS recent_searches (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), label TEXT NOT NULL, lat REAL, lng REAL, searched_at INTEGER NOT NULL);
+--   CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), code TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, used INTEGER DEFAULT 0);
+--   ALTER TABLE owner_claims ADD COLUMN user_id INTEGER REFERENCES users(id);
+--   ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0;  -- only if users already existed without this column
 
 -- Seed data mirroring src/index.js DEMO_DATA, so the app looks the
 -- same the moment you switch from in-memory to D1.
