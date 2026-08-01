@@ -45,13 +45,49 @@ async function getUserFromToken(env, request) {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) return null;
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.role, u.name FROM auth_tokens t
+    `SELECT u.id, u.email, u.role, u.name, u.email_verified FROM auth_tokens t
      JOIN users u ON u.id = t.user_id WHERE t.token = ? AND t.expires_at > ?`
   ).bind(token, Date.now()).first();
   return row || null;
 }
 function publicUser(u) {
-  return { id: u.id, email: u.email, role: u.role, name: u.name || null };
+  return { id: u.id, email: u.email, role: u.role, name: u.name || null, emailVerified: !!u.email_verified };
+}
+
+// ---------- Email verification ----------
+const VERIFICATION_CODE_LIFETIME_MS = 15 * 60 * 1000; // 15 min
+function generateVerificationCode() {
+  return String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
+}
+async function issueVerificationCode(env, userId) {
+  const code = generateVerificationCode();
+  await env.DB.prepare(
+    'INSERT INTO verification_codes (user_id, code, created_at, expires_at) VALUES (?,?,?,?)'
+  ).bind(userId, code, Date.now(), Date.now() + VERIFICATION_CODE_LIFETIME_MS).run();
+  return code;
+}
+// Sends via Resend if RESEND_API_KEY + RESEND_FROM are configured (needs a
+// verified domain — see schema.sql). Until then, this is a no-op that never
+// throws, and the caller falls back to returning the code in the API
+// response so the flow is fully testable without real email delivery.
+async function sendVerificationEmail(env, toEmail, code) {
+  if (!env.RESEND_API_KEY || !env.RESEND_FROM) return { sent: false, reason: 'not_configured' };
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: env.RESEND_FROM,
+        to: [toEmail],
+        subject: 'Your Pulse verification code',
+        html: `<p>Your Pulse verification code is:</p><p style="font-size:28px; font-weight:700; letter-spacing:4px;">${code}</p><p>This code expires in 15 minutes.</p>`,
+      }),
+    });
+    if (!res.ok) return { sent: false, reason: 'send_failed' };
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: 'send_error' };
+  }
 }
 
 function timeAgo(ms) {
@@ -365,7 +401,42 @@ export default {
       await env.DB.prepare('INSERT INTO auth_tokens (token, user_id, created_at, expires_at) VALUES (?,?,?,?)')
         .bind(token, userId, Date.now(), Date.now() + TOKEN_LIFETIME_MS).run();
 
-      return json({ token, user: publicUser({ id: userId, email, role, name: body.name || null }) });
+      const code = await issueVerificationCode(env, userId);
+      const sendResult = await sendVerificationEmail(env, email, code);
+
+      const response = { token, user: publicUser({ id: userId, email, role, name: body.name || null, email_verified: 0 }), emailVerificationSent: sendResult.sent };
+      if (!sendResult.sent) response.devVerificationCode = code; // only present when real email sending isn't configured yet
+      return json(response);
+    }
+
+    // POST /api/auth/verify-email  { code }
+    if (path === '/api/auth/verify-email' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const body = await request.json().catch(() => ({}));
+      const code = (body.code || '').trim();
+      if (!code) return json({ error: 'code is required' }, 400);
+
+      const row = await env.DB.prepare(
+        'SELECT * FROM verification_codes WHERE user_id = ? AND code = ? AND used = 0 AND expires_at > ? ORDER BY id DESC LIMIT 1'
+      ).bind(user.id, code, Date.now()).first();
+      if (!row) return json({ error: 'That code is invalid or has expired' }, 400);
+
+      await env.DB.prepare('UPDATE verification_codes SET used = 1 WHERE id = ?').bind(row.id).run();
+      await env.DB.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').bind(user.id).run();
+      return json({ ok: true });
+    }
+
+    // POST /api/auth/resend-verification
+    if (path === '/api/auth/resend-verification' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      if (user.email_verified) return json({ ok: true, alreadyVerified: true });
+      const code = await issueVerificationCode(env, user.id);
+      const sendResult = await sendVerificationEmail(env, user.email, code);
+      const response = { ok: true, emailVerificationSent: sendResult.sent };
+      if (!sendResult.sent) response.devVerificationCode = code;
+      return json(response);
     }
 
     // POST /api/auth/login  { email, password }
@@ -456,6 +527,7 @@ export default {
       const user = await getUserFromToken(env, request);
       if (!user) return json({ error: 'Not authenticated' }, 401);
       if (user.role !== 'business') return json({ error: 'Only business accounts can claim a store' }, 403);
+      if (!user.email_verified) return json({ error: 'Verify your email before claiming a store' }, 403);
       const body = await request.json().catch(() => ({}));
       if (!body.locationId) return json({ error: 'locationId is required' }, 400);
       await env.DB.prepare(
