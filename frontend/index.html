@@ -199,8 +199,8 @@
 
   /* Real map */
   #leaflet-map{width:100%; height:100%; background:var(--bg);}
-  #leaflet-map .leaflet-tile-pane{filter:saturate(3) brightness(0.85) contrast(1.3) opacity(0.9);}
-  [data-theme="dark"] #leaflet-map .leaflet-tile-pane{filter:saturate(1.15) brightness(1.04);}
+  #leaflet-map .leaflet-tile{filter:saturate(1.35) brightness(0.94) contrast(1.08); will-change:auto;}
+  [data-theme="dark"] #leaflet-map .leaflet-tile{filter:saturate(1.1) brightness(1.03);}
   .map-wrap{position:relative; flex:1; min-height:0; border-radius:0; overflow:hidden;}
   .map-frame-overlay{display:none;}
   @media (min-width:900px){
@@ -861,17 +861,17 @@ function initMapIfNeeded(){
   if(leafletMap || typeof L === 'undefined') return;
   const center = userLoc || {lat:33.6, lng:73.0};
   const worldBounds = L.latLngBounds([-85,-185],[85,185]);
-  leafletMap = L.map(leafletMapDiv, {zoomControl:false, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0}).setView([center.lat, center.lng], 15);
+  leafletMap = L.map(leafletMapDiv, {zoomControl:false, minZoom:3, maxBounds:worldBounds, maxBoundsViscosity:1.0, fadeAnimation:false}).setView([center.lat, center.lng], 15);
   const startDark = document.documentElement.dataset.theme === 'dark';
   baseTileLayer = L.tileLayer(startDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'
+    maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO', keepBuffer:6, updateWhenZooming:false
   }).addTo(leafletMap);
   let tileErrorCount = 0;
   baseTileLayer.on('tileerror', ()=>{
     tileErrorCount++;
     if(tileErrorCount === 6 && !satelliteOn){ // CARTO seems down/rate-limited — fall back to standard OSM tiles
       leafletMap.removeLayer(baseTileLayer);
-      baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}).addTo(leafletMap);
+      baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors', keepBuffer:6, updateWhenZooming:false}).addTo(leafletMap);
       toast('Map tiles switched to a backup source');
     }
   });
@@ -999,7 +999,7 @@ function updateMapTheme(isDark){
   leafletMap.removeLayer(baseTileLayer);
   baseTileLayer = L.tileLayer(
     isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}
+    {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO', keepBuffer:6, updateWhenZooming:false}
   );
   baseTileLayer.addTo(leafletMap);
   baseTileLayer.bringToBack();
@@ -1687,8 +1687,8 @@ function toggleSatellite(){
   leafletMap.removeLayer(baseTileLayer);
   satelliteOn = !satelliteOn;
   baseTileLayer = satelliteOn
-    ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri'})
-    : L.tileLayer(document.documentElement.dataset.theme==='dark' ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'});
+    ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri', keepBuffer:6, updateWhenZooming:false})
+    : L.tileLayer(document.documentElement.dataset.theme==='dark' ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO', keepBuffer:6, updateWhenZooming:false});
   baseTileLayer.addTo(leafletMap);
   baseTileLayer.bringToBack();
   toast(satelliteOn ? 'Satellite view' : 'Street view');
