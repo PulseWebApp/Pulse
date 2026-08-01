@@ -712,8 +712,12 @@ async function submitAuthForm(mode){
   }
   setAuthToken(data.token);
   currentUser = data.user;
-  closeModal();
-  toast(mode==='signup' ? `Welcome, ${currentUser.name || currentUser.email}!` : 'Logged in.');
+  if(mode==='signup'){
+    openVerifyEmailModal(data);
+  } else {
+    closeModal();
+    toast('Logged in.');
+  }
   updateAccountUI();
   if(document.getElementById('settings-page') && document.getElementById('settings-page').style.display!=='none') renderSettingsPage();
 }
@@ -736,6 +740,54 @@ function updateAccountUI(){
     btn.innerHTML = '<i class="fa-regular fa-user"></i>';
     btn.title = 'Guest — tap to log in';
   }
+}
+function openVerifyEmailModal(signupData){
+  const devCode = signupData && signupData.devVerificationCode;
+  const wasSent = signupData && signupData.emailVerificationSent;
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet" style="max-width:380px;">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">Verify your email</p>
+          <p class="sheet-sub">${wasSent ? `We sent a 6-digit code to ${currentUser ? currentUser.email : 'your email'}.` : `Email sending isn't set up yet on this deployment (no domain configured), so here's your code for testing:`}</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      ${devCode ? `<div style="text-align:center; font-family:'Sora',sans-serif; font-size:28px; font-weight:800; letter-spacing:6px; padding:14px; background:var(--surface-2); border-radius:12px; margin-bottom:16px;">${devCode}</div>` : ''}
+      <div id="verify-error" style="display:none; background:var(--coral-bg); color:var(--coral-text); font-size:12.5px; padding:10px 12px; border-radius:10px; margin-bottom:12px;"></div>
+      <div class="st-field"><label>6-digit code</label><input type="text" id="verify-code-input" maxlength="6" inputmode="numeric" placeholder="000000" style="letter-spacing:4px; text-align:center; font-size:18px;"></div>
+      <button class="primary-btn" id="verify-submit-btn" style="width:100%; margin-top:4px;" onclick="submitVerifyCode()">Verify</button>
+      <p style="text-align:center; font-size:12.5px; color:var(--ink-muted); margin-top:14px;">Didn't get it? <a href="#" onclick="event.preventDefault(); resendVerifyCode();" style="color:var(--accent-text); font-weight:600;">Resend code</a></p>
+      <p style="text-align:center; font-size:12px; color:var(--ink-muted); margin-top:8px;"><a href="#" onclick="event.preventDefault(); closeModal();" style="color:var(--ink-muted);">I'll do this later</a></p>
+    </div>
+  </div>`;
+}
+async function submitVerifyCode(){
+  const code = document.getElementById('verify-code-input').value.trim();
+  const errEl = document.getElementById('verify-error');
+  errEl.style.display = 'none';
+  if(code.length !== 6){ errEl.textContent = 'Enter the 6-digit code.'; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('verify-submit-btn');
+  btn.disabled = true; btn.textContent = 'Verifying…';
+  const data = await authRequest('/api/auth/verify-email', {code});
+  if(!data || data.error){
+    errEl.textContent = (data && data.error) || 'Could not verify right now.';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Verify';
+    return;
+  }
+  if(currentUser) currentUser.emailVerified = true;
+  closeModal();
+  toast('Email verified!');
+  if(document.getElementById('settings-page') && document.getElementById('settings-page').style.display!=='none') renderSettingsPage();
+}
+async function resendVerifyCode(){
+  const data = await authRequest('/api/auth/resend-verification', {});
+  if(!data || data.error){ toast((data && data.error) || 'Could not resend code'); return; }
+  if(data.alreadyVerified){ toast('Your email is already verified.'); closeModal(); return; }
+  openVerifyEmailModal(data);
+  toast(data.emailVerificationSent ? 'Code resent.' : 'New code generated (email sending not configured yet).');
 }
 function openAccountMenu(){
   if(!currentUser){ openAuthModal('login'); return; }
@@ -2208,6 +2260,12 @@ function renderSettingsPage(){
           <div style="flex:1;"><div style="font-weight:700; font-size:14px;">${currentUser.name || currentUser.email}</div><div style="font-size:12px; color:var(--ink-muted);">${currentUser.email} &middot; ${currentUser.role==='business'?'Business account':'Individual account'}</div></div>
           <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="logoutUser()">Log out</button>
         </div>
+        ${!currentUser.emailVerified ? `
+        <div class="report-row" style="background:var(--amber-bg); border-color:transparent; margin-bottom:20px;">
+          <div class="report-icon" style="background:var(--amber-fill); color:#fff;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div style="flex:1;"><div style="font-weight:600; font-size:13px; color:var(--amber-text);">Your email isn't verified yet</div><div style="font-size:11.5px; color:var(--amber-text);">${currentUser.role==='business' ? 'Required before you can claim a store.' : 'Verify it to keep your account secure.'}</div></div>
+          <button class="primary-btn" style="width:auto; padding:8px 16px;" onclick="resendVerifyCode()">Verify now</button>
+        </div>` : ''}
         <div class="st-field-row">
           <div class="st-field"><label>Full Name</label><input type="text" id="profile-name-input" value="${currentUser.name || ''}"></div>
           <div class="st-field"><label>Email</label><input type="email" value="${currentUser.email}" disabled style="opacity:.6;"></div>
@@ -2216,10 +2274,10 @@ function renderSettingsPage(){
         ${currentUser.role==='business' ? `
         <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
           <p style="font-size:13px; font-weight:700; margin-bottom:10px;">Claim a store</p>
-          <p style="font-size:12px; color:var(--ink-muted); margin-bottom:12px;">Link your account to a location so you can post real wait-time updates for it. Claims need verification before they take effect.</p>
+          <p style="font-size:12px; color:var(--ink-muted); margin-bottom:12px;">Link your account to a location so you can post real wait-time updates for it. ${currentUser.emailVerified ? 'Claims need admin verification before they take effect.' : 'Verify your email above before you can submit a claim.'}</p>
           <div style="display:flex; gap:8px;">
-            <input type="text" id="claim-location-id" placeholder="Location ID (e.g. 5)" style="flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font-size:13px; background:var(--surface); color:var(--ink);">
-            <button class="primary-btn" style="width:auto; padding:10px 16px;" onclick="submitClaimStore()">Claim</button>
+            <input type="text" id="claim-location-id" placeholder="Location ID (e.g. 5)" ${!currentUser.emailVerified ? 'disabled' : ''} style="flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font-size:13px; background:var(--surface); color:var(--ink); ${!currentUser.emailVerified ? 'opacity:.5;' : ''}">
+            <button class="primary-btn" style="width:auto; padding:10px 16px;" ${!currentUser.emailVerified ? 'disabled style="opacity:.5;"' : ''} onclick="submitClaimStore()">Claim</button>
           </div>
         </div>` : ''}
       `;
