@@ -480,7 +480,8 @@
     .frame{max-width:none; width:100%; padding:0; box-shadow:none; border-radius:0; background:var(--page);}
     .screen{flex-direction:row; height:100vh; border-radius:0; box-shadow:none; background:var(--page); padding:0; gap:0; position:relative;}
     .app-shell{display:flex; flex-direction:column; position:fixed; top:24px; left:24px; bottom:24px; width:307px; z-index:1000; background:rgba(255,255,255,.85); -webkit-border:1px solid rgba(255,255,255,.7); border-radius:40px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow:hidden; padding:0; transition:width .25s ease;}
-    .app-shell.collapsed{width:84px;}
+    .app-shell.collapsed{width:84px; height:auto; bottom:auto; max-height:calc(100vh - 48px); padding-bottom:14px;}
+    .app-shell.collapsed .app-shell-scroll{flex:none;}
     .app-shell.collapsed .brand-left-text, .app-shell.collapsed .nav-item span, .app-shell.collapsed .desktop-sidebar-body, .app-shell.collapsed > .promo-card{display:none !important;}
     .app-shell.collapsed .desktop-nav .nav-item{justify-content:center; padding:10px;}
     .app-shell.collapsed .desktop-nav .nav-item i{margin:0;}
