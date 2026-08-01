@@ -547,6 +547,48 @@ export default {
       return json({ locations: rows.results.map(mapLocation) });
     }
 
+    // ---------- Admin: review pending store claims ----------
+    // There's no signup path to role='admin' — promote an account directly
+    // in the D1 console: UPDATE users SET role='admin' WHERE email='you@example.com';
+
+    // GET /api/admin/claims — pending claims, joined with location + claimant info
+    if (path === '/api/admin/claims' && method === 'GET') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      if (user.role !== 'admin') return json({ error: 'Admin access required' }, 403);
+      const rows = await env.DB.prepare(
+        `SELECT oc.id, oc.owner_contact, oc.created_at, l.id AS location_id, l.name AS location_name,
+                u.email AS claimant_email, u.name AS claimant_name
+         FROM owner_claims oc
+         JOIN locations l ON l.id = oc.location_id
+         LEFT JOIN users u ON u.id = oc.user_id
+         WHERE oc.verified = 0 ORDER BY oc.id DESC`
+      ).all();
+      return json({ claims: rows.results });
+    }
+
+    // POST /api/admin/claims/approve  { claimId }
+    if (path === '/api/admin/claims/approve' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      if (user.role !== 'admin') return json({ error: 'Admin access required' }, 403);
+      const body = await request.json().catch(() => ({}));
+      if (!body.claimId) return json({ error: 'claimId is required' }, 400);
+      await env.DB.prepare('UPDATE owner_claims SET verified = 1 WHERE id = ?').bind(body.claimId).run();
+      return json({ ok: true });
+    }
+
+    // POST /api/admin/claims/reject  { claimId }
+    if (path === '/api/admin/claims/reject' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      if (user.role !== 'admin') return json({ error: 'Admin access required' }, 403);
+      const body = await request.json().catch(() => ({}));
+      if (!body.claimId) return json({ error: 'claimId is required' }, 400);
+      await env.DB.prepare('DELETE FROM owner_claims WHERE id = ?').bind(body.claimId).run();
+      return json({ ok: true });
+    }
+
     return json({ error: 'not found', path }, 404);
   },
 };
