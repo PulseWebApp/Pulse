@@ -2223,6 +2223,43 @@ async function submitClaimStore(){
   toast(data.note || 'Claim submitted');
   input.value = '';
 }
+async function loadAdminClaims(){
+  const listEl = document.getElementById('admin-claims-list');
+  if(!listEl) return;
+  const token = getAuthToken();
+  const data = await api('/api/admin/claims', {headers:{'Authorization':'Bearer '+token}});
+  if(!data || data.error){
+    listEl.innerHTML = `<p style="font-size:13px; color:var(--ink-muted);">${(data && data.error) || 'Could not load claims.'}</p>`;
+    return;
+  }
+  if(!data.claims.length){
+    listEl.innerHTML = `<p style="font-size:13px; color:var(--ink-muted);">No pending claims right now.</p>`;
+    return;
+  }
+  listEl.innerHTML = data.claims.map(c => `
+    <div class="report-row">
+      <div class="report-icon" style="background:var(--accent-bg); color:var(--accent-text);"><i class="fa-solid fa-store"></i></div>
+      <div style="flex:1;">
+        <div style="font-weight:600; font-size:13px;">${c.location_name} <span style="font-weight:400; color:var(--ink-muted); font-size:11.5px;">(location ${c.location_id})</span></div>
+        <div style="font-size:11.5px; color:var(--ink-muted);">Claimed by ${c.claimant_name || c.claimant_email || 'unknown'} &middot; ${c.owner_contact}</div>
+      </div>
+      <button class="primary-btn" style="width:auto; padding:8px 14px; background:var(--surface-2); color:var(--ink);" onclick="rejectClaim(${c.id})">Reject</button>
+      <button class="primary-btn" style="width:auto; padding:8px 14px; margin-left:8px;" onclick="approveClaim(${c.id})">Approve</button>
+    </div>
+  `).join('');
+}
+async function approveClaim(claimId){
+  const data = await authRequest('/api/admin/claims/approve', {claimId});
+  if(!data || data.error){ toast((data && data.error) || 'Could not approve claim'); return; }
+  toast('Claim approved');
+  loadAdminClaims();
+}
+async function rejectClaim(claimId){
+  const data = await authRequest('/api/admin/claims/reject', {claimId});
+  if(!data || data.error){ toast((data && data.error) || 'Could not reject claim'); return; }
+  toast('Claim rejected');
+  loadAdminClaims();
+}
 function notImplemented(){ toast('Not wired up yet — visual only for now.'); }
 function renderSettingsPage(){
   const page = document.getElementById('settings-page');
@@ -2238,10 +2275,14 @@ function renderSettingsPage(){
     {k:'storage', label:'Data & Storage', icon:'fa-database'},
     {k:'help', label:'Help & Support', icon:'fa-circle-question'},
     {k:'about', label:'About Pulse', icon:'fa-circle-info'},
+    ...(currentUser && currentUser.role==='admin' ? [{k:'admin', label:'Admin: Store Claims', icon:'fa-shield-halved'}] : []),
   ];
 
   let body = '';
-  if(settingsActiveTab==='profile'){
+  if(settingsActiveTab==='admin'){
+    body = `<p style="font-size:15px; font-weight:700; margin-bottom:16px;">Pending Store Claims</p><div id="admin-claims-list"><p style="font-size:13px; color:var(--ink-muted);">Loading…</p></div>`;
+    setTimeout(loadAdminClaims, 0);
+  } else if(settingsActiveTab==='profile'){
     if(!currentUser){
       body = `
         <p style="font-size:15px; font-weight:700; margin-bottom:8px;">Profile Settings</p>
