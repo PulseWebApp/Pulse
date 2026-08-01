@@ -234,7 +234,7 @@
   [data-theme="dark"] .map-control{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
   .map-control.dark{background:var(--ink); color:#fff;}
   @media (min-width:900px){
-    .map-control{width:56px; height:56px; font-size:21px;}
+    .map-control{width:38px; height:38px; font-size:15px;}
     .map-control:hover{transform:scale(1.1);}
   }
   .map-control:hover{transform:scale(1.08); color:var(--accent);}
@@ -413,6 +413,15 @@
   .st-field label{display:block; font-size:11.5px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:6px;}
   .st-field input, .st-field select{width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-family:'Inter',sans-serif; background:var(--surface); color:var(--ink); box-sizing:border-box;}
   .st-field-row{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .appr-grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  .appr-card{border:2px solid var(--border); border-radius:14px; padding:8px; cursor:pointer; text-align:left;}
+  .appr-card.active{border-color:var(--accent);}
+  .appr-preview{height:56px; border-radius:8px; margin-bottom:8px; position:relative; overflow:hidden;}
+  .appr-check{position:absolute; top:5px; right:5px; width:16px; height:16px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:8px;}
+  .appr-card-label{font-size:12px; font-weight:600; color:var(--ink); padding:0 2px 2px;}
+  .appr-accent-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .appr-accent-dot{width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; border:2px solid transparent; box-shadow:0 0 0 1px var(--border) inset;}
+  .appr-accent-dot.active{border-color:var(--ink);}
   .settings-nav-item.active{background:var(--accent-bg); color:var(--accent-text); font-weight:600;}
   @media (min-width:900px){
     .persona{display:none;}
@@ -450,7 +459,7 @@
   .promo-card{display:none;}
   .zoom-group{display:flex; flex-direction:column; background:rgba(255,255,255,.85); -webkit-border:1px solid rgba(255,255,255,.7); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-card);}
   [data-theme="dark"] .zoom-group{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
-  .zoom-group button{width:44px; height:38px; border:none; background:none; cursor:pointer; color:var(--ink-secondary); font-size:16px;}
+  .zoom-group button{width:38px; height:32px; border:none; background:none; cursor:pointer; color:var(--ink-secondary); font-size:15px;}
   .zoom-group button:first-child{border-bottom:1px solid var(--border);}
   @media (min-width:900px){
     .desktop-nav{display:flex; flex-direction:column; gap:2px; padding:0 18px 18px;}
@@ -1159,6 +1168,10 @@ function initMapIfNeeded(){
   if(userLoc && usingRealLocation){
     L.circleMarker([userLoc.lat, userLoc.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
   }
+  const storedStyle = localStorage.getItem('pulse_map_style');
+  if(storedStyle && storedStyle !== 'dark' && storedStyle !== 'standard'){
+    setTimeout(()=>applyMapStyle(storedStyle), 0);
+  }
 }
 
 function pinIcon(iconClass, fill){
@@ -1295,22 +1308,63 @@ function updateMapTheme(isDark){
   baseTileLayer.addTo(leafletMap);
   baseTileLayer.bringToBack();
 }
+function applyThemeMode(mode){
+  if(mode) localStorage.setItem('pulse_theme_mode', mode);
+  mode = localStorage.getItem('pulse_theme_mode') || 'light';
+  const isDark = mode==='system' ? window.matchMedia('(prefers-color-scheme: dark)').matches : mode==='dark';
+  document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+  document.querySelectorAll('.theme-toggle-icon').forEach(el=>{ el.className = 'ti theme-toggle-icon ' + (isDark ? 'ti-sun' : 'ti-moon'); });
+  document.querySelectorAll('.theme-toggle-emoji').forEach(el=>{ el.textContent = isDark ? '\u2600\uFE0F' : '\u{1F319}'; });
+  updateMapTheme(isDark);
+}
 function toggleTheme(){
   const isDark = document.documentElement.dataset.theme === 'dark';
-  document.documentElement.dataset.theme = isDark ? 'light' : 'dark';
-  localStorage.setItem('pulse_theme', isDark ? 'light' : 'dark');
-  document.querySelectorAll('.theme-toggle-icon').forEach(el=>{ el.className = 'ti theme-toggle-icon ' + (isDark ? 'ti-moon' : 'ti-sun'); });
-  document.querySelectorAll('.theme-toggle-emoji').forEach(el=>{ el.textContent = isDark ? '\u{1F319}' : '\u2600\uFE0F'; });
-  updateMapTheme(!isDark);
+  applyThemeMode(isDark ? 'light' : 'dark');
 }
-(function applyStoredTheme(){
-  const saved = localStorage.getItem('pulse_theme');
-  if(saved === 'dark'){
-    document.documentElement.dataset.theme = 'dark';
-    document.querySelectorAll('.theme-toggle-icon').forEach(el=>{ el.className = 'ti theme-toggle-icon ti-sun'; });
-    document.querySelectorAll('.theme-toggle-emoji').forEach(el=>{ el.textContent = '\u2600\uFE0F'; });
-  }
+applyThemeMode();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+  if((localStorage.getItem('pulse_theme_mode')||'light')==='system') applyThemeMode();
+});
+
+const ACCENT_PRESETS = {
+  blue:{accent:'#2563EB', hover:'#1D4ED8', bg:'#E8EFFF', text:'#1D4ED8'},
+  purple:{accent:'#7C3AED', hover:'#6D28D9', bg:'#F1E8FE', text:'#6D28D9'},
+  green:{accent:'#16A34A', hover:'#15803D', bg:'#DCFCE7', text:'#15803D'},
+  orange:{accent:'#EA580C', hover:'#C2410C', bg:'#FFEDD5', text:'#C2410C'},
+  red:{accent:'#DC2626', hover:'#B91C1C', bg:'#FEE2E2', text:'#B91C1C'},
+  teal:{accent:'#0D9488', hover:'#0F766E', bg:'#CCFBF1', text:'#0F766E'},
+  dark:{accent:'#1F2937', hover:'#111827', bg:'#E5E7EB', text:'#1F2937'},
+};
+function applyAccent(key){
+  localStorage.setItem('pulse_accent', key);
+  const p = ACCENT_PRESETS[key] || ACCENT_PRESETS.blue;
+  document.documentElement.style.setProperty('--accent', p.accent);
+  document.documentElement.style.setProperty('--accent-hover', p.hover);
+  document.documentElement.style.setProperty('--accent-bg', p.bg);
+  document.documentElement.style.setProperty('--accent-text', p.text);
+  renderSettingsPage();
+}
+(function applyStoredAccent(){
+  const saved = localStorage.getItem('pulse_accent');
+  if(saved && ACCENT_PRESETS[saved]) applyAccent(saved);
 })();
+
+function applyMapStyle(style){
+  localStorage.setItem('pulse_map_style', style);
+  if(leafletMap && baseTileLayer){
+    leafletMap.removeLayer(baseTileLayer);
+    satelliteOn = style==='satellite';
+    if(style==='satellite'){
+      baseTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri', keepBuffer:6, updateWhenZooming:false});
+    } else {
+      const dark = style==='dark';
+      baseTileLayer = L.tileLayer(dark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors &copy; CARTO', keepBuffer:6, updateWhenZooming:false});
+    }
+    baseTileLayer.addTo(leafletMap);
+    baseTileLayer.bringToBack();
+  }
+  renderSettingsPage();
+}
 
 function render(){
   const filters = document.getElementById('filters');
@@ -2283,10 +2337,167 @@ async function renderAnalyticsPage(){
 // ---------- Settings ----------
 let settingsActiveTab = 'profile';
 function setSettingsTab(t){ settingsActiveTab = t; renderSettingsPage(); }
-function getNotifPref(){ return localStorage.getItem('pulse_notif_pref') === 'on'; }
-function toggleNotifPref(){
-  const on = !getNotifPref();
-  localStorage.setItem('pulse_notif_pref', on ? 'on' : 'off');
+const NOTIF_DEFAULTS = {push:true, email:true, queueAlerts:true, nearbyUpdates:false, reportUpdates:true, quietStart:'23:00', quietEnd:'07:00'};
+function getNotifPrefs(){
+  try{ return {...NOTIF_DEFAULTS, ...(JSON.parse(localStorage.getItem('pulse_notif_prefs')) || {})}; }
+  catch(e){ return {...NOTIF_DEFAULTS}; }
+}
+function setNotifPref(key, val){
+  const p = getNotifPrefs();
+  p[key] = val;
+  localStorage.setItem('pulse_notif_prefs', JSON.stringify(p));
+  renderSettingsPage();
+}
+function toggleNotifPref(key){ setNotifPref(key, !getNotifPrefs()[key]); }
+function openHelpItem(label){
+  const content = {
+    'FAQs': "Common questions about wait times, reports, and accounts will live here.",
+    'Contact Support': "Support isn't wired up in this build yet — for now, use the feedback option in your app store listing.",
+    'Report a Problem': "Bug reports aren't collected in-app yet. Screenshot the issue and share it with the team directly.",
+    'Feature Requests': "We'd love your ideas — feature request collection isn't wired up in-app yet.",
+    'Community Guidelines': "Be honest, be kind, and only report what you can actually see. Full guidelines coming soon.",
+    "What's New": "Changelog coming soon.",
+    'Terms of Service': "Terms of Service aren't published yet for this build.",
+    'Privacy Policy': "Privacy Policy aren't published yet for this build.",
+    'Licenses': "Pulse uses Leaflet, Font Awesome, and OpenStreetMap/CARTO map tiles.",
+  }[label] || 'Coming soon.';
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet" style="max-width:360px;">
+      <div class="sheet-head">
+        <div><p class="sheet-title">${label}</p></div>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="font-size:13px; color:var(--ink-secondary); line-height:1.6;">${content}</p>
+    </div>
+  </div>`;
+}
+function pulseDataBytes(){
+  let bytes = 0;
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.indexOf('pulse_')===0) bytes += (k.length + (localStorage.getItem(k)||'').length) * 2; // UTF-16 estimate
+  }
+  return bytes;
+}
+function fmtBytes(bytes){
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+async function loadStorageInfo(){
+  const el = document.getElementById('storage-info');
+  if(!el) return;
+  let usage = 0, quota = 0;
+  if(navigator.storage && navigator.storage.estimate){
+    try{ const est = await navigator.storage.estimate(); usage = est.usage||0; quota = est.quota||0; }catch(e){}
+  }
+  const appDataBytes = pulseDataBytes();
+  const cacheKeys = ['pulse_recent_searches'];
+  let cacheBytes = 0;
+  cacheKeys.forEach(k=>{ const v = localStorage.getItem(k); if(v) cacheBytes += (k.length+v.length)*2; });
+  const pct = quota ? Math.min(100, (usage/quota*100)) : 0;
+
+  el.innerHTML = `
+    <div class="report-row">
+      <div class="report-icon" style="background:var(--amber-bg); color:var(--amber-text);"><i class="fa-solid fa-broom"></i></div>
+      <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Cache</div><div style="font-size:11.5px; color:var(--ink-muted);">Temporary data stored by the app &middot; ${fmtBytes(cacheBytes)}</div></div>
+      <button class="primary-btn" style="width:auto; padding:8px 16px; background:var(--surface-2); color:var(--ink);" onclick="clearAppCache()">Clear Cache</button>
+    </div>
+    <div class="report-row">
+      <div class="report-icon" style="background:var(--blue-bg); color:var(--blue-text);"><i class="fa-solid fa-map"></i></div>
+      <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Offline Maps</div><div style="font-size:11.5px; color:var(--ink-muted);">No offline maps downloaded &middot; 0 MB</div></div>
+      <button class="primary-btn" style="width:auto; padding:8px 16px; background:var(--surface-2); color:var(--ink);" onclick="manageOfflineMaps()">Manage Maps</button>
+    </div>
+    <div class="report-row">
+      <div class="report-icon" style="background:var(--purple-bg); color:var(--purple);"><i class="fa-solid fa-box-archive"></i></div>
+      <div style="flex:1;"><div style="font-weight:600; font-size:13px;">App Data</div><div style="font-size:11.5px; color:var(--ink-muted);">All app data and settings &middot; ${fmtBytes(appDataBytes)}</div></div>
+      <button class="primary-btn" style="width:auto; padding:8px 16px; background:var(--surface-2); color:var(--ink);" onclick="confirmClearAllData()">Clear Data</button>
+    </div>
+    <div style="margin-top:18px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-muted); margin-bottom:6px;"><span>Storage Used</span><span>${fmtBytes(usage)} / ${quota ? fmtBytes(quota) : 'unknown'} &middot; ${pct.toFixed(1)}%</span></div>
+      <div style="height:8px; border-radius:6px; background:var(--surface-2); overflow:hidden;"><div style="height:100%; width:${pct}%; background:var(--accent); border-radius:6px;"></div></div>
+    </div>`;
+}
+function clearAppCache(){
+  localStorage.removeItem('pulse_recent_searches');
+  toast('Cache cleared');
+  loadStorageInfo();
+}
+function manageOfflineMaps(){
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet" style="max-width:340px;">
+      <div class="sheet-head">
+        <div><p class="sheet-title">Offline Maps</p><p class="sheet-sub">Download areas for offline use</p></div>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="font-size:13px; color:var(--ink-muted); text-align:center; padding:20px 0;">Offline map downloads aren't available in this build yet.</p>
+    </div>
+  </div>`;
+}
+const PRIVACY_DEFAULTS = {locationHistory:true, dataCollection:true, profileVisibility:'Everyone', showOnlineStatus:false};
+function getPrivacyPrefs(){
+  try{ return {...PRIVACY_DEFAULTS, ...(JSON.parse(localStorage.getItem('pulse_privacy_prefs'))||{})}; }
+  catch(e){ return {...PRIVACY_DEFAULTS}; }
+}
+function setPrivacyPref(key, val){
+  const p = getPrivacyPrefs();
+  p[key] = val;
+  localStorage.setItem('pulse_privacy_prefs', JSON.stringify(p));
+  renderSettingsPage();
+}
+function togglePrivacyPref(key){ setPrivacyPref(key, !getPrivacyPrefs()[key]); }
+function openBlockedUsersModal(){
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet" style="max-width:340px;">
+      <div class="sheet-head">
+        <div><p class="sheet-title">Blocked Users</p><p class="sheet-sub">Manage who can't interact with your reports</p></div>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="font-size:13px; color:var(--ink-muted); text-align:center; padding:24px 0;">No blocked users yet.</p>
+    </div>
+  </div>`;
+}
+function confirmClearAllData(){
+  if(!confirm('This permanently deletes your saved places, recent searches, and preferences on this device, and logs you out. This cannot be undone. Continue?')) return;
+  ['pulse_saved_collections','pulse_saved_order','pulse_saved_custom','pulse_recent_searches','pulse_notif_prefs','pulse_privacy_prefs','pulse_theme_mode','pulse_theme','pulse_accent','pulse_map_style','pulse_default_location','pulse_auth_token'].forEach(k=>localStorage.removeItem(k));
+  location.reload();
+}
+let pendingLocRole = 'Home';
+let locSetDebounce;
+function onLocSetSearch(q){
+  clearTimeout(locSetDebounce);
+  const resultsEl = document.getElementById('loc-set-results');
+  if(!resultsEl) return;
+  if(!q || q.trim().length < 3){ resultsEl.classList.remove('show'); resultsEl.innerHTML=''; return; }
+  locSetDebounce = setTimeout(async ()=>{
+    try{
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q);
+      const res = await fetch(url);
+      const results = await res.json();
+      if(!results.length){ resultsEl.innerHTML = `<div class="search-result-item" style="color:var(--ink-muted);">No matches found</div>`; resultsEl.classList.add('show'); return; }
+      resultsEl.innerHTML = results.map(r=>`<div class="search-result-item" onclick='selectLocSetResult(${r.lat},${r.lon},${JSON.stringify(r.display_name)})'>${r.display_name}</div>`).join('');
+      resultsEl.classList.add('show');
+    }catch(e){ resultsEl.classList.remove('show'); }
+  }, 400);
+}
+function selectLocSetResult(lat, lng, label){
+  const shortLabel = label.split(',')[0];
+  const cols = getSavedCollections();
+  const existingId = (cols[pendingLocRole]||[]).find(id=>String(id).indexOf('c_')===0);
+  if(existingId){
+    cols[pendingLocRole] = cols[pendingLocRole].filter(id=>id!==existingId);
+    setSavedCollections(cols);
+  }
+  saveCustomAddress(shortLabel, lat, lng, pendingLocRole);
+  localStorage.setItem('pulse_default_location', JSON.stringify({label:shortLabel, lat, lng}));
+  toast(`Set as ${pendingLocRole}`);
+  const input = document.getElementById('loc-set-search');
+  if(input) input.value = '';
+  const resultsEl = document.getElementById('loc-set-results');
+  if(resultsEl) resultsEl.classList.remove('show');
   renderSettingsPage();
 }
 async function submitClaimStore(){
@@ -2339,7 +2550,7 @@ function notImplemented(){ toast('Not wired up yet — visual only for now.'); }
 function renderSettingsPage(){
   const page = document.getElementById('settings-page');
   const isDark = document.documentElement.dataset.theme === 'dark';
-  const notifOn = getNotifPref();
+  const notifPrefs = getNotifPrefs();
 
   const tabs = [
     {k:'profile', label:'Profile', icon:'fa-user'},
@@ -2369,12 +2580,16 @@ function renderSettingsPage(){
       `;
     } else {
       const initials = (currentUser.name || currentUser.email).trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      const isVerifiedBusiness = currentUser.role==='business' && currentUser.emailVerified;
       body = `
         <p style="font-size:15px; font-weight:700; margin-bottom:20px;">Profile Settings</p>
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
           <div class="st-avatar-fallback">${initials}</div>
-          <div style="flex:1;"><div style="font-weight:700; font-size:14px;">${currentUser.name || currentUser.email}</div><div style="font-size:12px; color:var(--ink-muted);">${currentUser.email} &middot; ${currentUser.role==='business'?'Business account':'Individual account'}</div></div>
-          <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="logoutUser()">Log out</button>
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px;">${currentUser.name || currentUser.email}${isVerifiedBusiness ? `<span style="display:inline-flex; align-items:center; gap:3px; background:var(--blue-bg); color:var(--blue-text); font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:20px;"><i class="fa-solid fa-circle-check"></i>Verified</span>` : ''}</div>
+            <div style="font-size:12px; color:var(--ink-muted);">${currentUser.email}</div>
+          </div>
+          <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="notImplemented()">Edit Photo</button>
         </div>
         ${!currentUser.emailVerified ? `
         <div class="report-row" style="background:var(--amber-bg); border-color:transparent; margin-bottom:20px;">
@@ -2382,9 +2597,15 @@ function renderSettingsPage(){
           <div style="flex:1;"><div style="font-weight:600; font-size:13px; color:var(--amber-text);">Your email isn't verified yet</div><div style="font-size:11.5px; color:var(--amber-text);">${currentUser.role==='business' ? 'Required before you can claim a store.' : 'Verify it to keep your account secure.'}</div></div>
           <button class="primary-btn" style="width:auto; padding:8px 16px;" onclick="resendVerifyCode()">Verify now</button>
         </div>` : ''}
+        <div class="st-field"><label>Full Name</label><input type="text" id="profile-name-input" value="${currentUser.name || ''}"></div>
         <div class="st-field-row">
-          <div class="st-field"><label>Full Name</label><input type="text" id="profile-name-input" value="${currentUser.name || ''}"></div>
           <div class="st-field"><label>Email</label><input type="email" value="${currentUser.email}" disabled style="opacity:.6;"></div>
+          <div class="st-field"><label>Phone Number</label><input type="text" id="profile-phone-input" placeholder="+92 300 1234567"></div>
+        </div>
+        <div class="st-field"><label>Username</label><input type="text" id="profile-username-input" placeholder="e.g. ${(currentUser.email||'').split('@')[0]}"></div>
+        <div class="st-field-row">
+          <div class="st-field"><label>Language</label><select id="profile-lang-select"><option>English</option><option>Urdu</option></select></div>
+          <div class="st-field"><label>Timezone</label><select id="profile-tz-select"><option>(GMT+05:00) Islamabad</option><option>(GMT+00:00) London</option><option>(GMT-05:00) New York</option></select></div>
         </div>
         <button class="primary-btn" style="width:auto; padding:11px 22px;" onclick="notImplemented()">Save Changes</button>
         ${currentUser.role==='business' ? `
@@ -2396,61 +2617,178 @@ function renderSettingsPage(){
             <button class="primary-btn" style="width:auto; padding:10px 16px;" ${!currentUser.emailVerified ? 'disabled style="opacity:.5;"' : ''} onclick="submitClaimStore()">Claim</button>
           </div>
         </div>` : ''}
+        <div style="margin-top:24px; text-align:right;"><button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="logoutUser()">Log out</button></div>
       `;
     }
   } else if(settingsActiveTab==='appearance'){
+    const themeMode = localStorage.getItem('pulse_theme_mode') || 'light';
+    const accent = localStorage.getItem('pulse_accent') || 'blue';
+    const mapStyle = localStorage.getItem('pulse_map_style') || 'standard';
+    const themeCards = [
+      {k:'light', label:'Light', sub:'Default', preview:'linear-gradient(135deg,#f4f6fb,#e6ebf5)'},
+      {k:'dark', label:'Dark', preview:'linear-gradient(135deg,#1a2030,#0f1420)'},
+      {k:'system', label:'System', sub:'Follow system', preview:'linear-gradient(90deg,#f4f6fb 50%,#161b26 50%)'},
+    ];
+    const mapCards = [
+      {k:'standard', label:'Standard', preview:'linear-gradient(135deg,#eef1f5,#dbe4ea)'},
+      {k:'dark', label:'Dark', preview:'linear-gradient(135deg,#20262f,#12161c)'},
+      {k:'satellite', label:'Satellite', preview:'linear-gradient(135deg,#3a4a2f,#6b7a4a)'},
+    ];
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Appearance</p>
-      <div class="report-row">
-        <div class="report-icon" style="background:var(--accent-bg); color:var(--accent-text);"><i class="fa-solid ${isDark?'fa-moon':'fa-sun'}"></i></div>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Dark mode</div><div style="font-size:11.5px; color:var(--ink-muted);">Currently ${isDark?'on':'off'}</div></div>
-        <button class="primary-btn" style="width:auto; padding:8px 16px;" onclick="toggleTheme(); renderSettingsPage();">Toggle</button>
+      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Appearance Settings</p>
+      <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin-bottom:10px;">Theme</p>
+      <div class="appr-grid3">
+        ${themeCards.map(c=>`<div class="appr-card ${themeMode===c.k?'active':''}" onclick="applyThemeMode('${c.k}'); renderSettingsPage();">
+          <div class="appr-preview" style="background:${c.preview};">${themeMode===c.k?'<span class="appr-check"><i class="fa-solid fa-check"></i></span>':''}</div>
+          <div class="appr-card-label">${c.label}${c.sub?` <span style="font-weight:400; color:var(--ink-muted);">${c.sub}</span>`:''}</div>
+        </div>`).join('')}
+      </div>
+      <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:22px 0 10px;">Color Accent</p>
+      <div class="appr-accent-row">
+        ${Object.entries(ACCENT_PRESETS).map(([k,p])=>`<div class="appr-accent-dot ${accent===k?'active':''}" style="background:${p.accent};" title="${k}" onclick="applyAccent('${k}')">${accent===k?'<i class="fa-solid fa-check" style="color:#fff; font-size:11px;"></i>':''}</div>`).join('')}
+      </div>
+      <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:22px 0 10px;">Map Style</p>
+      <div class="appr-grid3">
+        ${mapCards.map(c=>`<div class="appr-card ${mapStyle===c.k?'active':''}" onclick="applyMapStyle('${c.k}')">
+          <div class="appr-preview" style="background:${c.preview};">${mapStyle===c.k?'<span class="appr-check"><i class="fa-solid fa-check"></i></span>':''}</div>
+          <div class="appr-card-label">${c.label}</div>
+        </div>`).join('')}
       </div>`;
   } else if(settingsActiveTab==='notifications'){
+    const notifRows = [
+      {k:'push', icon:'fa-mobile-screen-button', color:'blue', label:'Push Notifications', sub:'Receive notifications on your device'},
+      {k:'email', icon:'fa-envelope', color:'purple', label:'Email Notifications', sub:'Receive notifications via email'},
+      {k:'queueAlerts', icon:'fa-hourglass-half', color:'coral', label:'Queue Alerts', sub:'Get notified when wait time is above limit'},
+      {k:'nearbyUpdates', icon:'fa-location-dot', color:'teal', label:'Nearby Updates', sub:'Updates about places near you'},
+      {k:'reportUpdates', icon:'fa-flag', color:'amber', label:'Report Updates', sub:'Updates on your reported issues'},
+    ];
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Notifications</p>
-      <div class="report-row">
-        <div class="report-icon" style="background:var(--teal-bg); color:var(--teal-text);"><i class="fa-solid fa-bell"></i></div>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Wait time alerts</div><div style="font-size:11.5px; color:var(--ink-muted);">Saved locally on this device — Pulse doesn't send push notifications yet</div></div>
-        <button class="primary-btn" style="width:auto; padding:8px 16px; ${notifOn?'':'background:var(--surface-2); color:var(--ink);'}" onclick="toggleNotifPref()">${notifOn?'On':'Off'}</button>
+      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">Notification Preferences</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:18px;">Choose how you want to be notified. Saved on this device — Pulse doesn't send real push/email yet.</p>
+      ${notifRows.map(r=>`<div class="report-row">
+        <div class="report-icon" style="background:var(--${r.color}-bg); color:var(--${r.color==='purple'?'purple':r.color+'-text'});"><i class="fa-solid ${r.icon}"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${r.label}</div><div style="font-size:11.5px; color:var(--ink-muted);">${r.sub}</div></div>
+        <label class="np-toggle"><input type="checkbox" ${notifPrefs[r.k]?'checked':''} onchange="toggleNotifPref('${r.k}')"><span class="np-toggle-slider"></span></label>
+      </div>`).join('')}
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+        <p style="font-size:13px; font-weight:700; margin-bottom:4px;">Quiet Hours</p>
+        <p style="font-size:11.5px; color:var(--ink-muted); margin-bottom:10px;">No notifications between</p>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="time" value="${notifPrefs.quietStart}" onchange="setNotifPref('quietStart', this.value)" style="padding:8px 10px; border-radius:9px; border:1px solid var(--border); font-size:12.5px; background:var(--surface); color:var(--ink);">
+          <span style="font-size:12px; color:var(--ink-muted);">to</span>
+          <input type="time" value="${notifPrefs.quietEnd}" onchange="setNotifPref('quietEnd', this.value)" style="padding:8px 10px; border-radius:9px; border:1px solid var(--border); font-size:12.5px; background:var(--surface); color:var(--ink);">
+        </div>
       </div>`;
   } else if(settingsActiveTab==='location'){
+    const cols = getSavedCollections();
+    const custom = getSavedCustom();
+    const homeId = (cols['Home']||[]).find(id=>String(id).indexOf('c_')===0);
+    const workId = (cols['Work']||[]).find(id=>String(id).indexOf('c_')===0);
+    const homeAddr = homeId && custom[homeId] ? custom[homeId].name : null;
+    const workAddr = workId && custom[workId] ? custom[workId].name : null;
+    const defaultLoc = (() => { try{ return JSON.parse(localStorage.getItem('pulse_default_location')); }catch(e){ return null; } })();
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Default Location</p>
+      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">Default Location</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:14px;">Choose your default location for the app.</p>
+      <div style="position:relative; margin-bottom:14px;">
+        <input type="text" id="loc-set-search" placeholder="Search for a location..." oninput="onLocSetSearch(this.value)" style="width:100%; padding:11px 14px 11px 38px; border-radius:12px; border:1px solid var(--border); font-size:13px; background:var(--surface); color:var(--ink); box-sizing:border-box;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:13px;"></i>
+        <div id="loc-set-results" class="search-results" style="position:absolute; top:calc(100% + 4px);"></div>
+      </div>
+      <div style="height:150px; border-radius:14px; background:linear-gradient(135deg,#e8efe4,#d7e3d0); position:relative; overflow:hidden; margin-bottom:16px;">
+        <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px); background-size:24px 24px;"></div>
+        <div style="position:absolute; left:50%; top:50%; width:90px; height:90px; border-radius:50%; background:rgba(37,99,235,.15); transform:translate(-50%,-50%);"></div>
+        <div style="position:absolute; left:50%; top:50%; width:16px; height:16px; border-radius:50%; background:var(--accent); border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.3); transform:translate(-50%,-50%);"></div>
+      </div>
       <div class="report-row">
-        <div class="report-icon" style="background:var(--blue-bg); color:var(--blue-text);"><i class="fa-solid fa-location-dot"></i></div>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Home base</div><div style="font-size:11.5px; color:var(--ink-muted);">Not set — used to center the map when Pulse opens</div></div>
-        <button class="primary-btn" style="width:auto; padding:8px 16px; background:var(--surface-2); color:var(--ink);" onclick="notImplemented()">Set</button>
+        <div class="report-icon" style="background:var(--amber-bg); color:var(--amber-text);"><i class="fa-solid fa-house"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Home</div><div style="font-size:11.5px; color:var(--ink-muted);">${homeAddr || 'Add home location'}</div></div>
+        <button class="np-row-menu" onclick="pendingLocRole='Home'; document.getElementById('loc-set-search').focus();" style="background:none; border:none; color:var(--ink-muted); cursor:pointer; font-size:15px;"><i class="fa-solid ${homeAddr?'fa-pen':'fa-plus'}"></i></button>
+      </div>
+      <div class="report-row">
+        <div class="report-icon" style="background:var(--blue-bg); color:var(--blue-text);"><i class="fa-solid fa-briefcase"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Work</div><div style="font-size:11.5px; color:var(--ink-muted);">${workAddr || 'Add work location'}</div></div>
+        <button class="np-row-menu" onclick="pendingLocRole='Work'; document.getElementById('loc-set-search').focus();" style="background:none; border:none; color:var(--ink-muted); cursor:pointer; font-size:15px;"><i class="fa-solid ${workAddr?'fa-pen':'fa-plus'}"></i></button>
       </div>`;
   } else if(settingsActiveTab==='privacy'){
+    const priv = getPrivacyPrefs();
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Privacy</p>
+      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">Privacy Settings</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:16px;">Manage your privacy and data preferences.</p>
       <div class="report-row">
-        <div class="report-icon" style="background:var(--purple-bg); color:var(--purple);"><i class="fa-solid fa-lock"></i></div>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Share anonymous check-ins</div><div style="font-size:11.5px; color:var(--ink-muted);">Helps other Pulse users see accurate wait times</div></div>
-        <button class="primary-btn" style="width:auto; padding:8px 16px;" onclick="notImplemented()">On</button>
+        <div class="report-icon" style="background:var(--amber-bg); color:var(--amber-text);"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Location History</div><div style="font-size:11.5px; color:var(--ink-muted);">Save places you've visited</div></div>
+        <label class="np-toggle"><input type="checkbox" ${priv.locationHistory?'checked':''} onchange="togglePrivacyPref('locationHistory')"><span class="np-toggle-slider"></span></label>
+      </div>
+      <div class="report-row">
+        <div class="report-icon" style="background:var(--blue-bg); color:var(--blue-text);"><i class="fa-solid fa-database"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Data Collection</div><div style="font-size:11.5px; color:var(--ink-muted);">Help improve Pulse by sharing anonymous data</div></div>
+        <label class="np-toggle"><input type="checkbox" ${priv.dataCollection?'checked':''} onchange="togglePrivacyPref('dataCollection')"><span class="np-toggle-slider"></span></label>
+      </div>
+      <div class="report-row">
+        <div class="report-icon" style="background:var(--purple-bg); color:var(--purple);"><i class="fa-solid fa-eye"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Profile Visibility</div><div style="font-size:11.5px; color:var(--ink-muted);">Who can see your profile</div></div>
+        <select onchange="setPrivacyPref('profileVisibility', this.value)" style="padding:7px 10px; border-radius:9px; border:1px solid var(--border); font-size:12px; background:var(--surface); color:var(--ink);">
+          <option ${priv.profileVisibility==='Everyone'?'selected':''}>Everyone</option>
+          <option ${priv.profileVisibility==='Nobody'?'selected':''}>Nobody</option>
+        </select>
+      </div>
+      <div class="report-row">
+        <div class="report-icon" style="background:var(--teal-bg); color:var(--teal-text);"><i class="fa-solid fa-circle-dot"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Show Online Status</div><div style="font-size:11.5px; color:var(--ink-muted);">Let others see when you're online</div></div>
+        <label class="np-toggle"><input type="checkbox" ${priv.showOnlineStatus?'checked':''} onchange="togglePrivacyPref('showOnlineStatus')"><span class="np-toggle-slider"></span></label>
+      </div>
+      <div class="report-row" style="cursor:pointer;" onclick="openBlockedUsersModal()">
+        <div class="report-icon" style="background:var(--surface-2); color:var(--ink-secondary);"><i class="fa-solid fa-user-slash"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Blocked Users</div><div style="font-size:11.5px; color:var(--ink-muted);">Manage blocked users</div></div>
+        <i class="fa-solid fa-chevron-right" style="color:var(--ink-muted); font-size:12px;"></i>
+      </div>
+      <div class="report-row" style="cursor:pointer;" onclick="confirmClearAllData()">
+        <div class="report-icon" style="background:var(--coral-bg); color:var(--coral-text);"><i class="fa-solid fa-trash"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px; color:var(--coral-text);">Clear All Data</div><div style="font-size:11.5px; color:var(--ink-muted);">This will permanently delete your local data</div></div>
+        <i class="fa-solid fa-chevron-right" style="color:var(--ink-muted); font-size:12px;"></i>
       </div>`;
   } else if(settingsActiveTab==='storage'){
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Data &amp; Storage</p>
-      <div class="report-row">
-        <div class="report-icon" style="background:var(--amber-bg); color:var(--amber-text);"><i class="fa-solid fa-database"></i></div>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Clear local data</div><div style="font-size:11.5px; color:var(--ink-muted);">Saved places, recent searches and preferences stored in this browser</div></div>
-        <button class="primary-btn" style="width:auto; padding:8px 16px; background:var(--surface-2); color:var(--ink);" onclick="notImplemented()">Clear</button>
-      </div>`;
+      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">Data &amp; Storage</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:16px;">Manage your app data and storage usage.</p>
+      <div id="storage-info"><p style="font-size:13px; color:var(--ink-muted);"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Checking storage...</p></div>`;
+    setTimeout(loadStorageInfo, 0);
   } else if(settingsActiveTab==='help'){
+    const helpRows = [
+      {icon:'fa-circle-question', color:'blue', label:'FAQs', sub:'Find answers to common questions'},
+      {icon:'fa-headset', color:'teal', label:'Contact Support', sub:'Get help from our support team'},
+      {icon:'fa-triangle-exclamation', color:'amber', label:'Report a Problem', sub:'Let us know about an issue'},
+      {icon:'fa-lightbulb', color:'coral', label:'Feature Requests', sub:'Suggest new features'},
+      {icon:'fa-book', color:'purple', label:'Community Guidelines', sub:'Read our community rules'},
+    ];
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Help &amp; Support</p>
-      <div class="report-row">
-        <div class="report-icon" style="background:var(--teal-bg); color:var(--teal-text);"><i class="fa-solid fa-circle-question"></i></div>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Contact support</div><div style="font-size:11.5px; color:var(--ink-muted);">Report a bug or ask a question about Pulse</div></div>
-        <button class="primary-btn" style="width:auto; padding:8px 16px; background:var(--surface-2); color:var(--ink);" onclick="notImplemented()">Contact</button>
-      </div>`;
+      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">Help &amp; Support</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:16px;">We're here to help you.</p>
+      ${helpRows.map(r=>`<div class="report-row" style="cursor:pointer;" onclick="openHelpItem('${r.label}')">
+        <div class="report-icon" style="background:var(--${r.color}-bg); color:var(--${r.color==='purple'?'purple':r.color+'-text'});"><i class="fa-solid ${r.icon}"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${r.label}</div><div style="font-size:11.5px; color:var(--ink-muted);">${r.sub}</div></div>
+        <i class="fa-solid fa-chevron-right" style="color:var(--ink-muted); font-size:12px;"></i>
+      </div>`).join('')}`;
   } else if(settingsActiveTab==='about'){
+    const aboutRows = ["What's New", 'Terms of Service', 'Privacy Policy', 'Licenses'];
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">About Pulse</p>
-      <p style="font-size:13px; color:var(--ink-secondary); line-height:1.6;">Pulse is a real-time, crowd-sourced app for wait times, road conditions, and local reports — built for RLC Hacks.</p>
-      <p style="font-size:12px; color:var(--ink-muted); margin-top:12px;">This build has no login system yet, so the Profile tab above is a visual preview — it isn't saved anywhere. Saved places and this notification preference are stored locally in your browser.</p>
+      <div style="text-align:center; padding:10px 0 20px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:10px;">
+          <span class="app-logo-badge"><svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M2 12h4l1.8-5 4 10 2.2-7 2 2h6" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span style="font-size:19px; font-weight:800; color:var(--ink);">Pulse</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:12.5px; color:var(--ink-muted);">Version 2.1.0</span>
+          <span style="background:var(--teal-bg); color:var(--teal-text); font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;">Latest</span>
+        </div>
+        <p style="font-size:12px; color:var(--ink-muted); max-width:280px; margin:0 auto;">Real-time wait times, road conditions, and local reports — crowd-sourced by people nearby.</p>
+      </div>
+      ${aboutRows.map(r=>`<div class="report-row" style="cursor:pointer;" onclick="openHelpItem('${r}')">
+        <div style="flex:1; font-weight:600; font-size:13px;">${r}</div>
+        <i class="fa-solid fa-chevron-right" style="color:var(--ink-muted); font-size:12px;"></i>
+      </div>`).join('')}
+      <p style="text-align:center; font-size:11px; color:var(--ink-muted); margin-top:18px;">&copy; 2026 Pulse. All rights reserved.</p>
     `;
   }
 
