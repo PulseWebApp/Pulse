@@ -2032,9 +2032,9 @@ async function boot(){
   }
 
   render(); // show demo data immediately, don't block on location/Overpass
+  const authCheck = loadCurrentUser().then(updateAccountUI); // runs in parallel — don't make login status wait on slow geolocation/nearby-places
   await resolveLocation();
-  await loadCurrentUser();
-  updateAccountUI();
+  await authCheck;
 
   sendHeartbeat();
   setInterval(sendHeartbeat, 30000);
