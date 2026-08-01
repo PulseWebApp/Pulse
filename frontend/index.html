@@ -162,17 +162,28 @@
   svg text{font-family:'Inter',sans-serif;}
   .map-pin{cursor:pointer;}
   .search-bar-wrap{position:absolute; top:14px; left:14px; right:130px; z-index:900; flex-shrink:0;}
-  .search-pill{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.85); -webkit-border:1px solid rgba(255,255,255,.7); border-radius:18px; box-shadow:var(--shadow-card); padding:0 14px; transition:box-shadow .3s, border-color .3s;}
+  .search-pill{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.85); -webkit-border:1px solid rgba(255,255,255,.7); border-radius:28px; box-shadow:var(--shadow-card); height:54px; padding:0 8px 0 18px; box-sizing:border-box; transition:box-shadow .3s, border-color .3s;}
   .search-pill:focus-within{box-shadow:var(--shadow-card), 0 0 0 3px var(--accent-bg); border-color:var(--accent);}
-  .search-pill .search-icon{font-size:15px; flex-shrink:0; color:var(--ink-muted); pointer-events:none; width:30px; text-align:center;}
+  .search-pill .search-icon{font-size:15px; flex-shrink:0; color:var(--ink-muted); pointer-events:none; width:20px; height:100%; display:flex; align-items:center; justify-content:center;}
+  .search-filter-btn{flex-shrink:0; width:34px; height:34px; border-radius:50%; border:none; background:var(--surface-2); color:var(--ink-secondary); font-size:13px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s, color .2s;}
+  .search-filter-btn:hover{background:var(--accent-bg); color:var(--accent-text);}
   .search-kbd{flex-shrink:0; font-size:10px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:3px 7px; border-radius:6px; pointer-events:none;}
-  .search-input{flex:1; min-width:0; padding:15px 0; border:none; font-size:14.5px; font-family:'Inter',sans-serif; background:none; color:var(--ink); outline:none;}
+  .search-pill .search-input{flex:1; min-width:0; width:auto; padding:0; margin:0; height:100%; box-sizing:border-box; border:none; font-size:14.5px; font-family:'Inter',sans-serif; background:none; color:var(--ink); outline:none;}
   [data-theme="dark"] .search-pill{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
   .search-results{position:absolute; left:0; right:0; top:calc(100% + 10px); background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); z-index:1250; max-height:340px; overflow-y:auto; display:none; padding:14px;}
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
+  .src-chips{display:flex; gap:16px; padding:2px 4px 12px; margin-bottom:8px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
+  .src-chip{font-size:13px; font-weight:600; color:var(--ink-secondary); cursor:pointer; padding:2px 0; border-bottom:2px solid transparent;}
+  .src-chip.active{color:var(--accent-text); border-bottom-color:var(--accent);}
+  .src-cat-list{display:flex; flex-direction:column;}
+  .src-cat-item{display:flex; align-items:center; gap:12px; padding:9px 6px; border-radius:12px; cursor:pointer;}
+  .src-cat-item:hover{background:var(--surface-2);}
+  .src-cat-icon{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;}
+  .src-cat-name{font-size:13.5px; font-weight:600; color:var(--ink);}
+  .src-more{display:block; text-align:left; padding:9px 6px 2px; font-size:13px; font-weight:600; color:var(--accent-text); cursor:pointer;}
   @media (min-width:900px){
-    .search-bar-wrap{top:64px; left:calc(355px + 40px); right:auto; width:min(420px, 38%); transition:left .25s;}
+    .search-bar-wrap{top:44px; left:calc(355px + 40px); right:auto; width:min(420px, 38%); transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .search-bar-wrap{left:calc(132px + 40px);}
     .search-input{font-size:14.5px;}
   }
@@ -193,14 +204,14 @@
   .map-wrap{position:relative; flex:1; min-height:0; border-radius:0; overflow:hidden;}
   .map-frame-overlay{display:none;}
   @media (min-width:900px){
-    .map-frame-overlay{display:block; position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:800; pointer-events:none; border-radius:32px; background:radial-gradient(ellipse at center, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 52%, rgba(255,255,255,.16) 84%, rgba(255,255,255,.38) 100%); border:1px solid rgba(255,255,255,.55); box-shadow:0 20px 50px rgba(20,22,30,.14), inset 0 0 50px rgba(255,255,255,.25), inset 0 1px 0 rgba(255,255,255,.6); transition:left .25s;}
+    .map-frame-overlay{display:block; position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:800; pointer-events:none; border-radius:32px; background:rgba(255,255,255,.4); -webkit-mask-image:radial-gradient(ellipse at center, transparent 0%, transparent 52%, black 88%); mask-image:radial-gradient(ellipse at center, transparent 0%, transparent 52%, black 88%); border:1px solid rgba(255,255,255,.65); box-shadow:0 20px 50px rgba(20,22,30,.14), inset 0 1px 0 rgba(255,255,255,.6); transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .map-frame-overlay{left:132px;}
-    [data-theme="dark"] .map-frame-overlay{background:radial-gradient(ellipse at center, rgba(24,34,52,0) 0%, rgba(24,34,52,0) 52%, rgba(24,34,52,.28) 84%, rgba(24,34,52,.5) 100%); border-color:rgba(255,255,255,.12); box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 0 50px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.1);}
-    .top-right-controls{top:64px; right:64px;}
-    .map-controls{top:126px; right:64px;}
-    .layers-btn{top:64px; right:116px;}
-    .heat-toggle{bottom:64px; left:64px;}
-    .weather-card{bottom:64px; right:64px;}
+    [data-theme="dark"] .map-frame-overlay{background:rgba(24,34,52,.55); border-color:rgba(255,255,255,.14); box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.1);}
+    .map-pane-desktop .top-right-controls{top:44px; right:64px;}
+    .map-pane-desktop .map-controls{top:106px; right:64px;}
+    .map-pane-desktop .layers-btn{top:64px; right:116px;}
+    .map-pane-desktop .heat-toggle{bottom:64px; left:64px;}
+    .map-pane-desktop .weather-card{bottom:64px; right:64px;}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -475,8 +486,8 @@
       <div class="search-bar-wrap">
         <div class="search-pill">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input type="text" id="search-input-desktop" class="search-input" placeholder="Search places, businesses or addresses..." oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')">
-          <span class="search-kbd">⌘K</span>
+          <input type="text" id="search-input-desktop" class="search-input" placeholder='Try &quot;Barber shop&quot; or &quot;Cafe&quot;' oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')">
+          <button type="button" class="search-filter-btn" title="Filters"><i class="fa-solid fa-sliders"></i></button>
         </div>
         <div id="search-results-desktop" class="search-results"></div>
       </div>
@@ -625,21 +636,38 @@ function clearRecentSearches(which){
   showRecentSearches(which);
 }
 const RECENT_DOT_COLORS = ['var(--accent)','var(--teal-fill)','var(--amber-fill)','var(--coral-fill)','var(--purple)'];
+const SEARCH_CHIP_CATS = [
+  {k:'all', label:'All'}, {k:'food', label:'Food'}, {k:'fuel', label:'Fuel'}, {k:'health', label:'Health'}, {k:'errand', label:'Errands'}
+];
+const SEARCH_QUICK_CATS = [
+  {k:'food', label:'Restaurants', icon:'fa-utensils', bg:'var(--teal-bg)', fg:'var(--teal-text)'},
+  {k:'health', label:'Pharmacy', icon:'fa-suitcase-medical', bg:'var(--blue-bg)', fg:'var(--blue-text)'},
+  {k:'health', label:'Hospitals', icon:'fa-hospital', bg:'var(--purple-bg)', fg:'var(--purple)'},
+  {k:'service', label:'Barbers', icon:'fa-scissors', bg:'var(--surface-2)', fg:'var(--ink-secondary)'},
+  {k:'fuel', label:'Fuel Stations', icon:'fa-gas-pump', bg:'var(--amber-bg)', fg:'var(--amber-text)'}
+];
+function searchQuickCategory(cat, which){
+  closeSearchPanel(which);
+  showDesktopPage('nearby');
+  setNearbyFilter(cat);
+}
 function showRecentSearches(which){
   const resultsEl = document.getElementById('search-results-'+which);
   const recent = getRecentSearches();
   const suggestions = locations.filter(l=>!l.osm).slice(0,4);
 
   let html = '';
+  html += `<div class="src-chips">${SEARCH_CHIP_CATS.map((c,i)=>`<span class="src-chip${i===0?' active':''}" onclick="searchQuickCategory('${c.k}','${which}')">${c.label}</span>`).join('')}</div>`;
   if(recent.length){
     html += `<div class="search-panel-head"><span>Recent Searches</span><span class="search-clear" onclick="clearRecentSearches('${which}')">Clear</span></div>`;
     html += recent.map((r,i) => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'><span class="search-dot" style="background:${RECENT_DOT_COLORS[i % RECENT_DOT_COLORS.length]};"></span>${r.label}</div>`).join('');
   }
+  html += `<div class="src-cat-list">${SEARCH_QUICK_CATS.map(c=>`<div class="src-cat-item" onclick="searchQuickCategory('${c.k}','${which}')"><span class="src-cat-icon" style="background:${c.bg}; color:${c.fg};"><i class="fa-solid ${c.icon}"></i></span><span class="src-cat-name">${c.label}</span></div>`).join('')}</div>`;
+  html += `<span class="src-more" onclick="closeSearchPanel('${which}'); showDesktopPage('nearby');">More categories</span>`;
   if(suggestions.length){
-    html += `<div class="search-panel-head" style="margin-top:${recent.length?'6px':'0'};"><span>Suggestions</span></div>`;
+    html += `<div class="search-panel-head" style="margin-top:6px;"><span>Suggestions</span></div>`;
     html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><span style="font-size:15px; width:18px; text-align:center; flex-shrink:0;">${emojiFor(l.icon)}</span>${l.name}</div>`).join('');
   }
-  if(!html) return;
   resultsEl.innerHTML = html;
   resultsEl.classList.add('show');
 }
