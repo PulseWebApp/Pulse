@@ -674,10 +674,22 @@ function setAuthToken(token){
 }
 async function loadCurrentUser(){
   const token = getAuthToken();
-  if(!token){ currentUser = null; return; }
-  const data = await api('/api/auth/me', {headers:{'Authorization':'Bearer '+token}});
-  currentUser = (data && data.user) ? data.user : null;
-  if(!currentUser) setAuthToken(null); // stale/expired token
+  if(!token || !API_BASE){ currentUser = null; return; }
+  try{
+    const res = await fetch(API_BASE + '/api/auth/me', {headers:{'Authorization':'Bearer '+token}});
+    if(res.status === 401){
+      // Server explicitly says this token is invalid/expired — safe to clear.
+      setAuthToken(null);
+      currentUser = null;
+      return;
+    }
+    if(!res.ok){ currentUser = null; return; } // some other hiccup — leave the token alone, retry next load
+    const data = await res.json();
+    currentUser = (data && data.user) ? data.user : null;
+  }catch(e){
+    // Network/CORS failure — leave the token alone rather than guessing it's invalid.
+    currentUser = null;
+  }
 }
 async function authRequest(path, body){
   const token = getAuthToken();
