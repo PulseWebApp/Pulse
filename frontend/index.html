@@ -1134,8 +1134,16 @@ function pinIconMinutes(minutes, fill){
   return L.divIcon({className:'', html:`<div style="width:32px;height:32px;border-radius:50%;background:${fill};border:2.5px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:800;font-family:'Inter',sans-serif;">${label}${minutes!=null?'<span style="font-size:7px;font-weight:700;margin-left:1px;">min</span>':''}</div>`, iconSize:[32,32], iconAnchor:[16,16]});
 }
 
+let lastMarkersSignature = null;
 function updateMapMarkers(){
   if(!leafletMap) return;
+  const locSig = locations.map(l=>l.id+'|'+l.minutes+'|'+l.status).join(',');
+  const roadSig = roadReports.length; // type (which drives the icon/color) never changes after creation
+  const sigSig = signals.map(s=>s.id+'|'+s.color).join(',');
+  const signature = locSig+'##'+roadSig+'##'+sigSig+'##'+JSON.stringify(activeLayers);
+  if(signature === lastMarkersSignature) return; // nothing marker-relevant changed since last time — skip the expensive rebuild
+  lastMarkersSignature = signature;
+
   Object.values(markerLayers).forEach(lg=>lg.clearLayers());
 
   locations.forEach(l=>{
@@ -1223,10 +1231,15 @@ function positionMap(){
   }
   initMapIfNeeded();
   updateMapMarkers();
-  setTimeout(()=>{ if(leafletMap) leafletMap.invalidateSize(); }, 50);
 }
-
-window.addEventListener('resize', ()=>{ positionMap(); });
+let resizeDebounce;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeDebounce);
+  resizeDebounce = setTimeout(()=>{
+    positionMap();
+    if(leafletMap) leafletMap.invalidateSize();
+  }, 150);
+});
 
 function setTab(t){
   tab = t;
@@ -2032,6 +2045,7 @@ async function boot(){
   }
 
   render(); // show demo data immediately, don't block on location/Overpass
+  renderDesktopPage(pageFromHash()); // restore the page from the URL (survives refresh, not just always Live Map)
   const authCheck = loadCurrentUser().then(updateAccountUI); // runs in parallel — don't make login status wait on slow geolocation/nearby-places
   await resolveLocation();
   await authCheck;
@@ -2044,8 +2058,15 @@ async function boot(){
   }, 30000);
 }
 let nearbyFilter = 'all';
-function showDesktopPage(page){
-  ['livemap','nearby','saved','reports','analytics','settings'].forEach(p=>{
+const DESKTOP_PAGES = ['livemap','nearby','saved','reports','analytics','settings'];
+let currentDesktopPage = 'livemap';
+function pageFromHash(){
+  const p = location.hash.replace('#','');
+  return DESKTOP_PAGES.includes(p) ? p : 'livemap';
+}
+function renderDesktopPage(page){
+  currentDesktopPage = page;
+  DESKTOP_PAGES.forEach(p=>{
     const navEl = document.getElementById('nav-'+(p==='livemap'?'livemap':p));
     if(navEl) navEl.classList.toggle('active', page===p);
     const pageEl = document.getElementById(p+'-page');
@@ -2060,6 +2081,13 @@ function showDesktopPage(page){
   else if(page==='settings') renderSettingsPage();
   else if(leafletMap) setTimeout(()=>leafletMap.invalidateSize(), 50);
 }
+function showDesktopPage(page){
+  if(page === currentDesktopPage){ renderDesktopPage(page); return; } // re-render in place, no new history entry
+  renderDesktopPage(page);
+  const url = page==='livemap' ? location.pathname + location.search : location.pathname + location.search + '#' + page;
+  history.pushState({page}, '', url);
+}
+window.addEventListener('popstate', () => renderDesktopPage(pageFromHash()));
 // ---------- Reports (real road_reports + signals, status derived honestly from confirm counts) ----------
 const REPORT_TYPE_META = {
   hazard:{label:'Hazard', icon:'fa-triangle-exclamation', color:'var(--amber-fill)'},
