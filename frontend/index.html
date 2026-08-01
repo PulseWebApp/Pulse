@@ -283,6 +283,27 @@
   .np-meta-row{display:flex; align-items:center; gap:6px; font-size:11.5px; margin:5px 0;}
   .np-rating{font-size:11.5px; color:var(--ink-secondary); margin-bottom:8px;}
   .np-dir-btn{width:100%; padding:8px; border-radius:9px; border:1px solid var(--border); background:var(--surface-2); font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;}
+  .page-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;}
+  .page-title{font-family:'Sora',sans-serif; font-size:20px; font-weight:800; color:var(--ink);}
+  .page-stat-row{display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;}
+  .page-stat-card{flex:1; min-width:130px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px;}
+  .page-stat-card .n{font-family:'Sora',sans-serif; font-size:24px; font-weight:800;}
+  .page-stat-card .l{font-size:11.5px; color:var(--ink-secondary); margin-top:2px;}
+  .tab-row{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px;}
+  .tab-btn{padding:10px 14px; font-size:13px; font-weight:600; color:var(--ink-secondary); cursor:pointer; border-bottom:2px solid transparent;}
+  .tab-btn.active{color:var(--accent); border-color:var(--accent);}
+  .report-row{display:flex; align-items:center; gap:12px; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:8px;}
+  .report-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+  .status-pill{font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; flex-shrink:0;}
+  .col-list{display:flex; flex-direction:column; gap:4px;}
+  .col-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; color:var(--ink);}
+  .col-item.active{background:var(--accent-bg); color:var(--accent-text); font-weight:600;}
+  .chart-card{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px;}
+  .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:12.5px;}
+  .bar-track{flex:1; height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:4px;}
+  .settings-nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; font-size:13px; color:var(--ink-secondary); cursor:pointer;}
+  .settings-nav-item.active{background:var(--accent-bg); color:var(--accent-text); font-weight:600;}
   @media (min-width:900px){
     .persona{display:none;}
     #filters{display:none;}
@@ -385,10 +406,10 @@
   <div class="desktop-nav">
     <div class="nav-item active" id="nav-livemap" onclick="showDesktopPage('livemap')"><i class="fa-solid fa-location-dot"></i><span>Live Map</span></div>
     <div class="nav-item" id="nav-nearby" onclick="showDesktopPage('nearby')"><i class="fa-regular fa-compass"></i><span>Nearby</span></div>
-    <div class="nav-item" onclick="toast('Coming soon')"><i class="fa-regular fa-bookmark"></i><span>Saved Places</span></div>
-    <div class="nav-item" onclick="toast('Coming soon')"><i class="fa-solid fa-shield-halved"></i><span>Reports</span></div>
-    <div class="nav-item" onclick="toast('Coming soon')"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></div>
-    <div class="nav-item" onclick="toast('Coming soon')"><i class="fa-solid fa-gear"></i><span>Settings</span></div>
+    <div class="nav-item" id="nav-saved" onclick="showDesktopPage('saved')"><i class="fa-regular fa-bookmark"></i><span>Saved Places</span></div>
+    <div class="nav-item" id="nav-reports" onclick="showDesktopPage('reports')"><i class="fa-solid fa-shield-halved"></i><span>Reports</span></div>
+    <div class="nav-item" id="nav-analytics" onclick="showDesktopPage('analytics')"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></div>
+    <div class="nav-item" id="nav-settings" onclick="showDesktopPage('settings')"><i class="fa-solid fa-gear"></i><span>Settings</span></div>
   </div>
 
   <div id="desktop-sidebar-body" class="desktop-sidebar-body"></div>
@@ -414,6 +435,10 @@
 
   <div class="map-pane-desktop" id="map-pane-desktop" style="display:none;">
     <div id="nearby-page" class="nearby-page" style="display:none;"></div>
+    <div id="saved-page" class="nearby-page" style="display:none;"></div>
+    <div id="reports-page" class="nearby-page" style="display:none;"></div>
+    <div id="analytics-page" class="nearby-page" style="display:none;"></div>
+    <div id="settings-page" class="nearby-page" style="display:none;"></div>
     <div class="map-wrap" style="flex:1;" id="map-wrap-el">
       <div id="leaflet-map"></div>
       <div class="search-bar-wrap">
@@ -1256,6 +1281,7 @@ function openDetail(id){
   <div class="overlay" onclick="if(event.target===this) closeModal()">
     <div class="sheet place-detail">
       <div style="display:flex; gap:6px; position:absolute; top:18px; right:18px; z-index:5;">
+        <button class="close-btn" id="save-btn-${l.id}" onclick="toggleSaveLocation('${l.id}')" title="Save this place">${isSaved(l.id) ? '<i class="fa-solid fa-bookmark"></i>' : '<i class="fa-regular fa-bookmark"></i>'}</button>
         <button class="close-btn" onclick="closeModal(); openReportModal();" title="Report something wrong" style="color:var(--coral-text);"><i class="fa-solid fa-flag" style="font-size:13px;"></i></button>
         <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
       </div>
@@ -1641,14 +1667,249 @@ async function boot(){
 }
 let nearbyFilter = 'all';
 function showDesktopPage(page){
-  document.getElementById('nav-livemap').classList.toggle('active', page==='livemap');
-  document.getElementById('nav-nearby').classList.toggle('active', page==='nearby');
+  ['livemap','nearby','saved','reports','analytics','settings'].forEach(p=>{
+    const navEl = document.getElementById('nav-'+(p==='livemap'?'livemap':p));
+    if(navEl) navEl.classList.toggle('active', page===p);
+    const pageEl = document.getElementById(p+'-page');
+    if(pageEl) pageEl.style.display = page===p ? 'block' : 'none';
+  });
   document.getElementById('map-wrap-el').style.display = page==='livemap' ? 'flex' : 'none';
-  document.getElementById('nearby-page').style.display = page==='nearby' ? 'block' : 'none';
   if(page==='nearby') renderNearbyPage();
+  else if(page==='saved') renderSavedPage();
+  else if(page==='reports') renderReportsPage();
+  else if(page==='analytics') renderAnalyticsPage();
+  else if(page==='settings') renderSettingsPage();
   else if(leafletMap) setTimeout(()=>leafletMap.invalidateSize(), 50);
 }
+// ---------- Reports (real road_reports + signals, status derived honestly from confirm counts) ----------
+const REPORT_TYPE_META = {
+  hazard:{label:'Hazard', icon:'fa-triangle-exclamation', color:'var(--amber-fill)'},
+  closure:{label:'Road Closed', icon:'fa-road-circle-xmark', color:'var(--coral-fill)'},
+  jam:{label:'Traffic Jam', icon:'fa-car', color:'var(--amber-fill)'},
+  police:{label:'Police', icon:'fa-shield-halved', color:'var(--accent)'},
+  camera:{label:'Camera', icon:'fa-camera', color:'var(--purple)'},
+};
+let reportsActiveTab = 'all';
+function setReportsTab(t){ reportsActiveTab = t; renderReportsPage(); }
+function renderReportsPage(){
+  const page = document.getElementById('reports-page');
+  const allReports = roadReports.map(r => ({...r, kind:'road', status: r.confirms>=3 ? 'Verified' : 'Pending'}))
+    .concat(signals.map(s => ({...s, kind:'signal', type:'signal', name: s.name || 'Traffic signal', status: s.confirms>=3 ? 'Verified' : 'Pending'})));
+
+  const typeCounts = {};
+  roadReports.forEach(r => { typeCounts[r.type] = (typeCounts[r.type]||0) + 1; });
+
+  let filtered = allReports;
+  if(reportsActiveTab==='pending') filtered = allReports.filter(r=>r.status==='Pending');
+  if(reportsActiveTab==='verified') filtered = allReports.filter(r=>r.status==='Verified');
+  if(reportsActiveTab==='rejected') filtered = []; // honest — no rejection workflow exists in this app
+
+  page.innerHTML = `
+    <div class="page-header"><div class="page-title">Reports</div><button class="primary-btn" style="width:auto; padding:10px 18px;" onclick="openReportModal()"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Report</button></div>
+    <div class="page-stat-row">
+      <div class="page-stat-card"><div class="n">${allReports.length}</div><div class="l">Total Reports</div></div>
+      ${Object.entries(typeCounts).map(([type,n])=>{
+        const meta = REPORT_TYPE_META[type] || {label:type, color:'var(--ink-muted)'};
+        return `<div class="page-stat-card"><div class="n" style="color:${meta.color};">${n}</div><div class="l">${meta.label}</div></div>`;
+      }).join('')}
+    </div>
+    <div class="tab-row">
+      <div class="tab-btn ${reportsActiveTab==='all'?'active':''}" onclick="setReportsTab('all')">All Reports</div>
+      <div class="tab-btn ${reportsActiveTab==='pending'?'active':''}" onclick="setReportsTab('pending')">Pending</div>
+      <div class="tab-btn ${reportsActiveTab==='verified'?'active':''}" onclick="setReportsTab('verified')">Verified</div>
+      <div class="tab-btn ${reportsActiveTab==='rejected'?'active':''}" onclick="setReportsTab('rejected')">Rejected</div>
+    </div>
+    ${filtered.length ? filtered.map(r=>{
+      const meta = REPORT_TYPE_META[r.type] || {label:r.type, icon:'fa-flag', color:'var(--ink-muted)'};
+      const statusBg = r.status==='Verified' ? 'var(--teal-bg)' : 'var(--amber-bg)';
+      const statusText = r.status==='Verified' ? 'var(--teal-text)' : 'var(--amber-text)';
+      return `<div class="report-row">
+        <div class="report-icon" style="background:${meta.color}22; color:${meta.color};"><i class="fa-solid ${meta.icon}"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${r.name}</div><div style="font-size:11.5px; color:var(--ink-muted);">${meta.label}${r.detail ? ' \u00B7 '+r.detail : ''}</div></div>
+        <div class="status-pill" style="background:${statusBg}; color:${statusText};">${r.status}</div>
+        <div style="font-size:11.5px; color:var(--ink-muted); width:80px; text-align:right;">${r.confirms||0} votes</div>
+        <div style="font-size:11px; color:var(--ink-muted); width:70px; text-align:right;">${r.updated || ''}</div>
+      </div>`;
+    }).join('') : `<p style="color:var(--ink-muted); font-size:13px;">No reports in this view yet.</p>`}
+  `;
+}
+
+// ---------- Analytics (real aggregation via /api/analytics — no invented numbers) ----------
+async function renderAnalyticsPage(){
+  const page = document.getElementById('analytics-page');
+  page.innerHTML = `<p style="color:var(--ink-muted); font-size:13px;">Loading real analytics from your check-in history...</p>`;
+  const data = await api('/api/analytics');
+  if(!data){ page.innerHTML = `<p style="color:var(--ink-muted); font-size:13px;">Couldn't load analytics right now.</p>`; return; }
+
+  const daily = data.dailyAvgWait || [];
+  const hourly = data.hourlyCheckins || [];
+  const busiest = data.busiestLocations || [];
+  const byType = data.reportsByType || [];
+
+  const avgOverall = daily.length ? Math.round(daily.reduce((s,d)=>s+d.avgMinutes,0)/daily.length) : null;
+  const maxHourly = Math.max(1, ...hourly.map(h=>h.count));
+  const peakHour = hourly.length ? hourly.reduce((a,b)=>b.count>a.count?b:a, hourly[0]) : null;
+  const maxBusy = Math.max(1, ...busiest.map(b=>b.checkins));
+  const typeColors = {hazard:'var(--amber-fill)', closure:'var(--coral-fill)', jam:'var(--amber-fill)', police:'var(--accent)', camera:'var(--purple)'};
+  const totalTyped = byType.reduce((s,t)=>s+t.count,0);
+
+  page.innerHTML = `
+    <div class="page-header"><div class="page-title">Analytics</div><span style="font-size:12px; color:var(--ink-muted);">Based on real check-ins &amp; reports from your database</span></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="chart-card">
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 4px;">Average Wait Time</p>
+        <p style="font-size:24px; font-weight:800; font-family:'Sora',sans-serif; margin:0 0 12px;">${avgOverall==null?'No data yet':avgOverall+' min'}</p>
+        ${daily.length>=2 ? `<svg viewBox="0 0 300 80" style="width:100%; height:80px;"><polyline points="${daily.map((d,i)=>`${(i/(daily.length-1))*300},${80-(d.avgMinutes/Math.max(...daily.map(x=>x.avgMinutes),1))*70}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/></svg>` : `<p style="font-size:12px; color:var(--ink-muted);">Needs at least 2 days of check-ins to chart a trend.</p>`}
+      </div>
+      <div class="chart-card">
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 4px;">Busiest Time</p>
+        <p style="font-size:24px; font-weight:800; font-family:'Sora',sans-serif; margin:0 0 12px;">${peakHour ? peakHour.hour+':00 \u2013 '+((peakHour.hour+1)%24)+':00' : 'No data yet'}</p>
+        <div style="display:flex; align-items:flex-end; gap:2px; height:70px;">
+          ${hourly.length ? Array.from({length:24},(_,h)=>{
+            const found = hourly.find(x=>x.hour===h);
+            const n = found ? found.count : 0;
+            return `<div style="flex:1; height:${(n/maxHourly)*100}%; background:var(--accent); border-radius:2px; min-height:2px;" title="${h}:00 - ${n} check-ins"></div>`;
+          }).join('') : `<p style="font-size:12px; color:var(--ink-muted);">No check-in data yet.</p>`}
+        </div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="chart-card">
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 12px;">Busiest Places</p>
+        ${busiest.length ? busiest.map(b=>`<div class="bar-row"><span style="width:100px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${b.name}</span><div class="bar-track"><div class="bar-fill" style="width:${(b.checkins/maxBusy)*100}%; background:var(--accent);"></div></div><span style="width:70px; text-align:right; flex-shrink:0; color:var(--ink-muted);">${b.checkins} check-ins</span></div>`).join('') : `<p style="font-size:12px; color:var(--ink-muted);">No check-ins recorded yet.</p>`}
+      </div>
+      <div class="chart-card">
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 12px;">Reports Overview</p>
+        ${byType.length ? byType.map(t=>{
+          const meta = REPORT_TYPE_META[t.type] || {label:t.type};
+          const color = typeColors[t.type] || 'var(--ink-muted)';
+          return `<div class="bar-row"><span style="width:90px; flex-shrink:0;">${meta.label}</span><div class="bar-track"><div class="bar-fill" style="width:${totalTyped?(t.count/totalTyped)*100:0}%; background:${color};"></div></div><span style="width:40px; text-align:right; flex-shrink:0; color:var(--ink-muted);">${t.count}</span></div>`;
+        }).join('') : `<p style="font-size:12px; color:var(--ink-muted);">No road reports recorded yet.</p>`}
+      </div>
+    </div>
+  `;
+}
+
+// ---------- Settings (real sections only — no account system exists, so no fake profile) ----------
+let settingsActiveTab = 'appearance';
+function setSettingsTab(t){ settingsActiveTab = t; renderSettingsPage(); }
+function getNotifPref(){ return localStorage.getItem('pulse_notif_pref') === 'on'; }
+function toggleNotifPref(){
+  const on = !getNotifPref();
+  localStorage.setItem('pulse_notif_pref', on ? 'on' : 'off');
+  renderSettingsPage();
+}
+function renderSettingsPage(){
+  const page = document.getElementById('settings-page');
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const notifOn = getNotifPref();
+
+  const tabs = [
+    {k:'appearance', label:'Appearance', icon:'fa-palette'},
+    {k:'notifications', label:'Notifications', icon:'fa-bell'},
+    {k:'about', label:'About Pulse', icon:'fa-circle-info'},
+  ];
+
+  let body = '';
+  if(settingsActiveTab==='appearance'){
+    body = `
+      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Appearance</p>
+      <div class="report-row">
+        <div class="report-icon" style="background:var(--accent-bg); color:var(--accent-text);"><i class="fa-solid ${isDark?'fa-moon':'fa-sun'}"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Dark mode</div><div style="font-size:11.5px; color:var(--ink-muted);">Currently ${isDark?'on':'off'}</div></div>
+        <button class="primary-btn" style="width:auto; padding:8px 16px;" onclick="toggleTheme(); renderSettingsPage();">Toggle</button>
+      </div>`;
+  } else if(settingsActiveTab==='notifications'){
+    body = `
+      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Notifications</p>
+      <div class="report-row">
+        <div class="report-icon" style="background:var(--teal-bg); color:var(--teal-text);"><i class="fa-solid fa-bell"></i></div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">Wait time alerts</div><div style="font-size:11.5px; color:var(--ink-muted);">Saved locally on this device — Pulse doesn't send push notifications yet</div></div>
+        <button class="primary-btn" style="width:auto; padding:8px 16px; ${notifOn?'':'background:var(--surface-2); color:var(--ink);'}" onclick="toggleNotifPref()">${notifOn?'On':'Off'}</button>
+      </div>`;
+  } else if(settingsActiveTab==='about'){
+    body = `
+      <p style="font-size:15px; font-weight:700; margin-bottom:16px;">About Pulse</p>
+      <p style="font-size:13px; color:var(--ink-secondary); line-height:1.6;">Pulse is a real-time, crowd-sourced app for wait times, road conditions, and local reports — built for RLC Hacks.</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-top:12px;">This build has no login system, so there's no personal profile page — all data is either public/shared (locations, reports) or stored locally in your browser (saved places, this notification preference).</p>
+    `;
+  }
+
+  page.innerHTML = `
+    <div class="page-header"><div class="page-title">Settings</div></div>
+    <div style="display:grid; grid-template-columns:200px 1fr; gap:20px;">
+      <div class="col-list">
+        ${tabs.map(t=>`<div class="settings-nav-item ${settingsActiveTab===t.k?'active':''}" onclick="setSettingsTab('${t.k}')"><i class="fa-solid ${t.icon}"></i>${t.label}</div>`).join('')}
+      </div>
+      <div class="chart-card">${body}</div>
+    </div>
+  `;
+}
+
 function setNearbyFilter(f){ nearbyFilter = f; renderNearbyPage(); }
+
+// ---------- Saved Places (real, localStorage-backed — no accounts exist so this is per-browser) ----------
+function getSavedCollections(){
+  try{ return JSON.parse(localStorage.getItem('pulse_saved_collections') || '{"Favorites":[]}'); }
+  catch(e){ return {"Favorites":[]}; }
+}
+function setSavedCollections(obj){ localStorage.setItem('pulse_saved_collections', JSON.stringify(obj)); }
+function isSaved(locationId){
+  const cols = getSavedCollections();
+  return Object.values(cols).some(arr => arr.includes(String(locationId)));
+}
+function toggleSaveLocation(locationId, collection){
+  const cols = getSavedCollections();
+  const c = collection || 'Favorites';
+  if(!cols[c]) cols[c] = [];
+  const idx = cols[c].indexOf(String(locationId));
+  if(idx >= 0) cols[c].splice(idx, 1);
+  else cols[c].push(String(locationId));
+  setSavedCollections(cols);
+  toast(idx >= 0 ? 'Removed from '+c : 'Saved to '+c);
+  const btn = document.getElementById('save-btn-'+locationId);
+  if(btn) btn.innerHTML = isSaved(locationId) ? '<i class="fa-solid fa-bookmark"></i>' : '<i class="fa-regular fa-bookmark"></i>';
+}
+let savedActiveCollection = 'Favorites';
+function setSavedCollection(name){ savedActiveCollection = name; renderSavedPage(); }
+function createCollection(){
+  const name = prompt('New collection name:');
+  if(!name || !name.trim()) return;
+  const cols = getSavedCollections();
+  if(!cols[name]) cols[name] = [];
+  setSavedCollections(cols);
+  savedActiveCollection = name;
+  renderSavedPage();
+}
+function renderSavedPage(){
+  const page = document.getElementById('saved-page');
+  const cols = getSavedCollections();
+  const activeIds = cols[savedActiveCollection] || [];
+  const savedLocations = locations.filter(l => activeIds.includes(String(l.id)));
+
+  page.innerHTML = `
+    <div class="page-header"><div class="page-title">Saved Places</div><button class="primary-btn" style="width:auto; padding:10px 18px;" onclick="createCollection()"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Collection</button></div>
+    <div style="display:grid; grid-template-columns:200px 1fr; gap:20px;">
+      <div>
+        <p style="font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:8px;">Collections</p>
+        <div class="col-list">
+          ${Object.keys(cols).map(name => `<div class="col-item ${name===savedActiveCollection?'active':''}" onclick="setSavedCollection('${name}')"><i class="fa-solid fa-folder"></i> ${name} <span style="margin-left:auto; color:var(--ink-muted); font-size:11px;">${cols[name].length}</span></div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <p style="font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:8px;">${savedActiveCollection}</p>
+        ${savedLocations.length ? savedLocations.map(l=>{
+          const c = statusColors[l.status];
+          return `<div class="report-row" onclick="openDetail('${l.id}')" style="cursor:pointer;">
+            <div class="report-icon" style="background:${c.bg}; color:${c.text};">${emojiFor(l.icon)}</div>
+            <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${l.name}</div><div style="font-size:11.5px; color:var(--ink-muted);">${l.distance||'nearby'} away</div></div>
+            <div class="status-pill" style="background:${c.bg}; color:${c.text};">${l.minutes==null?'No data':l.minutes+' min'}</div>
+          </div>`;
+        }).join('') : `<p style="color:var(--ink-muted); font-size:13px;">Nothing saved here yet. Open any place and tap the bookmark icon to save it.</p>`}
+      </div>
+    </div>
+  `;
+}
 function renderNearbyPage(q){
   const page = document.getElementById('nearby-page');
   const query = (q!=null ? q : (document.getElementById('np-search-input')?.value || '')).toLowerCase();
