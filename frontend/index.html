@@ -212,6 +212,7 @@
     .map-pane-desktop .layers-btn{top:64px; right:116px;}
     .map-pane-desktop .heat-toggle{bottom:64px; left:64px;}
     .map-pane-desktop .weather-card{bottom:64px; right:64px;}
+    .map-pane-desktop .route-panel{bottom:64px; left:64px; right:auto; width:340px;}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -275,6 +276,14 @@
   .wait-badge .d{width:6px; height:6px; border-radius:50%; animation:breathe 1.8s ease-in-out infinite;}
 
   .weather-card{position:absolute; bottom:14px; right:14px; z-index:900; background:rgba(255,255,255,.85); -webkit-border:1px solid rgba(255,255,255,.7); border-radius:16px; padding:10px 14px; box-shadow:var(--shadow-card); display:none; align-items:center; gap:9px;}
+  .route-panel{position:absolute; bottom:14px; left:14px; right:14px; z-index:950; max-height:56vh; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); padding:18px; display:none;}
+  .route-panel.show{display:block;}
+  .route-panel-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;}
+  .route-summary{font-size:22px; font-weight:800; font-family:'Sora',sans-serif; color:var(--ink);}
+  .route-sub{font-size:12px; color:var(--ink-muted); margin-top:2px;}
+  .route-step{display:flex; gap:10px; padding:9px 0; border-top:1px solid var(--border); font-size:12.5px; color:var(--ink);}
+  .route-step:first-child{border-top:none;}
+  .route-step-icon{width:22px; height:22px; border-radius:50%; background:var(--accent-bg); color:var(--accent-text); display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; margin-top:1px;}
   .leaflet-bottom.leaflet-right{right:auto !important; left:0 !important;}
   .leaflet-control-attribution{display:none !important;}
   [data-theme="dark"] .weather-card{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
@@ -552,6 +561,7 @@
         </div>
       </div>
       <div class="weather-card" id="weather-card-desktop"></div>
+      <div class="route-panel" id="route-panel"></div>
     </div>
   </div>
   <div id="modal-holder"></div>
@@ -1449,11 +1459,75 @@ function openDetail(id){
   loadWaitSparkline(l.id);
 }
 
-function openDirections(id){
+let routeLayer = null, routeStartMarker = null, routeEndMarker = null;
+function closeRoute(){
+  if(routeLayer && leafletMap){ leafletMap.removeLayer(routeLayer); routeLayer = null; }
+  if(routeStartMarker && leafletMap){ leafletMap.removeLayer(routeStartMarker); routeStartMarker = null; }
+  if(routeEndMarker && leafletMap){ leafletMap.removeLayer(routeEndMarker); routeEndMarker = null; }
+  const panel = document.getElementById('route-panel');
+  if(panel) panel.classList.remove('show');
+}
+async function openDirections(id){
   const l = locations.find(x=>String(x.id)===String(id));
   if(!l) return;
-  const pos = l.osm ? {lat:l.lat, lng:l.lng} : demoToLatLng(l.x, l.y);
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${pos.lat},${pos.lng}`, '_blank');
+  const destPos = l.osm ? {lat:l.lat, lng:l.lng} : demoToLatLng(l.x, l.y);
+
+  closeModal();
+  showDesktopPage('livemap');
+  initMapIfNeeded();
+
+  const panel = document.getElementById('route-panel');
+  if(!panel) return;
+  panel.classList.add('show');
+  panel.innerHTML = `<div style="text-align:center; padding:16px 0; color:var(--ink-muted); font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Finding a route to ${l.name}...</div>`;
+
+  const origin = await getUserLocation();
+  if(origin.error){
+    panel.innerHTML = `<div>
+      <p style="font-size:13px; color:var(--ink-secondary); margin-bottom:14px;">Couldn't get your location to route from (${origin.error.replace(/_/g,' ')}). Enable location access and try again.</p>
+      <button class="primary-btn" style="width:100%;" onclick="closeRoute()">Close</button>
+    </div>`;
+    return;
+  }
+
+  const data = await api(`/api/directions?from=${origin.lat},${origin.lng}&to=${destPos.lat},${destPos.lng}`);
+  if(!data || data.error){
+    panel.innerHTML = `<div>
+      <p style="font-size:13px; color:var(--ink-secondary); margin-bottom:14px;">Couldn't load a route right now${data && data.error ? ' — '+data.error : ''}.</p>
+      <button class="primary-btn" style="width:100%;" onclick="closeRoute()">Close</button>
+    </div>`;
+    return;
+  }
+
+  closeRoute();
+  panel.classList.add('show');
+
+  const c = statusColors[l.status] || statusColors.unknown;
+  if(typeof L !== 'undefined' && leafletMap){
+    routeLayer = L.polyline(data.geometry, {color:'#2563EB', weight:5, opacity:.85, lineJoin:'round'}).addTo(leafletMap);
+    routeStartMarker = L.circleMarker([origin.lat, origin.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
+    routeEndMarker = L.marker([destPos.lat, destPos.lng], {icon: pinIcon(l.icon, c.fill)}).addTo(leafletMap);
+    leafletMap.fitBounds(routeLayer.getBounds(), {paddingTopLeft:[360,40], paddingBottomRight:[40,40]});
+  }
+
+  const km = (data.distanceMeters/1000).toFixed(1);
+  const mins = Math.max(1, Math.round(data.durationSeconds/60));
+
+  panel.innerHTML = `
+    <div class="route-panel-head">
+      <div>
+        <div class="route-summary">${mins} min</div>
+        <div class="route-sub">${km} km &middot; to ${l.name}</div>
+      </div>
+      <button class="close-btn" onclick="closeRoute()" title="Exit navigation"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div>
+      ${data.steps && data.steps.length ? data.steps.map(s=>`<div class="route-step">
+        <span class="route-step-icon"><i class="fa-solid fa-arrow-up"></i></span>
+        <div style="flex:1;">${s.instruction}${s.distance ? `<div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">${s.distance < 1000 ? Math.round(s.distance)+' m' : (s.distance/1000).toFixed(1)+' km'}</div>` : ''}</div>
+      </div>`).join('') : `<p style="font-size:12px; color:var(--ink-muted);">Step-by-step turns aren't available for this route, but the path is drawn on the map.</p>`}
+    </div>
+  `;
 }
 
 async function loadWaitSparkline(id){
