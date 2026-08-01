@@ -310,12 +310,13 @@
   .np-toggle input:checked + .np-toggle-slider::before{transform:translateX(18px);}
   .app-shell.collapsed ~ .map-pane-desktop .nearby-page{left:132px;}
   [data-theme="dark"] .nearby-page{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
-  .np-search{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04);}
-  .np-search input{flex:1; border:none; outline:none; font-size:14px; background:none; color:var(--ink);}
-  .np-chips{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+  .np-search{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:28px; height:54px; box-sizing:border-box; padding:0 20px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04);}
+  .np-search:focus-within{box-shadow:0 2px 8px rgba(0,0,0,.04), 0 0 0 3px var(--accent-bg); border-color:var(--accent);}
+  .np-search input{flex:1; height:100%; border:none; outline:none; font-size:14.5px; font-family:'Inter',sans-serif; background:none; color:var(--ink);}
+  .np-chips{display:flex; gap:8px; margin-bottom:32px; flex-wrap:wrap;}
   .np-chip{font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:20px; background:var(--surface-2); color:var(--ink-secondary); cursor:pointer; border:1px solid var(--border);}
   .np-chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
-  .np-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;}
+  .np-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); row-gap:32px; column-gap:16px;}
   .np-card{background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.05); transition:transform .2s, box-shadow .2s;}
   .np-card:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.1);}
   .np-photo{height:110px; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-size:32px;}
@@ -537,7 +538,17 @@ let locations = [
   {id:5, name:'Shell station, Main St', category:'fuel', icon:'ti-gas-station', distance:'0.5 mi', status:'amber', minutes:12, confirms:0, updated:'1 min ago', ownerOwned:true, ownerVerified:true, note:'2 pumps closed for maintenance', x:250, y:70},
   {id:6, name:'Bilal barbershop', category:'service', icon:'ti-scissors', distance:'0.3 mi', status:'red', minutes:45, confirms:0, updated:'3 min ago', ownerOwned:true, ownerVerified:true, note:'3 people ahead, walk-ins only', x:57, y:335},
   {id:7, name:'Ranchers Restaurant', category:'food', icon:'ti-tools-kitchen-2', distance:'0.3 mi', status:'green', minutes:5, confirms:8, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:180, y:115},
-  {id:8, name:'Layers Bakeshop', category:'food', icon:'ti-bread', distance:'0.5 mi', status:'amber', minutes:15, confirms:4, updated:'3 min ago', ownerOwned:false, ownerVerified:false, x:122, y:310}
+  {id:8, name:'Layers Bakeshop', category:'food', icon:'ti-bread', distance:'0.5 mi', status:'amber', minutes:15, confirms:4, updated:'3 min ago', ownerOwned:false, ownerVerified:false, x:122, y:310},
+  {id:9, name:'Zenith Coffee House', category:'food', icon:'ti-coffee', distance:'0.2 mi', status:'green', minutes:3, confirms:9, updated:'1 min ago', ownerOwned:false, ownerVerified:false, x:150, y:180},
+  {id:10, name:'Circle K, Airport Rd', category:'fuel', icon:'ti-gas-station', distance:'0.9 mi', status:'green', minutes:2, confirms:5, updated:'4 min ago', ownerOwned:false, ownerVerified:false, x:210, y:260},
+  {id:11, name:'Total Fuel Station', category:'fuel', icon:'ti-gas-station', distance:'1.3 mi', status:'red', minutes:22, confirms:2, updated:'6 min ago', ownerOwned:false, ownerVerified:false, x:80, y:150},
+  {id:12, name:'Northgate Pharmacy', category:'health', icon:'ti-first-aid-kit', distance:'0.6 mi', status:'amber', minutes:11, confirms:7, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:190, y:400},
+  {id:13, name:'Willow Dental Clinic', category:'health', icon:'ti-stethoscope', distance:'1.0 mi', status:'green', minutes:6, confirms:3, updated:'5 min ago', ownerOwned:false, ownerVerified:false, x:260, y:190},
+  {id:14, name:'Quick Cuts Barbershop', category:'service', icon:'ti-scissors', distance:'0.4 mi', status:'green', minutes:8, confirms:11, updated:'1 min ago', ownerOwned:true, ownerVerified:true, x:70, y:260},
+  {id:15, name:'City Bank Branch', category:'service', icon:'ti-building-bank', distance:'1.2 mi', status:'amber', minutes:19, confirms:6, updated:'3 min ago', ownerOwned:false, ownerVerified:false, x:230, y:60},
+  {id:16, name:'Fresh Mart Grocery', category:'errand', icon:'ti-shopping-cart', distance:'0.5 mi', status:'green', minutes:4, confirms:10, updated:'2 min ago', ownerOwned:false, ownerVerified:false, x:140, y:350},
+  {id:17, name:'Sunrise Dry Cleaners', category:'errand', icon:'ti-wash', distance:'0.7 mi', status:'amber', minutes:14, confirms:2, updated:'4 min ago', ownerOwned:false, ownerVerified:false, x:200, y:120},
+  {id:18, name:'Metro Post Office', category:'errand', icon:'ti-map-pin', distance:'1.1 mi', status:'red', minutes:31, confirms:5, updated:'6 min ago', ownerOwned:false, ownerVerified:false, x:95, y:400}
 ];
 
 let roadReports = [
@@ -2034,12 +2045,12 @@ function renderNearbyPage(q){
     {k:'all', label:'All'}, {k:'openNow', label:'Open Now'}, {k:'under10', label:'Under 10 min'},
     {k:'verified', label:'Verified'}, {k:'walking', label:'Walking Distance'},
   ];
-  const visibleItems = npShowAll ? items : items.slice(0, 4);
+  const visibleItems = npShowAll ? items : items.slice(0, 8);
 
   page.innerHTML = `
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-      <div class="np-search" style="flex:1; margin-bottom:0;"><i class="fa-solid fa-magnifying-glass" style="color:var(--ink-muted);"></i><input id="np-search-input" placeholder="Search nearby places..." value="${q||''}" oninput="renderNearbyPage(this.value)"></div>
-      <button onclick="openFiltersModal()" style="display:flex; align-items:center; gap:8px; padding:11px 16px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; flex-shrink:0;"><i class="fa-solid fa-sliders"></i>Filters</button>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:26px;">
+      <div class="np-search" style="flex:1; margin-bottom:0;"><i class="fa-solid fa-magnifying-glass" style="color:var(--ink-muted);"></i><input id="np-search-input" placeholder='Try &quot;Barber shop&quot; or &quot;Cafe&quot;' value="${q||''}" oninput="renderNearbyPage(this.value)"></div>
+      <button onclick="openFiltersModal()" style="display:flex; align-items:center; gap:8px; height:54px; padding:0 20px; border-radius:28px; border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,.04);"><i class="fa-solid fa-sliders"></i>Filters</button>
     </div>
     <div class="np-chips">${chips.map(c=>`<div class="np-chip ${nearbyFilter===c.k?'active':''}" onclick="setNearbyFilter('${c.k}')">${c.label}</div>`).join('')}<div class="np-chip" onclick="openFiltersModal()">More <i class="fa-solid fa-chevron-down" style="font-size:9px; margin-left:4px;"></i></div></div>
     <div class="np-grid">
@@ -2056,7 +2067,7 @@ function renderNearbyPage(q){
         </div>`;
       }).join('') : `<p style="grid-column:1/-1; color:var(--ink-muted); font-size:13px;">No places match your search.</p>`}
     </div>
-    ${items.length > 4 ? `<div style="text-align:center; margin-top:18px;"><button onclick="toggleShowAllNearby()" style="border:none; background:none; color:var(--accent-text); font-weight:600; font-size:13px; cursor:pointer;">${npShowAll ? 'Show less' : 'View more places'} <i class="fa-solid fa-chevron-${npShowAll?'up':'down'}" style="font-size:10px; margin-left:4px;"></i></button></div>` : ''}
+    ${items.length > 8 ? `<div style="text-align:center; margin-top:18px;"><button onclick="toggleShowAllNearby()" style="border:none; background:none; color:var(--accent-text); font-weight:600; font-size:13px; cursor:pointer;">${npShowAll ? 'Show less' : 'View more places'} <i class="fa-solid fa-chevron-${npShowAll?'up':'down'}" style="font-size:10px; margin-left:4px;"></i></button></div>` : ''}
 
     <div id="np-filters-overlay" class="np-filters-overlay">
       <div class="np-filters-modal">
