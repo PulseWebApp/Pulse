@@ -172,8 +172,8 @@
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
   @media (min-width:900px){
-    .search-bar-wrap{top:24px; left:calc(355px + (100% - 355px)/2); transform:translateX(-50%); right:auto; width:min(500px, 50%); transition:left .25s;}
-    .app-shell.collapsed ~ .map-pane-desktop .search-bar-wrap{left:calc(132px + (100% - 132px)/2);}
+    .search-bar-wrap{top:64px; left:calc(355px + 40px); right:auto; width:min(420px, 38%); transition:left .25s;}
+    .app-shell.collapsed ~ .map-pane-desktop .search-bar-wrap{left:calc(132px + 40px);}
     .search-input{font-size:14.5px;}
   }
   .search-panel-head{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink); padding:4px 8px 8px;}
@@ -196,12 +196,11 @@
     .map-frame-overlay{display:block; position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:800; pointer-events:none; border-radius:32px; background:radial-gradient(ellipse at center, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 52%, rgba(255,255,255,.16) 84%, rgba(255,255,255,.38) 100%); border:1px solid rgba(255,255,255,.55); box-shadow:0 20px 50px rgba(20,22,30,.14), inset 0 0 50px rgba(255,255,255,.25), inset 0 1px 0 rgba(255,255,255,.6); transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .map-frame-overlay{left:132px;}
     [data-theme="dark"] .map-frame-overlay{background:radial-gradient(ellipse at center, rgba(24,34,52,0) 0%, rgba(24,34,52,0) 52%, rgba(24,34,52,.28) 84%, rgba(24,34,52,.5) 100%); border-color:rgba(255,255,255,.12); box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 0 50px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.1);}
-    .search-bar-wrap{top:38px;}
-    .top-right-controls{top:38px; right:38px;}
-    .map-controls{top:90px; right:38px;}
-    .layers-btn{top:38px; right:90px;}
-    .heat-toggle{bottom:38px; left:38px;}
-    .weather-card{bottom:38px; right:38px;}
+    .top-right-controls{top:64px; right:64px;}
+    .map-controls{top:126px; right:64px;}
+    .layers-btn{top:64px; right:116px;}
+    .heat-toggle{bottom:64px; left:64px;}
+    .weather-card{bottom:64px; right:64px;}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -305,7 +304,7 @@
   .np-chips{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
   .np-chip{font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:20px; background:var(--surface-2); color:var(--ink-secondary); cursor:pointer; border:1px solid var(--border);}
   .np-chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
-  .np-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px;}
+  .np-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;}
   .np-card{background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.05); transition:transform .2s, box-shadow .2s;}
   .np-card:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.1);}
   .np-photo{height:110px; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-size:32px;}
