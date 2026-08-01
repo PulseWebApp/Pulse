@@ -212,7 +212,8 @@
     .map-pane-desktop .layers-btn{top:64px; right:116px;}
     .map-pane-desktop .heat-toggle{bottom:64px; left:64px;}
     .map-pane-desktop .weather-card{bottom:64px; right:64px;}
-    .map-pane-desktop .route-panel{bottom:64px; left:64px; right:auto; width:340px;}
+    .map-pane-desktop .route-panel{bottom:64px; left:calc(355px + 40px); right:auto; width:340px; transition:left .25s;}
+    .app-shell.collapsed ~ .map-pane-desktop .route-panel{left:calc(132px + 40px);}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
