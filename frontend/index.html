@@ -193,8 +193,9 @@
   .map-wrap{position:relative; flex:1; min-height:0; border-radius:0; overflow:hidden;}
   .map-frame-overlay{display:none;}
   @media (min-width:900px){
-    .map-frame-overlay{display:block; position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:800; pointer-events:none; border-radius:32px; background:rgba(255,255,255,.85); border:1px solid rgba(255,255,255,.7); box-shadow:0 20px 50px rgba(20,22,30,.14); transition:left .25s;}
+    .map-frame-overlay{display:block; position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:800; pointer-events:none; border-radius:32px; background:radial-gradient(ellipse at center, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 52%, rgba(255,255,255,.16) 84%, rgba(255,255,255,.38) 100%); border:1px solid rgba(255,255,255,.55); box-shadow:0 20px 50px rgba(20,22,30,.14), inset 0 0 50px rgba(255,255,255,.25), inset 0 1px 0 rgba(255,255,255,.6); transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .map-frame-overlay{left:132px;}
+    [data-theme="dark"] .map-frame-overlay{background:radial-gradient(ellipse at center, rgba(24,34,52,0) 0%, rgba(24,34,52,0) 52%, rgba(24,34,52,.28) 84%, rgba(24,34,52,.5) 100%); border-color:rgba(255,255,255,.12); box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 0 50px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.1);}
     .search-bar-wrap{top:38px;}
     .top-right-controls{top:38px; right:38px;}
     .map-controls{top:90px; right:38px;}
