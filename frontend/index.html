@@ -550,7 +550,7 @@
           <button class="mode-pill-btn" id="mode-light-btn" onclick="if(document.documentElement.dataset.theme==='dark') toggleTheme();" title="Light"><i class="fa-solid fa-sun" style="font-size:12px;"></i></button>
           <button class="mode-pill-btn" id="mode-dark-btn" onclick="if(document.documentElement.dataset.theme!=='dark') toggleTheme();" title="Dark"><i class="fa-solid fa-moon" style="font-size:12px;"></i></button>
         </div>
-        <div class="avatar-btn">A</div>
+        <div class="avatar-btn" id="account-avatar-btn" style="cursor:pointer;" onclick="openAccountMenu()"><i class="fa-regular fa-user"></i></div>
       </div>
       <div class="map-controls">
         <button class="map-control locate" onclick="recenterOnMe()" title="Go to my location"><i class="fa-solid fa-location-crosshairs"></i></button>
@@ -663,6 +663,131 @@ const typeColors = {
 // Real map / real location state
 let userLoc = null;           // {lat,lng} from device GPS, or a fallback
 let usingRealLocation = false;
+
+// ---------- Auth (guest mode is the default — nothing is gated behind login except
+// account-synced saved places and the business owner dashboard) ----------
+let currentUser = null; // {id,email,role,name} | null (null = guest)
+function getAuthToken(){ return localStorage.getItem('pulse_auth_token'); }
+function setAuthToken(token){
+  if(token) localStorage.setItem('pulse_auth_token', token);
+  else localStorage.removeItem('pulse_auth_token');
+}
+async function loadCurrentUser(){
+  const token = getAuthToken();
+  if(!token){ currentUser = null; return; }
+  const data = await api('/api/auth/me', {headers:{'Authorization':'Bearer '+token}});
+  currentUser = (data && data.user) ? data.user : null;
+  if(!currentUser) setAuthToken(null); // stale/expired token
+}
+async function authRequest(path, body){
+  const token = getAuthToken();
+  return api(path, {
+    method:'POST',
+    headers:{'Content-Type':'application/json', ...(token ? {'Authorization':'Bearer '+token} : {})},
+    body: JSON.stringify(body||{})
+  });
+}
+async function submitAuthForm(mode){
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  if(!email || !password){ errEl.textContent = 'Enter an email and password.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('auth-submit-btn');
+  btn.disabled = true; btn.textContent = mode==='signup' ? 'Creating account…' : 'Logging in…';
+
+  let payload = {email, password};
+  if(mode==='signup'){
+    payload.name = document.getElementById('auth-name').value.trim() || null;
+    payload.role = document.querySelector('input[name="auth-role"]:checked').value;
+  }
+  const data = await authRequest(mode==='signup' ? '/api/auth/signup' : '/api/auth/login', payload);
+
+  if(!data || data.error){
+    errEl.textContent = (data && data.error) || 'Something went wrong. Try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = mode==='signup' ? 'Create account' : 'Log in';
+    return;
+  }
+  setAuthToken(data.token);
+  currentUser = data.user;
+  closeModal();
+  toast(mode==='signup' ? `Welcome, ${currentUser.name || currentUser.email}!` : 'Logged in.');
+  updateAccountUI();
+  if(document.getElementById('settings-page') && document.getElementById('settings-page').style.display!=='none') renderSettingsPage();
+}
+async function logoutUser(){
+  await authRequest('/api/auth/logout', {});
+  setAuthToken(null);
+  currentUser = null;
+  toast('Logged out — you\'re browsing as a guest.');
+  updateAccountUI();
+  if(document.getElementById('settings-page') && document.getElementById('settings-page').style.display!=='none') renderSettingsPage();
+}
+function updateAccountUI(){
+  const btn = document.getElementById('account-avatar-btn');
+  if(!btn) return;
+  if(currentUser){
+    const initials = (currentUser.name || currentUser.email || '?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    btn.textContent = initials;
+    btn.title = currentUser.email;
+  } else {
+    btn.innerHTML = '<i class="fa-regular fa-user"></i>';
+    btn.title = 'Guest — tap to log in';
+  }
+}
+function openAccountMenu(){
+  if(!currentUser){ openAuthModal('login'); return; }
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet" style="max-width:340px;">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">${currentUser.name || currentUser.email}</p>
+          <p class="sheet-sub">${currentUser.email} &middot; ${currentUser.role==='business' ? 'Business account' : 'Individual account'}</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <button class="opt-btn" onclick="closeModal(); showDesktopPage('settings'); setSettingsTab('profile');"><i class="fa-solid fa-user"></i> Profile settings</button>
+      ${currentUser.role==='business' ? `<button class="opt-btn" onclick="closeModal(); showDesktopPage('settings'); setSettingsTab('profile');"><i class="fa-solid fa-store"></i> Manage my stores</button>` : ''}
+      <button class="opt-btn" onclick="logoutUser()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log out</button>
+    </div>
+  </div>`;
+}
+function openAuthModal(mode){
+  mode = mode || 'login';
+  document.getElementById('modal-holder').innerHTML = `
+  <div class="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="sheet" style="max-width:380px;">
+      <div class="sheet-head">
+        <div>
+          <p class="sheet-title">${mode==='signup' ? 'Create your account' : 'Log in to Pulse'}</p>
+          <p class="sheet-sub">${mode==='signup' ? 'Or keep browsing as a guest — everything still works.' : 'New here? You can also just continue as a guest.'}</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="auth-error" style="display:none; background:var(--coral-bg); color:var(--coral-text); font-size:12.5px; padding:10px 12px; border-radius:10px; margin-bottom:12px;"></div>
+      ${mode==='signup' ? `<div class="st-field"><label>Name</label><input type="text" id="auth-name" placeholder="Your name"></div>` : ''}
+      <div class="st-field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com"></div>
+      <div class="st-field"><label>Password</label><input type="password" id="auth-password" placeholder="${mode==='signup' ? 'At least 8 characters' : 'Your password'}"></div>
+      ${mode==='signup' ? `
+      <div class="st-field">
+        <label>Account type</label>
+        <div style="display:flex; gap:10px;">
+          <label style="flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:12.5px; cursor:pointer;"><input type="radio" name="auth-role" value="user" checked>Individual</label>
+          <label style="flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:12.5px; cursor:pointer;"><input type="radio" name="auth-role" value="business">Business owner</label>
+        </div>
+      </div>` : ''}
+      <button class="primary-btn" id="auth-submit-btn" style="width:100%; margin-top:4px;" onclick="submitAuthForm('${mode}')">${mode==='signup' ? 'Create account' : 'Log in'}</button>
+      <p style="text-align:center; font-size:12.5px; color:var(--ink-muted); margin-top:14px;">
+        ${mode==='signup' ? `Already have an account? <a href="#" onclick="event.preventDefault(); openAuthModal('login')" style="color:var(--accent-text); font-weight:600;">Log in</a>`
+                           : `New to Pulse? <a href="#" onclick="event.preventDefault(); openAuthModal('signup')" style="color:var(--accent-text); font-weight:600;">Create an account</a>`}
+      </p>
+      <p style="text-align:center; font-size:12px; color:var(--ink-muted); margin-top:8px;"><a href="#" onclick="event.preventDefault(); closeModal();" style="color:var(--ink-muted);">Continue as guest</a></p>
+    </div>
+  </div>`;
+}
 let leafletMap = null;
 let markerLayers = {};        // category -> Leaflet layerGroup
 let activeLayers = {food:true, fuel:true, health:true, service:true, errand:true, road:true, signal:true};
@@ -1844,6 +1969,8 @@ async function boot(){
 
   render(); // show demo data immediately, don't block on location/Overpass
   await resolveLocation();
+  await loadCurrentUser();
+  updateAccountUI();
 
   sendHeartbeat();
   setInterval(sendHeartbeat, 30000);
@@ -2035,6 +2162,15 @@ function toggleNotifPref(){
   localStorage.setItem('pulse_notif_pref', on ? 'on' : 'off');
   renderSettingsPage();
 }
+async function submitClaimStore(){
+  const input = document.getElementById('claim-location-id');
+  const locationId = input.value.trim();
+  if(!locationId){ toast('Enter a location ID first'); return; }
+  const data = await authRequest('/api/owner/claim', {locationId});
+  if(!data || data.error){ toast((data && data.error) || 'Could not submit claim'); return; }
+  toast(data.note || 'Claim submitted');
+  input.value = '';
+}
 function notImplemented(){ toast('Not wired up yet — visual only for now.'); }
 function renderSettingsPage(){
   const page = document.getElementById('settings-page');
@@ -2054,27 +2190,40 @@ function renderSettingsPage(){
 
   let body = '';
   if(settingsActiveTab==='profile'){
-    body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:20px;">Profile Settings</p>
-      <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
-        <div class="st-avatar-fallback">AZ</div>
-        <div style="flex:1;"><div style="font-weight:700; font-size:14px;">Asad Zahid</div><div style="font-size:12px; color:var(--ink-muted);">asad.zahid@example.com</div></div>
-        <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="notImplemented()">Edit Photo</button>
-      </div>
-      <div class="st-field-row">
-        <div class="st-field"><label>Full Name</label><input type="text" value="Asad Zahid"></div>
-        <div></div>
-      </div>
-      <div class="st-field-row">
-        <div class="st-field"><label>Email</label><input type="email" value="asad.zahid@example.com"></div>
-        <div class="st-field"><label>Phone Number</label><input type="text" value="+92 300 1234567"></div>
-      </div>
-      <div class="st-field-row">
-        <div class="st-field"><label>Language</label><select><option>English</option><option>Urdu</option></select></div>
-        <div class="st-field"><label>Timezone</label><select><option>(GMT+05:00) Islamabad</option></select></div>
-      </div>
-      <button class="primary-btn" style="width:auto; padding:11px 22px;" onclick="notImplemented()">Save Changes</button>
-    `;
+    if(!currentUser){
+      body = `
+        <p style="font-size:15px; font-weight:700; margin-bottom:8px;">Profile Settings</p>
+        <p style="font-size:13px; color:var(--ink-secondary); line-height:1.6; margin-bottom:20px;">You're browsing as a guest — everything in Pulse works without an account. Log in to sync your saved places and recent searches across devices, or create a business account to manage your own store's wait times.</p>
+        <div style="display:flex; gap:10px;">
+          <button class="primary-btn" style="width:auto; padding:11px 20px;" onclick="openAuthModal('login')">Log in</button>
+          <button class="primary-btn" style="width:auto; padding:11px 20px; background:var(--surface-2); color:var(--ink);" onclick="openAuthModal('signup')">Create account</button>
+        </div>
+      `;
+    } else {
+      const initials = (currentUser.name || currentUser.email).trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      body = `
+        <p style="font-size:15px; font-weight:700; margin-bottom:20px;">Profile Settings</p>
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
+          <div class="st-avatar-fallback">${initials}</div>
+          <div style="flex:1;"><div style="font-weight:700; font-size:14px;">${currentUser.name || currentUser.email}</div><div style="font-size:12px; color:var(--ink-muted);">${currentUser.email} &middot; ${currentUser.role==='business'?'Business account':'Individual account'}</div></div>
+          <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="logoutUser()">Log out</button>
+        </div>
+        <div class="st-field-row">
+          <div class="st-field"><label>Full Name</label><input type="text" id="profile-name-input" value="${currentUser.name || ''}"></div>
+          <div class="st-field"><label>Email</label><input type="email" value="${currentUser.email}" disabled style="opacity:.6;"></div>
+        </div>
+        <button class="primary-btn" style="width:auto; padding:11px 22px;" onclick="notImplemented()">Save Changes</button>
+        ${currentUser.role==='business' ? `
+        <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
+          <p style="font-size:13px; font-weight:700; margin-bottom:10px;">Claim a store</p>
+          <p style="font-size:12px; color:var(--ink-muted); margin-bottom:12px;">Link your account to a location so you can post real wait-time updates for it. Claims need verification before they take effect.</p>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="claim-location-id" placeholder="Location ID (e.g. 5)" style="flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font-size:13px; background:var(--surface); color:var(--ink);">
+            <button class="primary-btn" style="width:auto; padding:10px 16px;" onclick="submitClaimStore()">Claim</button>
+          </div>
+        </div>` : ''}
+      `;
+    }
   } else if(settingsActiveTab==='appearance'){
     body = `
       <p style="font-size:15px; font-weight:700; margin-bottom:16px;">Appearance</p>
