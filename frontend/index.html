@@ -172,7 +172,8 @@
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
   @media (min-width:900px){
-    .search-bar-wrap{top:24px; left:calc(355px + (100% - 355px)/2); transform:translateX(-50%); right:auto; width:min(500px, 50%);}
+    .search-bar-wrap{top:24px; left:calc(355px + (100% - 355px)/2); transform:translateX(-50%); right:auto; width:min(500px, 50%); transition:left .25s;}
+    .app-shell.collapsed ~ .map-pane-desktop .search-bar-wrap{left:calc(132px + (100% - 132px)/2);}
     .search-input{font-size:14.5px;}
   }
   .search-panel-head{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink); padding:4px 8px 8px;}
@@ -189,11 +190,7 @@
   #leaflet-map{width:100%; height:100%; background:var(--surface-1, #EEF2F1);}
   #leaflet-map .leaflet-tile-pane{filter:saturate(3) brightness(0.85) contrast(1.3) opacity(0.9);}
   [data-theme="dark"] #leaflet-map .leaflet-tile-pane{filter:saturate(1.15) brightness(1.04);}
-  .map-wrap{position:relative; flex:1; min-height:0; border-radius:20px; overflow:hidden; box-shadow:0 10px 34px rgba(15,23,42,.10);}
-  @media (min-width:900px){
-    .map-wrap{margin:24px 24px 24px 355px; border-radius:32px; box-shadow:0 20px 50px rgba(20,22,30,.14);}
-    .map-wrap::after{content:''; position:absolute; inset:0; z-index:350; pointer-events:none; border-radius:32px; border:1px solid rgba(255,255,255,.5); background:radial-gradient(ellipse at center, rgba(255,255,255,0) 62%, rgba(255,255,255,.3) 100%);}
-  }
+  .map-wrap{position:relative; flex:1; min-height:0; border-radius:0; overflow:hidden;}
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
   .pin-dot i{transform:rotate(45deg); font-size:12px; color:#fff;}
@@ -272,7 +269,24 @@
   .crowd-badge{font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;}
 
   .desktop-sidebar-body{display:none;}
-  .nearby-page{position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:900; overflow-y:auto; padding:28px 32px; border-radius:32px; background:rgba(255,255,255,.85); border:1px solid rgba(255,255,255,.7); box-shadow:0 20px 50px rgba(20,22,30,.14);}
+  .nearby-page{position:fixed; top:24px; left:355px; right:24px; bottom:24px; z-index:900; overflow-y:auto; padding:28px 32px; border-radius:32px; background:rgba(255,255,255,.85); border:1px solid rgba(255,255,255,.7); box-shadow:0 20px 50px rgba(20,22,30,.14); transition:left .25s; scrollbar-width:none; -ms-overflow-style:none;}
+  .nearby-page::-webkit-scrollbar{display:none;}
+  .np-filters-overlay{display:none; position:fixed; inset:0; background:rgba(15,23,42,.4); z-index:2000; align-items:center; justify-content:center;}
+  .np-filters-modal{background:#fff; border-radius:20px; padding:24px; width:360px; max-height:85vh; overflow-y:auto; box-shadow:0 30px 70px rgba(0,0,0,.25);}
+  .np-cat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .np-cat-btn{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:12px; border:1px solid var(--border); cursor:pointer; font-size:10.5px; color:var(--ink-secondary);}
+  .np-cat-btn i{font-size:15px; color:var(--ink-secondary);}
+  .np-cat-btn.active{background:var(--accent-bg); border-color:var(--accent); color:var(--accent-text);}
+  .np-cat-btn.active i{color:var(--accent-text);}
+  .np-rating-btn{flex:1; text-align:center; padding:9px 6px; border-radius:10px; border:1px solid var(--border); font-size:12px; font-weight:600; cursor:pointer; color:var(--ink-secondary);}
+  .np-rating-btn.active{background:var(--accent-bg); border-color:var(--accent); color:var(--accent-text);}
+  .np-toggle{position:relative; display:inline-block; width:40px; height:22px;}
+  .np-toggle input{display:none;}
+  .np-toggle-slider{position:absolute; inset:0; background:var(--border-strong); border-radius:20px; cursor:pointer; transition:.2s;}
+  .np-toggle-slider::before{content:''; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+  .np-toggle input:checked + .np-toggle-slider{background:var(--accent);}
+  .np-toggle input:checked + .np-toggle-slider::before{transform:translateX(18px);}
+  .app-shell.collapsed ~ .map-pane-desktop .nearby-page{left:132px;}
   [data-theme="dark"] .nearby-page{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
   .np-search{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04);}
   .np-search input{flex:1; border:none; outline:none; font-size:14px; background:none; color:var(--ink);}
@@ -1914,6 +1928,49 @@ function renderSavedPage(){
     </div>
   `;
 }
+const NP_CATEGORIES = [
+  {k:'all', label:'All', icon:'fa-border-all'},
+  {k:'health', label:'Pharmacy', icon:'fa-suitcase-medical'},
+  {k:'service', label:'Barbershop', icon:'fa-scissors'},
+  {k:'health2', label:'Clinics', icon:'fa-stethoscope'},
+  {k:'fuel', label:'Gas', icon:'fa-gas-pump'},
+  {k:'food', label:'Restaurants', icon:'fa-utensils'},
+  {k:'errand', label:'Grocery', icon:'fa-cart-shopping'},
+  {k:'food2', label:'Coffee', icon:'fa-mug-saucer'},
+  {k:'gym', label:'Gyms', icon:'fa-dumbbell'},
+  {k:'more', label:'More', icon:'fa-ellipsis'},
+];
+let npFilters = { category:'all', minRating:0, sortBy:'distance' };
+let npShowAll = false;
+function setNearbyFilter(f){ nearbyFilter = f; npShowAll = false; renderNearbyPage(); }
+function openFiltersModal(){
+  document.getElementById('np-filters-overlay').style.display = 'flex';
+}
+function closeFiltersModal(){
+  document.getElementById('np-filters-overlay').style.display = 'none';
+}
+function setNpCategory(k){
+  npFilters.category = k;
+  document.querySelectorAll('.np-cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.k===k));
+}
+function setNpRating(r){
+  npFilters.minRating = r;
+  document.querySelectorAll('.np-rating-btn').forEach(b=>b.classList.toggle('active', Number(b.dataset.r)===r));
+}
+function applyNpFilters(){
+  npFilters.sortBy = document.getElementById('np-sort-select').value;
+  closeFiltersModal();
+  npShowAll = false;
+  renderNearbyPage();
+}
+function resetNpFilters(){
+  npFilters = { category:'all', minRating:0, sortBy:'distance' };
+  npShowAll = false;
+  closeFiltersModal();
+  renderNearbyPage();
+}
+function toggleShowAllNearby(){ npShowAll = !npShowAll; renderNearbyPage(); }
+
 function renderNearbyPage(q){
   const page = document.getElementById('nearby-page');
   const query = (q!=null ? q : (document.getElementById('np-search-input')?.value || '')).toLowerCase();
@@ -1921,28 +1978,85 @@ function renderNearbyPage(q){
   if(nearbyFilter==='under10') items = items.filter(l=>l.minutes!=null && l.minutes<10);
   if(nearbyFilter==='verified') items = items.filter(l=>l.ownerVerified);
 
+  const catMap = {health:'health', service:'service', health2:'health', fuel:'fuel', food:'food', errand:'errand', food2:'food', gym:'service'};
+  if(npFilters.category!=='all' && npFilters.category!=='more' && catMap[npFilters.category]){
+    items = items.filter(l => l.category === catMap[npFilters.category]);
+  }
+  if(npFilters.minRating > 0){
+    items = items.filter(l => l.ratingCount && l.ratingAvg >= npFilters.minRating);
+  }
+  if(npFilters.sortBy==='rating') items = items.slice().sort((a,b)=>(b.ratingAvg||0)-(a.ratingAvg||0));
+  else if(npFilters.sortBy==='wait') items = items.slice().sort((a,b)=>(a.minutes==null?999:a.minutes)-(b.minutes==null?999:b.minutes));
+  // 'distance' sort left in natural order — we don't have precise numeric distance to sort by reliably
+
   const chips = [
-    {k:'all', label:'All'},
-    {k:'under10', label:'Under 10 min'},
-    {k:'verified', label:'Verified'},
+    {k:'all', label:'All'}, {k:'openNow', label:'Open Now'}, {k:'under10', label:'Under 10 min'},
+    {k:'verified', label:'Verified'}, {k:'walking', label:'Walking Distance'},
   ];
+  const visibleItems = npShowAll ? items : items.slice(0, 4);
 
   page.innerHTML = `
-    <div class="np-search"><i class="fa-solid fa-magnifying-glass" style="color:var(--ink-muted);"></i><input id="np-search-input" placeholder="Search nearby places..." value="${q||''}" oninput="renderNearbyPage(this.value)"></div>
-    <div class="np-chips">${chips.map(c=>`<div class="np-chip ${nearbyFilter===c.k?'active':''}" onclick="setNearbyFilter('${c.k}')">${c.label}</div>`).join('')}</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <div class="np-search" style="flex:1; margin-bottom:0;"><i class="fa-solid fa-magnifying-glass" style="color:var(--ink-muted);"></i><input id="np-search-input" placeholder="Search nearby places..." value="${q||''}" oninput="renderNearbyPage(this.value)"></div>
+      <button onclick="openFiltersModal()" style="display:flex; align-items:center; gap:8px; padding:11px 16px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; flex-shrink:0;"><i class="fa-solid fa-sliders"></i>Filters</button>
+    </div>
+    <div class="np-chips">${chips.map(c=>`<div class="np-chip ${nearbyFilter===c.k?'active':''}" onclick="setNearbyFilter('${c.k}')">${c.label}</div>`).join('')}<div class="np-chip" onclick="openFiltersModal()">More <i class="fa-solid fa-chevron-down" style="font-size:9px; margin-left:4px;"></i></div></div>
     <div class="np-grid">
-      ${items.length ? items.map(l=>{
+      ${visibleItems.length ? visibleItems.map(l=>{
         const c = statusColors[l.status];
         return `<div class="np-card">
           <div class="np-photo" style="${l.photoUrl ? `background-image:url('${l.photoUrl}');` : `background:${c.bg}; color:${c.text};`}">${l.photoUrl ? '' : emojiFor(l.icon)}</div>
           <div class="np-body">
             <div class="np-name">${l.name}</div>
-            <div class="np-meta-row"><span style="color:${c.text}; font-weight:700;">${l.minutes==null ? 'No data' : l.minutes+' min wait'}</span><span style="color:var(--ink-muted);">\u00B7 ${l.distance||'nearby'}</span></div>
+            <div class="np-meta-row"><i class="fa-solid fa-arrow-down" style="font-size:9px; color:${c.text};"></i><span style="color:${c.text}; font-weight:700;">${l.minutes==null ? 'No data' : l.minutes+' min wait'}</span><span style="color:var(--ink-muted);">\u00B7 ${l.distance||'nearby'}</span></div>
             <div class="np-rating">${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : 'No ratings yet'}${l.ownerVerified ? ' \u00B7 <span style="color:var(--teal-text);">Verified</span>' : ''}</div>
             <button class="np-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
           </div>
         </div>`;
       }).join('') : `<p style="grid-column:1/-1; color:var(--ink-muted); font-size:13px;">No places match your search.</p>`}
+    </div>
+    ${items.length > 4 ? `<div style="text-align:center; margin-top:18px;"><button onclick="toggleShowAllNearby()" style="border:none; background:none; color:var(--accent-text); font-weight:600; font-size:13px; cursor:pointer;">${npShowAll ? 'Show less' : 'View more places'} <i class="fa-solid fa-chevron-${npShowAll?'up':'down'}" style="font-size:10px; margin-left:4px;"></i></button></div>` : ''}
+
+    <div id="np-filters-overlay" class="np-filters-overlay">
+      <div class="np-filters-modal">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <p style="font-size:16px; font-weight:700; margin:0;">Filters</p>
+          <button onclick="closeFiltersModal()" style="border:none; background:none; font-size:18px; color:var(--ink-muted); cursor:pointer;">&times;</button>
+        </div>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin-bottom:10px;">Categories</p>
+        <div class="np-cat-grid">
+          ${NP_CATEGORIES.map(c=>`<div class="np-cat-btn ${npFilters.category===c.k?'active':''}" data-k="${c.k}" onclick="setNpCategory('${c.k}')"><i class="fa-solid ${c.icon}"></i><span>${c.label}</span></div>`).join('')}
+        </div>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Distance</p>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:11px; color:var(--ink-muted);">0.1 mi</span>
+          <input type="range" min="1" max="50" value="25" style="flex:1;">
+          <span style="font-size:11px; color:var(--ink-muted);">5 mi</span>
+        </div>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:18px 0 8px;">Rating</p>
+        <div style="display:flex; gap:8px;">
+          <div class="np-rating-btn" data-r="4" onclick="setNpRating(4)">4+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
+          <div class="np-rating-btn" data-r="3" onclick="setNpRating(3)">3+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
+          <div class="np-rating-btn" data-r="2" onclick="setNpRating(2)">2+ <i class="fa-solid fa-star" style="font-size:10px; color:#F59E0B;"></i></div>
+          <div class="np-rating-btn active" data-r="0" onclick="setNpRating(0)">Any</div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px;">
+          <p style="font-size:13px; font-weight:600; margin:0;">Open Now</p>
+          <label class="np-toggle"><input type="checkbox"><span class="np-toggle-slider"></span></label>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px;">
+          <p style="font-size:13px; font-weight:600; margin:0;">Sort By</p>
+          <select id="np-sort-select" style="padding:8px 12px; border-radius:9px; border:1px solid var(--border); font-size:12.5px;">
+            <option value="distance" ${npFilters.sortBy==='distance'?'selected':''}>Distance</option>
+            <option value="rating" ${npFilters.sortBy==='rating'?'selected':''}>Rating</option>
+            <option value="wait" ${npFilters.sortBy==='wait'?'selected':''}>Wait time</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:22px;">
+          <button onclick="resetNpFilters()" style="flex:1; padding:12px; border-radius:11px; border:1px solid var(--border); background:var(--surface); font-weight:600; font-size:13px; cursor:pointer;">Reset</button>
+          <button onclick="applyNpFilters()" class="primary-btn" style="flex:1; margin-bottom:0;">Apply Filters</button>
+        </div>
+      </div>
     </div>
   `;
 }
