@@ -216,6 +216,39 @@ export default {
       return json({ points });
     }
 
+    // GET /api/analytics — real aggregation from checkins + road_reports, no fake numbers
+    if (path === '/api/analytics' && method === 'GET') {
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+      const [dailyRows, hourlyRows, busiestRows, reportTypeRows] = await Promise.all([
+        // Average wait per day, last 7 days that actually have data
+        env.DB.prepare(
+          `SELECT date(created_at/1000, 'unixepoch') AS day, AVG(minutes) AS avg_min, COUNT(*) AS n
+           FROM checkins WHERE created_at > ? GROUP BY day ORDER BY day ASC`
+        ).bind(sevenDaysAgo).all(),
+        // Check-in count per hour of day (0-23), all-time
+        env.DB.prepare(
+          `SELECT CAST(strftime('%H', created_at/1000, 'unixepoch') AS INTEGER) AS hr, COUNT(*) AS n
+           FROM checkins GROUP BY hr ORDER BY hr ASC`
+        ).all(),
+        // Busiest locations by check-in volume
+        env.DB.prepare(
+          `SELECT l.name, COUNT(c.id) AS n, AVG(c.minutes) AS avg_min
+           FROM checkins c JOIN locations l ON l.id = c.location_id
+           GROUP BY c.location_id ORDER BY n DESC LIMIT 5`
+        ).all(),
+        // Road reports grouped by real type
+        env.DB.prepare('SELECT type, COUNT(*) AS n FROM road_reports GROUP BY type').all(),
+      ]);
+
+      return json({
+        dailyAvgWait: dailyRows.results.map(r => ({ day: r.day, avgMinutes: Math.round(r.avg_min), count: r.n })),
+        hourlyCheckins: hourlyRows.results.map(r => ({ hour: r.hr, count: r.n })),
+        busiestLocations: busiestRows.results.map(r => ({ name: r.name, checkins: r.n, avgMinutes: Math.round(r.avg_min) })),
+        reportsByType: reportTypeRows.results.map(r => ({ type: r.type, count: r.n })),
+      });
+    }
+
     return json({ error: 'not found', path }, 404);
   },
 };
