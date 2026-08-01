@@ -7,7 +7,7 @@
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 function json(data, status = 200) {
@@ -15,6 +15,43 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
+}
+
+// ---------- Auth helpers (PBKDF2 via Web Crypto — native to Workers, no external lib) ----------
+function bytesToHex(bytes) {
+  return [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function hexToBytes(hex) {
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < arr.length; i++) arr[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return arr;
+}
+async function hashPassword(password, saltHex) {
+  const salt = saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, 256);
+  return { hash: bytesToHex(new Uint8Array(bits)), salt: bytesToHex(salt) };
+}
+async function verifyPassword(password, saltHex, hashHex) {
+  const { hash } = await hashPassword(password, saltHex);
+  return hash === hashHex;
+}
+function generateToken() {
+  return bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+}
+const TOKEN_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+async function getUserFromToken(env, request) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return null;
+  const row = await env.DB.prepare(
+    `SELECT u.id, u.email, u.role, u.name FROM auth_tokens t
+     JOIN users u ON u.id = t.user_id WHERE t.token = ? AND t.expires_at > ?`
+  ).bind(token, Date.now()).first();
+  return row || null;
+}
+function publicUser(u) {
+  return { id: u.id, email: u.email, role: u.role, name: u.name || null };
 }
 
 function timeAgo(ms) {
@@ -188,8 +225,16 @@ export default {
     }
 
     // POST /api/owner-update  { locationId, status, note, photoUrl }
+    // Now requires a real, verified owner_claims row for this user + location —
+    // previously this trusted any request (see schema.sql history for that note).
     if (path === '/api/owner-update' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
       const body = await request.json();
+      const claim = await env.DB.prepare(
+        'SELECT * FROM owner_claims WHERE user_id = ? AND location_id = ? AND verified = 1'
+      ).bind(user.id, body.locationId).first();
+      if (!claim) return json({ error: 'You do not have a verified claim on this location' }, 403);
       await env.DB.prepare(
         'UPDATE locations SET status=?, note=?, photo_url=?, updated_at=?, owner_verified=1 WHERE id=?'
       ).bind(body.status, body.note, body.photoUrl || null, Date.now(), body.locationId).run();
@@ -295,6 +340,139 @@ export default {
       } catch (e) {
         return json({ error: 'Routing request failed', detail: String(e) }, 500);
       }
+    }
+
+    // ---------- Auth ----------
+    // POST /api/auth/signup  { email, password, name?, role? }
+    if (path === '/api/auth/signup' && method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const email = (body.email || '').trim().toLowerCase();
+      const password = body.password || '';
+      if (!email || !email.includes('@')) return json({ error: 'A valid email is required' }, 400);
+      if (password.length < 8) return json({ error: 'Password must be at least 8 characters' }, 400);
+
+      const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
+      if (existing) return json({ error: 'An account with that email already exists' }, 409);
+
+      const role = body.role === 'business' ? 'business' : 'user';
+      const { hash, salt } = await hashPassword(password);
+      const result = await env.DB.prepare(
+        'INSERT INTO users (email, password_hash, password_salt, role, name, created_at) VALUES (?,?,?,?,?,?)'
+      ).bind(email, hash, salt, role, body.name || null, Date.now()).run();
+      const userId = result.meta.last_row_id;
+
+      const token = generateToken();
+      await env.DB.prepare('INSERT INTO auth_tokens (token, user_id, created_at, expires_at) VALUES (?,?,?,?)')
+        .bind(token, userId, Date.now(), Date.now() + TOKEN_LIFETIME_MS).run();
+
+      return json({ token, user: publicUser({ id: userId, email, role, name: body.name || null }) });
+    }
+
+    // POST /api/auth/login  { email, password }
+    if (path === '/api/auth/login' && method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const email = (body.email || '').trim().toLowerCase();
+      const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+      if (!user) return json({ error: 'Invalid email or password' }, 401);
+      const ok = await verifyPassword(body.password || '', user.password_salt, user.password_hash);
+      if (!ok) return json({ error: 'Invalid email or password' }, 401);
+
+      const token = generateToken();
+      await env.DB.prepare('INSERT INTO auth_tokens (token, user_id, created_at, expires_at) VALUES (?,?,?,?)')
+        .bind(token, user.id, Date.now(), Date.now() + TOKEN_LIFETIME_MS).run();
+
+      return json({ token, user: publicUser(user) });
+    }
+
+    // POST /api/auth/logout
+    if (path === '/api/auth/logout' && method === 'POST') {
+      const authHeader = request.headers.get('Authorization') || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      if (token) await env.DB.prepare('DELETE FROM auth_tokens WHERE token = ?').bind(token).run();
+      return json({ ok: true });
+    }
+
+    // GET /api/auth/me
+    if (path === '/api/auth/me' && method === 'GET') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      return json({ user: publicUser(user) });
+    }
+
+    // ---------- Per-account saved places & recent searches ----------
+    // GET /api/saved
+    if (path === '/api/saved' && method === 'GET') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const rows = await env.DB.prepare('SELECT * FROM saved_items WHERE user_id = ? ORDER BY saved_at DESC').bind(user.id).all();
+      return json({ items: rows.results });
+    }
+
+    // POST /api/saved  { collection, locationId? , customName?, customLat?, customLng? }
+    if (path === '/api/saved' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const body = await request.json().catch(() => ({}));
+      if (!body.collection) return json({ error: 'collection is required' }, 400);
+      await env.DB.prepare(
+        `INSERT INTO saved_items (user_id, collection, location_id, custom_name, custom_lat, custom_lng, saved_at)
+         VALUES (?,?,?,?,?,?,?)`
+      ).bind(user.id, body.collection, body.locationId || null, body.customName || null, body.customLat || null, body.customLng || null, Date.now()).run();
+      return json({ ok: true });
+    }
+
+    // DELETE /api/saved?id=123
+    if (path === '/api/saved' && method === 'DELETE') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const id = url.searchParams.get('id');
+      if (!id) return json({ error: 'id is required' }, 400);
+      await env.DB.prepare('DELETE FROM saved_items WHERE id = ? AND user_id = ?').bind(id, user.id).run();
+      return json({ ok: true });
+    }
+
+    // GET /api/recent-searches
+    if (path === '/api/recent-searches' && method === 'GET') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const rows = await env.DB.prepare('SELECT * FROM recent_searches WHERE user_id = ? ORDER BY searched_at DESC LIMIT 10').bind(user.id).all();
+      return json({ items: rows.results });
+    }
+
+    // POST /api/recent-searches  { label, lat, lng }
+    if (path === '/api/recent-searches' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const body = await request.json().catch(() => ({}));
+      if (!body.label) return json({ error: 'label is required' }, 400);
+      await env.DB.prepare('INSERT INTO recent_searches (user_id, label, lat, lng, searched_at) VALUES (?,?,?,?,?)')
+        .bind(user.id, body.label, body.lat || null, body.lng || null, Date.now()).run();
+      return json({ ok: true });
+    }
+
+    // ---------- Business: claim a store ----------
+    // POST /api/owner/claim  { locationId, contact }
+    if (path === '/api/owner/claim' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      if (user.role !== 'business') return json({ error: 'Only business accounts can claim a store' }, 403);
+      const body = await request.json().catch(() => ({}));
+      if (!body.locationId) return json({ error: 'locationId is required' }, 400);
+      await env.DB.prepare(
+        'INSERT INTO owner_claims (location_id, owner_contact, user_id, verified) VALUES (?,?,?,0)'
+      ).bind(body.locationId, body.contact || user.email, user.id).run();
+      return json({ ok: true, note: 'Claim submitted — pending verification' });
+    }
+
+    // GET /api/owner/locations — stores this business account can manage
+    if (path === '/api/owner/locations' && method === 'GET') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const rows = await env.DB.prepare(
+        `SELECT l.*, oc.verified AS claim_verified FROM owner_claims oc
+         JOIN locations l ON l.id = oc.location_id WHERE oc.user_id = ?`
+      ).bind(user.id).all();
+      return json({ locations: rows.results.map(mapLocation) });
     }
 
     return json({ error: 'not found', path }, 404);
