@@ -742,7 +742,7 @@ const EMOJI_MAP = {
 function emojiFor(tiClass){ return EMOJI_MAP[tiClass] || '\u{1F4CD}'; }
 
 function renderStars(avg, count){
-  if(!count) return `<span style="color:var(--ink-muted);">No ratings yet</span>`;
+  if(!count) return `<span style="color:var(--ink-muted);">${t('no_ratings_yet')}</span>`;
   const full = Math.round(avg);
   let stars = '';
   for(let i=1;i<=5;i++) stars += i<=full ? '\u2605' : '\u2606';
@@ -1532,56 +1532,56 @@ const TRANSLATIONS = {
     btn_directions:'Directions', btn_save:'Save', btn_cancel:'Cancel', btn_close:'Close', btn_save_changes:'Save Changes', btn_login:'Log in', btn_logout:'Log out', btn_create_account:'Create account',
     settings_profile:'Profile', settings_notifications:'Notifications', settings_appearance:'Appearance', settings_location:'Default Location', settings_privacy:'Privacy', settings_storage:'Data & Storage', settings_help:'Help & Support', settings_about:'About Pulse',
     dir_title:'Get Directions', dir_subtitle:'Choose your travel mode', dir_destination_placeholder:'Choose destination', dir_drive:'Drive', dir_walk:'Walk', dir_bike:'Bike', dir_transit:'Transit',
-    page_title_nearby:'Nearby', page_title_saved:'Saved Places', page_title_reports:'Reports', page_title_analytics:'Analytics', page_title_settings:'Settings'},
+    page_title_nearby:'Nearby', page_title_saved:'Saved Places', page_title_reports:'Reports', page_title_analytics:'Analytics', page_title_settings:'Settings', profile_settings_title:'Profile Settings', guest_intro:"You're browsing as a guest — everything in Pulse works without an account. Log in to sync your saved places and recent searches across devices, or create a business account to manage your own store's wait times.", even_as_guest:'Even as a guest', even_as_guest_desc:'Language and timezone are saved on this device (not your account) until you clear browser data or log in.', timezone_label:'Timezone', language_label:'Language', save_on_device_btn:'Save on this device', edit_photo_btn:'Edit Photo', full_name_label:'Full Name', email_label:'Email', phone_label:'Phone Number', username_label:'Username', unit_min:'min', unit_mi:'mi', checkins_label:'check-ins', no_ratings_yet:'No ratings yet', open_now:'Open now', away_label:'away', new_collection_btn:'+ New Collection', collections_label:'COLLECTIONS', recently_saved_label:'RECENTLY SAVED', create_collection_btn:'+ Create Collection', places_count_label:'places', favorites_collection:'Favorites', home_collection:'Home', work_collection:'Work', recently_saved_collection:'Recently Saved', notif_prefs_title:'Notification Preferences', notif_prefs_desc:"Choose how you want to be notified. Saved on this device — Pulse doesn't send real push/email yet.", push_notif_label:'Push Notifications', push_notif_sub:'Receive notifications on your device', email_notif_label:'Email Notifications', email_notif_sub:'Receive notifications via email', queue_alerts_label:'Queue Alerts', queue_alerts_sub:'Get notified when wait time is above limit', nearby_updates_label:'Nearby Updates', nearby_updates_sub:'Updates about places near you', report_updates_label:'Report Updates', report_updates_sub:'Updates on your reported issues', quiet_hours_label:'Quiet Hours', quiet_hours_desc:'No notifications between', avg_wait_time_label:'Average Wait Time', from_last_week_label:'from last week', busiest_time_label:'Busiest Time', daily_peak_time_label:'Daily peak time', busiest_areas_label:'Busiest Areas', reports_overview_label:'Reports Overview', new_report_btn:'+ New Report', total_reports_label:'Total Reports', report_type_hazard:'Hazard', report_type_road_closed:'Road Closed', report_type_traffic_jam:'Traffic Jam', report_type_police:'Police', report_type_camera:'Camera', filter_all_reports:'All Reports', filter_pending:'Pending', filter_verified:'Verified', filter_rejected:'Rejected', sort_newest_first:'Newest First', votes_label:'votes'},
   zh: {nav_livemap:'实时地图', nav_nearby:'附近', nav_saved:'收藏地点', nav_reports:'举报', nav_analytics:'数据分析', nav_settings:'设置',
     search_placeholder:'搜索地点、商家、地址', live_overview:'实时概览', live_users:'在线用户', reports_today:'今日举报', verified_spots:'已验证地点',
     nearby_places:'附近地点', view_all:'查看全部', promo_title:'帮助改善 Pulse', promo_sub:'报告等待时间，帮助他人。', promo_btn:'+ 立即举报',
     btn_directions:'路线', btn_save:'保存', btn_cancel:'取消', btn_close:'关闭', btn_save_changes:'保存更改', btn_login:'登录', btn_logout:'退出登录', btn_create_account:'创建账户',
     settings_profile:'个人资料', settings_notifications:'通知', settings_appearance:'外观', settings_location:'默认位置', settings_privacy:'隐私', settings_storage:'数据与存储', settings_help:'帮助与支持', settings_about:'关于 Pulse',
     dir_title:'获取路线', dir_subtitle:'选择出行方式', dir_destination_placeholder:'选择目的地', dir_drive:'驾车', dir_walk:'步行', dir_bike:'骑行', dir_transit:'公交',
-    page_title_nearby:'附近', page_title_saved:'收藏地点', page_title_reports:'举报', page_title_analytics:'数据分析', page_title_settings:'设置'},
+    page_title_nearby:'附近', page_title_saved:'收藏地点', page_title_reports:'举报', page_title_analytics:'数据分析', page_title_settings:'设置', profile_settings_title:'个人资料设置', guest_intro:'您正在以访客身份浏览——Pulse 的所有功能无需账户即可使用。登录以在多个设备间同步收藏地点和最近搜索，或创建商家账户来管理您店铺的等待时间。', even_as_guest:'即使是访客', even_as_guest_desc:'语言和时区将保存在此设备上（而非您的账户），直到您清除浏览器数据或登录为止。', timezone_label:'时区', language_label:'语言', save_on_device_btn:'保存到此设备', edit_photo_btn:'编辑照片', full_name_label:'姓名', email_label:'邮箱', phone_label:'电话号码', username_label:'用户名', unit_min:'分钟', unit_mi:'英里', checkins_label:'签到', no_ratings_yet:'暂无评分', open_now:'营业中', away_label:'外', new_collection_btn:'+ 新建收藏夹', collections_label:'收藏夹', recently_saved_label:'最近保存', create_collection_btn:'+ 创建收藏夹', places_count_label:'个地点', favorites_collection:'收藏', home_collection:'家', work_collection:'公司', recently_saved_collection:'最近保存', notif_prefs_title:'通知偏好设置', notif_prefs_desc:'选择您希望的通知方式。保存在此设备上——Pulse 暂不发送真实推送/邮件通知。', push_notif_label:'推送通知', push_notif_sub:'在您的设备上接收通知', email_notif_label:'邮件通知', email_notif_sub:'通过邮件接收通知', queue_alerts_label:'排队提醒', queue_alerts_sub:'等待时间超过限制时通知我', nearby_updates_label:'附近动态', nearby_updates_sub:'您附近地点的更新', report_updates_label:'举报更新', report_updates_sub:'您举报问题的最新进展', quiet_hours_label:'免打扰时间', quiet_hours_desc:'以下时间段不接收通知', avg_wait_time_label:'平均等待时间', from_last_week_label:'较上周', busiest_time_label:'最繁忙时段', daily_peak_time_label:'每日高峰时段', busiest_areas_label:'最繁忙区域', reports_overview_label:'举报概览', new_report_btn:'+ 新建举报', total_reports_label:'举报总数', report_type_hazard:'危险', report_type_road_closed:'道路封闭', report_type_traffic_jam:'交通拥堵', report_type_police:'警察', report_type_camera:'摄像头', filter_all_reports:'全部举报', filter_pending:'待处理', filter_verified:'已核实', filter_rejected:'已驳回', sort_newest_first:'最新优先', votes_label:'票'},
   hi: {nav_livemap:'लाइव मैप', nav_nearby:'आस-पास', nav_saved:'सहेजे गए स्थान', nav_reports:'रिपोर्ट', nav_analytics:'विश्लेषण', nav_settings:'सेटिंग्स',
     search_placeholder:'स्थान, व्यवसाय, पते खोजें', live_overview:'लाइव अवलोकन', live_users:'लाइव उपयोगकर्ता', reports_today:'आज की रिपोर्ट', verified_spots:'सत्यापित स्थान',
     nearby_places:'आस-पास के स्थान', view_all:'सभी देखें', promo_title:'Pulse को बेहतर बनाने में मदद करें', promo_sub:'प्रतीक्षा समय की रिपोर्ट करें और दूसरों की मदद करें।', promo_btn:'+ अभी रिपोर्ट करें',
     btn_directions:'दिशा-निर्देश', btn_save:'सहेजें', btn_cancel:'रद्द करें', btn_close:'बंद करें', btn_save_changes:'बदलाव सहेजें', btn_login:'लॉग इन करें', btn_logout:'लॉग आउट करें', btn_create_account:'खाता बनाएं',
     settings_profile:'प्रोफ़ाइल', settings_notifications:'सूचनाएं', settings_appearance:'दिखावट', settings_location:'डिफ़ॉल्ट स्थान', settings_privacy:'गोपनीयता', settings_storage:'डेटा और स्टोरेज', settings_help:'सहायता और समर्थन', settings_about:'Pulse के बारे में',
     dir_title:'दिशा-निर्देश प्राप्त करें', dir_subtitle:'अपना यात्रा मोड चुनें', dir_destination_placeholder:'गंतव्य चुनें', dir_drive:'गाड़ी', dir_walk:'पैदल', dir_bike:'साइकिल', dir_transit:'सार्वजनिक परिवहन',
-    page_title_nearby:'आस-पास', page_title_saved:'सहेजे गए स्थान', page_title_reports:'रिपोर्ट', page_title_analytics:'विश्लेषण', page_title_settings:'सेटिंग्स'},
+    page_title_nearby:'आस-पास', page_title_saved:'सहेजे गए स्थान', page_title_reports:'रिपोर्ट', page_title_analytics:'विश्लेषण', page_title_settings:'सेटिंग्स', profile_settings_title:'प्रोफ़ाइल सेटिंग्स', guest_intro:'आप गेस्ट के रूप में ब्राउज़ कर रहे हैं — Pulse की सभी सुविधाएं बिना खाते के भी काम करती हैं। अपने सहेजे गए स्थानों और हाल की खोजों को डिवाइस पर सिंक करने के लिए लॉग इन करें, या अपने स्टोर के प्रतीक्षा समय को प्रबंधित करने के लिए बिज़नेस खाता बनाएं।', even_as_guest:'गेस्ट के रूप में भी', even_as_guest_desc:'भाषा और समय क्षेत्र इस डिवाइस पर सहेजे जाते हैं (आपके खाते में नहीं) जब तक आप ब्राउज़र डेटा साफ़ न करें या लॉग इन न करें।', timezone_label:'समय क्षेत्र', language_label:'भाषा', save_on_device_btn:'इस डिवाइस पर सहेजें', edit_photo_btn:'फ़ोटो संपादित करें', full_name_label:'पूरा नाम', email_label:'ईमेल', phone_label:'फ़ोन नंबर', username_label:'उपयोगकर्ता नाम', unit_min:'मिनट', unit_mi:'मील', checkins_label:'चेक-इन', no_ratings_yet:'अभी कोई रेटिंग नहीं', open_now:'अभी खुला है', away_label:'दूर', new_collection_btn:'+ नया संग्रह', collections_label:'संग्रह', recently_saved_label:'हाल ही में सहेजा गया', create_collection_btn:'+ संग्रह बनाएं', places_count_label:'स्थान', favorites_collection:'पसंदीदा', home_collection:'घर', work_collection:'कार्यालय', recently_saved_collection:'हाल ही में सहेजा गया', notif_prefs_title:'सूचना प्राथमिकताएं', notif_prefs_desc:'चुनें कि आपको कैसे सूचित किया जाए। इस डिवाइस पर सहेजा गया — Pulse अभी वास्तविक पुश/ईमेल नहीं भेजता।', push_notif_label:'पुश सूचनाएं', push_notif_sub:'अपने डिवाइस पर सूचनाएं प्राप्त करें', email_notif_label:'ईमेल सूचनाएं', email_notif_sub:'ईमेल के ज़रिए सूचनाएं प्राप्त करें', queue_alerts_label:'कतार अलर्ट', queue_alerts_sub:'प्रतीक्षा समय सीमा से अधिक होने पर सूचित करें', nearby_updates_label:'आस-पास की जानकारी', nearby_updates_sub:'आपके आस-पास के स्थानों की जानकारी', report_updates_label:'रिपोर्ट अपडेट', report_updates_sub:'आपकी रिपोर्ट की गई समस्याओं पर अपडेट', quiet_hours_label:'शांत घंटे', quiet_hours_desc:'इस दौरान कोई सूचना नहीं', avg_wait_time_label:'औसत प्रतीक्षा समय', from_last_week_label:'पिछले सप्ताह से', busiest_time_label:'सबसे व्यस्त समय', daily_peak_time_label:'दैनिक व्यस्त समय', busiest_areas_label:'सबसे व्यस्त क्षेत्र', reports_overview_label:'रिपोर्ट अवलोकन', new_report_btn:'+ नई रिपोर्ट', total_reports_label:'कुल रिपोर्ट', report_type_hazard:'खतरा', report_type_road_closed:'सड़क बंद', report_type_traffic_jam:'ट्रैफिक जाम', report_type_police:'पुलिस', report_type_camera:'कैमरा', filter_all_reports:'सभी रिपोर्ट', filter_pending:'लंबित', filter_verified:'सत्यापित', filter_rejected:'अस्वीकृत', sort_newest_first:'सबसे नया पहले', votes_label:'वोट'},
   es: {nav_livemap:'Mapa en vivo', nav_nearby:'Cerca', nav_saved:'Lugares guardados', nav_reports:'Reportes', nav_analytics:'Analítica', nav_settings:'Configuración',
     search_placeholder:'Buscar lugares, negocios, direcciones', live_overview:'Resumen en vivo', live_users:'Usuarios en línea', reports_today:'Reportes de hoy', verified_spots:'Lugares verificados',
     nearby_places:'Lugares cercanos', view_all:'Ver todo', promo_title:'Ayuda a mejorar Pulse', promo_sub:'Reporta tiempos de espera y ayuda a otros.', promo_btn:'+ Reportar ahora',
     btn_directions:'Direcciones', btn_save:'Guardar', btn_cancel:'Cancelar', btn_close:'Cerrar', btn_save_changes:'Guardar cambios', btn_login:'Iniciar sesión', btn_logout:'Cerrar sesión', btn_create_account:'Crear cuenta',
     settings_profile:'Perfil', settings_notifications:'Notificaciones', settings_appearance:'Apariencia', settings_location:'Ubicación predeterminada', settings_privacy:'Privacidad', settings_storage:'Datos y almacenamiento', settings_help:'Ayuda y soporte', settings_about:'Acerca de Pulse',
     dir_title:'Obtener direcciones', dir_subtitle:'Elige tu modo de viaje', dir_destination_placeholder:'Elegir destino', dir_drive:'Conducir', dir_walk:'Caminar', dir_bike:'Bicicleta', dir_transit:'Transporte público',
-    page_title_nearby:'Cerca', page_title_saved:'Lugares guardados', page_title_reports:'Reportes', page_title_analytics:'Analítica', page_title_settings:'Configuración'},
+    page_title_nearby:'Cerca', page_title_saved:'Lugares guardados', page_title_reports:'Reportes', page_title_analytics:'Analítica', page_title_settings:'Configuración', profile_settings_title:'Configuración de perfil', guest_intro:'Estás navegando como invitado — todo en Pulse funciona sin una cuenta. Inicia sesión para sincronizar tus lugares guardados y búsquedas recientes entre dispositivos, o crea una cuenta de negocio para gestionar los tiempos de espera de tu propio local.', even_as_guest:'Incluso como invitado', even_as_guest_desc:'El idioma y la zona horaria se guardan en este dispositivo (no en tu cuenta) hasta que borres los datos del navegador o inicies sesión.', timezone_label:'Zona horaria', language_label:'Idioma', save_on_device_btn:'Guardar en este dispositivo', edit_photo_btn:'Editar foto', full_name_label:'Nombre completo', email_label:'Correo electrónico', phone_label:'Número de teléfono', username_label:'Nombre de usuario', unit_min:'min', unit_mi:'mi', checkins_label:'check-ins', no_ratings_yet:'Sin reseñas aún', open_now:'Abierto ahora', away_label:'de distancia', new_collection_btn:'+ Nueva colección', collections_label:'COLECCIONES', recently_saved_label:'GUARDADO RECIENTEMENTE', create_collection_btn:'+ Crear colección', places_count_label:'lugares', favorites_collection:'Favoritos', home_collection:'Casa', work_collection:'Trabajo', recently_saved_collection:'Guardado recientemente', notif_prefs_title:'Preferencias de notificación', notif_prefs_desc:'Elige cómo quieres recibir notificaciones. Guardado en este dispositivo — Pulse aún no envía notificaciones push/correo reales.', push_notif_label:'Notificaciones push', push_notif_sub:'Recibe notificaciones en tu dispositivo', email_notif_label:'Notificaciones por correo', email_notif_sub:'Recibe notificaciones por correo electrónico', queue_alerts_label:'Alertas de cola', queue_alerts_sub:'Notificarme cuando el tiempo de espera supere el límite', nearby_updates_label:'Novedades cercanas', nearby_updates_sub:'Actualizaciones sobre lugares cerca de ti', report_updates_label:'Actualizaciones de reportes', report_updates_sub:'Novedades sobre tus reportes', quiet_hours_label:'Horas de silencio', quiet_hours_desc:'Sin notificaciones entre', avg_wait_time_label:'Tiempo de espera promedio', from_last_week_label:'desde la semana pasada', busiest_time_label:'Hora más concurrida', daily_peak_time_label:'Hora pico diaria', busiest_areas_label:'Zonas más concurridas', reports_overview_label:'Resumen de reportes', new_report_btn:'+ Nuevo reporte', total_reports_label:'Reportes totales', report_type_hazard:'Peligro', report_type_road_closed:'Vía cerrada', report_type_traffic_jam:'Tráfico', report_type_police:'Policía', report_type_camera:'Cámara', filter_all_reports:'Todos los reportes', filter_pending:'Pendientes', filter_verified:'Verificados', filter_rejected:'Rechazados', sort_newest_first:'Más recientes primero', votes_label:'votos'},
   fr: {nav_livemap:'Carte en direct', nav_nearby:'À proximité', nav_saved:'Lieux enregistrés', nav_reports:'Signalements', nav_analytics:'Analytique', nav_settings:'Paramètres',
     search_placeholder:'Rechercher des lieux, commerces, adresses', live_overview:'Aperçu en direct', live_users:'Utilisateurs en ligne', reports_today:"Signalements aujourd'hui", verified_spots:'Lieux vérifiés',
     nearby_places:'Lieux à proximité', view_all:'Tout voir', promo_title:'Aidez à améliorer Pulse', promo_sub:"Signalez les temps d'attente et aidez les autres.", promo_btn:'+ Signaler maintenant',
     btn_directions:'Itinéraire', btn_save:'Enregistrer', btn_cancel:'Annuler', btn_close:'Fermer', btn_save_changes:'Enregistrer les modifications', btn_login:'Se connecter', btn_logout:'Se déconnecter', btn_create_account:'Créer un compte',
     settings_profile:'Profil', settings_notifications:'Notifications', settings_appearance:'Apparence', settings_location:'Position par défaut', settings_privacy:'Confidentialité', settings_storage:'Données et stockage', settings_help:'Aide et support', settings_about:'À propos de Pulse',
     dir_title:"Obtenir l'itinéraire", dir_subtitle:'Choisissez votre mode de déplacement', dir_destination_placeholder:'Choisir la destination', dir_drive:'Voiture', dir_walk:'À pied', dir_bike:'Vélo', dir_transit:'Transport en commun',
-    page_title_nearby:'À proximité', page_title_saved:'Lieux enregistrés', page_title_reports:'Signalements', page_title_analytics:'Analytique', page_title_settings:'Paramètres'},
+    page_title_nearby:'À proximité', page_title_saved:'Lieux enregistrés', page_title_reports:'Signalements', page_title_analytics:'Analytique', page_title_settings:'Paramètres', profile_settings_title:'Paramètres du profil', guest_intro:"Vous naviguez en tant qu'invité — tout fonctionne dans Pulse sans compte. Connectez-vous pour synchroniser vos lieux enregistrés et recherches récentes entre appareils, ou créez un compte professionnel pour gérer les temps d'attente de votre commerce.", even_as_guest:"Même en tant qu'invité", even_as_guest_desc:'La langue et le fuseau horaire sont enregistrés sur cet appareil (pas sur votre compte) jusqu’à ce que vous effaciez les données du navigateur ou vous connectiez.', timezone_label:'Fuseau horaire', language_label:'Langue', save_on_device_btn:'Enregistrer sur cet appareil', edit_photo_btn:'Modifier la photo', full_name_label:'Nom complet', email_label:'E-mail', phone_label:'Numéro de téléphone', username_label:"Nom d'utilisateur", unit_min:'min', unit_mi:'mi', checkins_label:'passages', no_ratings_yet:'Pas encore d’avis', open_now:'Ouvert maintenant', away_label:'', new_collection_btn:'+ Nouvelle collection', collections_label:'COLLECTIONS', recently_saved_label:'ENREGISTRÉS RÉCEMMENT', create_collection_btn:'+ Créer une collection', places_count_label:'lieux', favorites_collection:'Favoris', home_collection:'Domicile', work_collection:'Travail', recently_saved_collection:'Enregistrés récemment', notif_prefs_title:'Préférences de notification', notif_prefs_desc:"Choisissez comment être notifié. Enregistré sur cet appareil — Pulse n'envoie pas encore de vraies notifications push/e-mail.", push_notif_label:'Notifications push', push_notif_sub:'Recevoir des notifications sur votre appareil', email_notif_label:'Notifications par e-mail', email_notif_sub:'Recevoir des notifications par e-mail', queue_alerts_label:"Alertes d'attente", queue_alerts_sub:"Être averti quand le temps d'attente dépasse la limite", nearby_updates_label:'Actualités à proximité', nearby_updates_sub:'Mises à jour sur les lieux près de vous', report_updates_label:'Mises à jour des signalements', report_updates_sub:'Suivi de vos signalements', quiet_hours_label:'Heures silencieuses', quiet_hours_desc:'Aucune notification entre', avg_wait_time_label:"Temps d'attente moyen", from_last_week_label:'par rapport à la semaine dernière', busiest_time_label:'Heure la plus fréquentée', daily_peak_time_label:'Pic quotidien', busiest_areas_label:'Zones les plus fréquentées', reports_overview_label:'Aperçu des signalements', new_report_btn:'+ Nouveau signalement', total_reports_label:'Total des signalements', report_type_hazard:'Danger', report_type_road_closed:'Route fermée', report_type_traffic_jam:'Embouteillage', report_type_police:'Police', report_type_camera:'Caméra', filter_all_reports:'Tous les signalements', filter_pending:'En attente', filter_verified:'Vérifiés', filter_rejected:'Rejetés', sort_newest_first:'Plus récents d’abord', votes_label:'votes'},
   ar: {nav_livemap:'الخريطة المباشرة', nav_nearby:'القريب', nav_saved:'الأماكن المحفوظة', nav_reports:'البلاغات', nav_analytics:'التحليلات', nav_settings:'الإعدادات',
     search_placeholder:'ابحث عن أماكن، أعمال، عناوين', live_overview:'نظرة عامة مباشرة', live_users:'المستخدمون النشطون', reports_today:'بلاغات اليوم', verified_spots:'أماكن موثقة',
     nearby_places:'أماكن قريبة', view_all:'عرض الكل', promo_title:'ساعد في تحسين Pulse', promo_sub:'أبلغ عن أوقات الانتظار وساعد الآخرين.', promo_btn:'+ أبلغ الآن',
     btn_directions:'الاتجاهات', btn_save:'حفظ', btn_cancel:'إلغاء', btn_close:'إغلاق', btn_save_changes:'حفظ التغييرات', btn_login:'تسجيل الدخول', btn_logout:'تسجيل الخروج', btn_create_account:'إنشاء حساب',
     settings_profile:'الملف الشخصي', settings_notifications:'الإشعارات', settings_appearance:'المظهر', settings_location:'الموقع الافتراضي', settings_privacy:'الخصوصية', settings_storage:'البيانات والتخزين', settings_help:'المساعدة والدعم', settings_about:'حول Pulse',
     dir_title:'الحصول على الاتجاهات', dir_subtitle:'اختر وسيلة تنقلك', dir_destination_placeholder:'اختر الوجهة', dir_drive:'قيادة', dir_walk:'مشي', dir_bike:'دراجة', dir_transit:'نقل عام',
-    page_title_nearby:'القريب', page_title_saved:'الأماكن المحفوظة', page_title_reports:'البلاغات', page_title_analytics:'التحليلات', page_title_settings:'الإعدادات'},
+    page_title_nearby:'القريب', page_title_saved:'الأماكن المحفوظة', page_title_reports:'البلاغات', page_title_analytics:'التحليلات', page_title_settings:'الإعدادات', profile_settings_title:'إعدادات الملف الشخصي', guest_intro:'أنت تتصفح كضيف — كل شيء في Pulse يعمل بدون حساب. سجّل الدخول لمزامنة أماكنك المحفوظة وعمليات البحث الأخيرة عبر الأجهزة، أو أنشئ حساب أعمال لإدارة أوقات الانتظار في متجرك.', even_as_guest:'حتى كضيف', even_as_guest_desc:'يتم حفظ اللغة والمنطقة الزمنية على هذا الجهاز (وليس في حسابك) حتى تقوم بمسح بيانات المتصفح أو تسجيل الدخول.', timezone_label:'المنطقة الزمنية', language_label:'اللغة', save_on_device_btn:'الحفظ على هذا الجهاز', edit_photo_btn:'تعديل الصورة', full_name_label:'الاسم الكامل', email_label:'البريد الإلكتروني', phone_label:'رقم الهاتف', username_label:'اسم المستخدم', unit_min:'دقيقة', unit_mi:'ميل', checkins_label:'تسجيلات دخول', no_ratings_yet:'لا توجد تقييمات بعد', open_now:'مفتوح الآن', away_label:'', new_collection_btn:'+ مجموعة جديدة', collections_label:'المجموعات', recently_saved_label:'المحفوظة مؤخراً', create_collection_btn:'+ إنشاء مجموعة', places_count_label:'أماكن', favorites_collection:'المفضلة', home_collection:'المنزل', work_collection:'العمل', recently_saved_collection:'المحفوظة مؤخراً', notif_prefs_title:'تفضيلات الإشعارات', notif_prefs_desc:'اختر كيف تريد أن يتم إعلامك. محفوظ على هذا الجهاز — لا يرسل Pulse إشعارات فعلية بعد.', push_notif_label:'الإشعارات الفورية', push_notif_sub:'تلقي الإشعارات على جهازك', email_notif_label:'إشعارات البريد الإلكتروني', email_notif_sub:'تلقي الإشعارات عبر البريد الإلكتروني', queue_alerts_label:'تنبيهات الانتظار', queue_alerts_sub:'إعلامي عند تجاوز وقت الانتظار الحد المسموح', nearby_updates_label:'تحديثات قريبة', nearby_updates_sub:'تحديثات عن الأماكن القريبة منك', report_updates_label:'تحديثات البلاغات', report_updates_sub:'تحديثات على مشكلاتك المُبلَّغ عنها', quiet_hours_label:'ساعات الهدوء', quiet_hours_desc:'لا إشعارات بين', avg_wait_time_label:'متوسط وقت الانتظار', from_last_week_label:'مقارنة بالأسبوع الماضي', busiest_time_label:'أكثر الأوقات ازدحاماً', daily_peak_time_label:'ذروة الازدحام اليومية', busiest_areas_label:'أكثر المناطق ازدحاماً', reports_overview_label:'نظرة عامة على البلاغات', new_report_btn:'+ بلاغ جديد', total_reports_label:'إجمالي البلاغات', report_type_hazard:'خطر', report_type_road_closed:'طريق مغلق', report_type_traffic_jam:'ازدحام مروري', report_type_police:'شرطة', report_type_camera:'كاميرا', filter_all_reports:'كل البلاغات', filter_pending:'قيد الانتظار', filter_verified:'موثقة', filter_rejected:'مرفوضة', sort_newest_first:'الأحدث أولاً', votes_label:'صوت'},
   ur: {nav_livemap:'لائیو نقشہ', nav_nearby:'قریبی', nav_saved:'محفوظ شدہ مقامات', nav_reports:'رپورٹس', nav_analytics:'تجزیات', nav_settings:'ترتیبات',
     search_placeholder:'مقامات، کاروبار، پتے تلاش کریں', live_overview:'لائیو جائزہ', live_users:'لائیو صارفین', reports_today:'آج کی رپورٹس', verified_spots:'تصدیق شدہ مقامات',
     nearby_places:'قریبی مقامات', view_all:'سب دیکھیں', promo_title:'Pulse کو بہتر بنانے میں مدد کریں', promo_sub:'انتظار کے اوقات کی رپورٹ کریں اور دوسروں کی مدد کریں۔', promo_btn:'+ ابھی رپورٹ کریں',
     btn_directions:'ہدایات', btn_save:'محفوظ کریں', btn_cancel:'منسوخ کریں', btn_close:'بند کریں', btn_save_changes:'تبدیلیاں محفوظ کریں', btn_login:'لاگ ان کریں', btn_logout:'لاگ آؤٹ کریں', btn_create_account:'اکاؤنٹ بنائیں',
     settings_profile:'پروفائل', settings_notifications:'اطلاعات', settings_appearance:'ظاہری شکل', settings_location:'ڈیفالٹ مقام', settings_privacy:'رازداری', settings_storage:'ڈیٹا اور اسٹوریج', settings_help:'مدد اور معاونت', settings_about:'Pulse کے بارے میں',
     dir_title:'ہدایات حاصل کریں', dir_subtitle:'اپنا سفری طریقہ منتخب کریں', dir_destination_placeholder:'منزل منتخب کریں', dir_drive:'گاڑی', dir_walk:'پیدل', dir_bike:'سائیکل', dir_transit:'عوامی ٹرانسپورٹ',
-    page_title_nearby:'قریبی', page_title_saved:'محفوظ شدہ مقامات', page_title_reports:'رپورٹس', page_title_analytics:'تجزیات', page_title_settings:'ترتیبات'},
+    page_title_nearby:'قریبی', page_title_saved:'محفوظ شدہ مقامات', page_title_reports:'رپورٹس', page_title_analytics:'تجزیات', page_title_settings:'ترتیبات', profile_settings_title:'پروفائل ترتیبات', guest_intro:'آپ مہمان کے طور پر براؤز کر رہے ہیں — Pulse میں سب کچھ بغیر اکاؤنٹ کے کام کرتا ہے۔ اپنے محفوظ شدہ مقامات اور حالیہ تلاش کو مختلف آلات پر سنک کرنے کے لیے لاگ ان کریں، یا اپنے اسٹور کے انتظار کے اوقات کا نظم کرنے کے لیے بزنس اکاؤنٹ بنائیں۔', even_as_guest:'مہمان کے طور پر بھی', even_as_guest_desc:'زبان اور ٹائم زون اس ڈیوائس پر محفوظ ہوتے ہیں (آپ کے اکاؤنٹ میں نہیں) جب تک آپ براؤزر ڈیٹا صاف نہ کریں یا لاگ ان نہ کریں۔', timezone_label:'ٹائم زون', language_label:'زبان', save_on_device_btn:'اس ڈیوائس پر محفوظ کریں', edit_photo_btn:'تصویر میں تبدیلی کریں', full_name_label:'پورا نام', email_label:'ای میل', phone_label:'فون نمبر', username_label:'یوزر نیم', unit_min:'منٹ', unit_mi:'میل', checkins_label:'چیک اِنز', no_ratings_yet:'ابھی کوئی ریٹنگ نہیں', open_now:'ابھی کھلا ہے', away_label:'دور', new_collection_btn:'+ نیا مجموعہ', collections_label:'مجموعے', recently_saved_label:'حال ہی میں محفوظ شدہ', create_collection_btn:'+ مجموعہ بنائیں', places_count_label:'مقامات', favorites_collection:'پسندیدہ', home_collection:'گھر', work_collection:'کام', recently_saved_collection:'حال ہی میں محفوظ شدہ', notif_prefs_title:'اطلاعاتی ترجیحات', notif_prefs_desc:'منتخب کریں کہ آپ کو کیسے مطلع کیا جائے۔ اس ڈیوائس پر محفوظ — Pulse ابھی حقیقی پش/ای میل نہیں بھیجتا۔', push_notif_label:'پش اطلاعات', push_notif_sub:'اپنے ڈیوائس پر اطلاعات وصول کریں', email_notif_label:'ای میل اطلاعات', email_notif_sub:'ای میل کے ذریعے اطلاعات وصول کریں', queue_alerts_label:'قطار الرٹس', queue_alerts_sub:'انتظار کا وقت حد سے زیادہ ہونے پر مطلع کریں', nearby_updates_label:'قریبی اپڈیٹس', nearby_updates_sub:'آپ کے قریب مقامات کے بارے میں اپڈیٹس', report_updates_label:'رپورٹ اپڈیٹس', report_updates_sub:'آپ کی رپورٹ کردہ مسائل پر اپڈیٹس', quiet_hours_label:'خاموش اوقات', quiet_hours_desc:'ان اوقات میں کوئی اطلاع نہیں', avg_wait_time_label:'اوسط انتظار کا وقت', from_last_week_label:'گزشتہ ہفتے سے', busiest_time_label:'مصروف ترین وقت', daily_peak_time_label:'روزانہ عروج کا وقت', busiest_areas_label:'مصروف ترین علاقے', reports_overview_label:'رپورٹس کا جائزہ', new_report_btn:'+ نئی رپورٹ', total_reports_label:'کل رپورٹس', report_type_hazard:'خطرہ', report_type_road_closed:'سڑک بند', report_type_traffic_jam:'ٹریفک جام', report_type_police:'پولیس', report_type_camera:'کیمرہ', filter_all_reports:'تمام رپورٹس', filter_pending:'زیر التوا', filter_verified:'تصدیق شدہ', filter_rejected:'مسترد شدہ', sort_newest_first:'تازہ ترین پہلے', votes_label:'ووٹ'},
   pt: {nav_livemap:'Mapa ao vivo', nav_nearby:'Próximo', nav_saved:'Locais salvos', nav_reports:'Relatos', nav_analytics:'Análises', nav_settings:'Configurações',
     search_placeholder:'Buscar locais, empresas, endereços', live_overview:'Visão geral ao vivo', live_users:'Usuários ao vivo', reports_today:'Relatos de hoje', verified_spots:'Locais verificados',
     nearby_places:'Locais próximos', view_all:'Ver tudo', promo_title:'Ajude a melhorar o Pulse', promo_sub:'Relate tempos de espera e ajude outras pessoas.', promo_btn:'+ Relatar agora',
     btn_directions:'Rotas', btn_save:'Salvar', btn_cancel:'Cancelar', btn_close:'Fechar', btn_save_changes:'Salvar alterações', btn_login:'Entrar', btn_logout:'Sair', btn_create_account:'Criar conta',
     settings_profile:'Perfil', settings_notifications:'Notificações', settings_appearance:'Aparência', settings_location:'Localização padrão', settings_privacy:'Privacidade', settings_storage:'Dados e armazenamento', settings_help:'Ajuda e suporte', settings_about:'Sobre o Pulse',
     dir_title:'Obter rotas', dir_subtitle:'Escolha seu modo de viagem', dir_destination_placeholder:'Escolher destino', dir_drive:'Carro', dir_walk:'A pé', dir_bike:'Bicicleta', dir_transit:'Transporte público',
-    page_title_nearby:'Próximo', page_title_saved:'Locais salvos', page_title_reports:'Relatos', page_title_analytics:'Análises', page_title_settings:'Configurações'},
+    page_title_nearby:'Próximo', page_title_saved:'Locais salvos', page_title_reports:'Relatos', page_title_analytics:'Análises', page_title_settings:'Configurações', profile_settings_title:'Configurações de perfil', guest_intro:'Você está navegando como convidado — tudo no Pulse funciona sem uma conta. Entre para sincronizar seus locais salvos e pesquisas recentes entre dispositivos, ou crie uma conta empresarial para gerenciar os tempos de espera do seu próprio estabelecimento.', even_as_guest:'Mesmo como convidado', even_as_guest_desc:'O idioma e o fuso horário são salvos neste dispositivo (não na sua conta) até que você limpe os dados do navegador ou entre na sua conta.', timezone_label:'Fuso horário', language_label:'Idioma', save_on_device_btn:'Salvar neste dispositivo', edit_photo_btn:'Editar foto', full_name_label:'Nome completo', email_label:'E-mail', phone_label:'Número de telefone', username_label:'Nome de usuário', unit_min:'min', unit_mi:'mi', checkins_label:'check-ins', no_ratings_yet:'Ainda sem avaliações', open_now:'Aberto agora', away_label:'de distância', new_collection_btn:'+ Nova coleção', collections_label:'COLEÇÕES', recently_saved_label:'SALVOS RECENTEMENTE', create_collection_btn:'+ Criar coleção', places_count_label:'locais', favorites_collection:'Favoritos', home_collection:'Casa', work_collection:'Trabalho', recently_saved_collection:'Salvos recentemente', notif_prefs_title:'Preferências de notificação', notif_prefs_desc:'Escolha como deseja ser notificado. Salvo neste dispositivo — o Pulse ainda não envia push/e-mail reais.', push_notif_label:'Notificações push', push_notif_sub:'Receba notificações no seu dispositivo', email_notif_label:'Notificações por e-mail', email_notif_sub:'Receba notificações por e-mail', queue_alerts_label:'Alertas de fila', queue_alerts_sub:'Ser avisado quando o tempo de espera exceder o limite', nearby_updates_label:'Novidades próximas', nearby_updates_sub:'Atualizações sobre locais perto de você', report_updates_label:'Atualizações de relatos', report_updates_sub:'Atualizações sobre seus relatos', quiet_hours_label:'Horário silencioso', quiet_hours_desc:'Sem notificações entre', avg_wait_time_label:'Tempo médio de espera', from_last_week_label:'em relação à semana passada', busiest_time_label:'Horário mais movimentado', daily_peak_time_label:'Pico diário', busiest_areas_label:'Áreas mais movimentadas', reports_overview_label:'Resumo de relatos', new_report_btn:'+ Novo relato', total_reports_label:'Total de relatos', report_type_hazard:'Perigo', report_type_road_closed:'Via fechada', report_type_traffic_jam:'Engarrafamento', report_type_police:'Polícia', report_type_camera:'Câmera', filter_all_reports:'Todos os relatos', filter_pending:'Pendentes', filter_verified:'Verificados', filter_rejected:'Rejeitados', sort_newest_first:'Mais recentes primeiro', votes_label:'votos'},
 };
 const SUPPORTED_LANGS = Object.keys(TRANSLATIONS);
 const RTL_LANGS = ['ar','ur'];
@@ -1598,7 +1598,6 @@ function t(key){
 }
 function applyLanguage(){
   const lang = getCurrentLanguage();
-  document.documentElement.dir = RTL_LANGS.includes(lang) ? 'rtl' : 'ltr';
   document.documentElement.lang = lang;
   const navMap = {livemap:'navtext-livemap', nearby:'navtext-nearby', saved:'navtext-saved', reports:'navtext-reports', analytics:'navtext-analytics', settings:'navtext-settings'};
   const navKeyMap = {livemap:'nav_livemap', nearby:'nav_nearby', saved:'nav_saved', reports:'nav_reports', analytics:'nav_analytics', settings:'nav_settings'};
@@ -1833,7 +1832,7 @@ function renderDesktopSidebar(){
         const c = statusColors[l.status];
         return `<div class="ds-place-row" onclick="openDetail('${l.id}')">
           <div class="ds-place-dot" style="background:${c.bg}; color:${c.text};">${emojiFor(l.icon)}</div>
-          <div class="ds-place-info"><div class="ds-place-name">${l.name}</div><div class="ds-place-meta">${l.distance || 'nearby'} \u00B7 ${l.osm ? 'no reports yet' : (l.confirms>0 ? l.confirms+' check-ins' : 'owner reported')}</div></div>
+          <div class="ds-place-info"><div class="ds-place-name">${l.name}</div><div class="ds-place-meta">${l.distance || 'nearby'} \u00B7 ${l.osm ? 'no reports yet' : (l.confirms>0 ? l.confirms+' '+t('checkins_label') : 'owner reported')}</div></div>
           <div class="ds-place-time" style="background:${c.bg}; color:${c.text};">${l.minutes==null ? 'No data' : l.minutes+' min'}</div>
         </div>`;
       }).join('') : `<div class="empty">Nothing nearby yet.</div>`}
@@ -1872,7 +1871,7 @@ function renderFeed(content){
           <div class="icon-badge" style="background:${c.bg}; color:${c.text};"><span>${emojiFor(l.icon)}</span></div>
           <div class="card-body">
             <p class="card-title">${l.name} ${l.ownerVerified?'<span class="badge-owner"><i class="ti ti-rosette-discount-check" style="font-size:11px;"></i>Verified</span>':''} ${l.osm?'<span class="badge-real">Real</span>':(l.id<=8?'<span class="badge-demo">Demo</span>':'')}</p>
-            <p class="card-sub">${l.distance} · ${l.osm ? 'be the first to report' : (l.confirms>0? l.confirms+' check-ins':'owner reported')} · ${l.updated}</p>
+            <p class="card-sub">${l.distance} · ${l.osm ? 'be the first to report' : (l.confirms>0? l.confirms+' '+t('checkins_label'):'owner reported')} · ${l.updated}</p>
             ${l.ratingCount ? `<p class="card-sub" style="margin-top:2px;">${renderStars(l.ratingAvg, l.ratingCount)}</p>` : ''}
           </div>
           <div class="card-right">
@@ -2096,7 +2095,7 @@ function openDetail(id){
           <div class="d-photo" style="${l.photoUrl ? `background-image:url('${l.photoUrl}');` : `background:${c.bg}; color:${c.text};`}">${l.photoUrl ? '' : emojiFor(l.icon)}</div>
           <div>
             <p class="sheet-title">${l.name}</p>
-            <p class="sheet-sub">${l.ownerVerified? 'Reported by the owner · '+l.updated : 'Based on '+l.confirms+' check-ins · '+l.updated}</p>
+            <p class="sheet-sub">${l.ownerVerified? 'Reported by the owner · '+l.updated : 'Based on '+l.confirms+' '+t('checkins_label')+' · '+l.updated}</p>
             ${l.ratingCount ? `<p class="sheet-sub" style="margin-top:4px;">${renderStars(l.ratingAvg, l.ratingCount)}</p>` : ''}
           </div>
         </div>
@@ -2125,7 +2124,7 @@ function openDetail(id){
           <div id="busy-times-${l.id}"></div>
         </div>
         <div class="dg-actions" style="display:flex; gap:8px;">
-          <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
+          <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>${t('btn_directions')}</button>
           <button class="primary-btn" onclick="document.getElementById('checkin-section-${l.id}').scrollIntoView({behavior:'smooth', block:'nearest'})" style="flex:1; margin-bottom:0; display:flex; align-items:center; justify-content:center; gap:6px;"><i class="fa-solid fa-check"></i>Check In</button>
         </div>
       </div>
@@ -2665,6 +2664,8 @@ const REPORT_TYPE_META = {
   police:{label:'Police', icon:'fa-shield-halved', color:'var(--accent)'},
   camera:{label:'Camera', icon:'fa-camera', color:'var(--purple)'},
 };
+const REPORT_TYPE_KEY = {hazard:'report_type_hazard', closure:'report_type_road_closed', jam:'report_type_traffic_jam', police:'report_type_police', camera:'report_type_camera'};
+function reportTypeLabel(type){ return REPORT_TYPE_KEY[type] ? t(REPORT_TYPE_KEY[type]) : (REPORT_TYPE_META[type] ? REPORT_TYPE_META[type].label : type); }
 let reportsActiveTab = 'all';
 let reportsSortBy = 'newest';
 function setReportsTab(t){ reportsActiveTab = t; renderReportsPage(); }
@@ -2688,23 +2689,23 @@ function renderReportsPage(){
   // 'newest' keeps natural order — new reports are unshifted onto roadReports/signals as they're created
 
   page.innerHTML = `
-    <div class="page-header"><div class="page-title">Reports</div><button class="primary-btn" style="width:auto; padding:10px 18px;" onclick="openReportModal()"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Report</button></div>
+    <div class="page-header"><div class="page-title">${t('page_title_reports')}</div><button class="primary-btn" style="width:auto; padding:10px 18px;" onclick="openReportModal()"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>${t('new_report_btn').replace('+ ','')}</button></div>
     <div class="page-stat-row">
-      <div class="page-stat-card"><div class="n">${allReports.length}</div><div class="l">Total Reports</div></div>
+      <div class="page-stat-card"><div class="n">${allReports.length}</div><div class="l">${t('total_reports_label')}</div></div>
       ${Object.entries(typeCounts).map(([type,n])=>{
         const meta = REPORT_TYPE_META[type] || {label:type, color:'var(--ink-muted)'};
-        return `<div class="page-stat-card"><div class="n" style="color:${meta.color};">${n}</div><div class="l">${meta.label}</div></div>`;
+        return `<div class="page-stat-card"><div class="n" style="color:${meta.color};">${n}</div><div class="l">${reportTypeLabel(type)}</div></div>`;
       }).join('')}
     </div>
     <div class="tab-row">
       <div class="tab-tabs">
-        <div class="tab-btn ${reportsActiveTab==='all'?'active':''}" onclick="setReportsTab('all')"><i class="fa-solid fa-list"></i>All Reports</div>
-        <div class="tab-btn ${reportsActiveTab==='pending'?'active':''}" onclick="setReportsTab('pending')"><i class="fa-regular fa-clock"></i>Pending</div>
-        <div class="tab-btn ${reportsActiveTab==='verified'?'active':''}" onclick="setReportsTab('verified')"><i class="fa-solid fa-circle-check"></i>Verified</div>
-        <div class="tab-btn ${reportsActiveTab==='rejected'?'active':''}" onclick="setReportsTab('rejected')"><i class="fa-solid fa-circle-xmark"></i>Rejected</div>
+        <div class="tab-btn ${reportsActiveTab==='all'?'active':''}" onclick="setReportsTab('all')"><i class="fa-solid fa-list"></i>${t('filter_all_reports')}</div>
+        <div class="tab-btn ${reportsActiveTab==='pending'?'active':''}" onclick="setReportsTab('pending')"><i class="fa-regular fa-clock"></i>${t('filter_pending')}</div>
+        <div class="tab-btn ${reportsActiveTab==='verified'?'active':''}" onclick="setReportsTab('verified')"><i class="fa-solid fa-circle-check"></i>${t('filter_verified')}</div>
+        <div class="tab-btn ${reportsActiveTab==='rejected'?'active':''}" onclick="setReportsTab('rejected')"><i class="fa-solid fa-circle-xmark"></i>${t('filter_rejected')}</div>
       </div>
       <select class="rp-sort" onchange="setReportsSort(this.value)">
-        <option value="newest" ${reportsSortBy==='newest'?'selected':''}>Newest First</option>
+        <option value="newest" ${reportsSortBy==='newest'?'selected':''}>${t('sort_newest_first')}</option>
         <option value="oldest" ${reportsSortBy==='oldest'?'selected':''}>Oldest First</option>
         <option value="votes" ${reportsSortBy==='votes'?'selected':''}>Most Votes</option>
       </select>
@@ -2713,13 +2714,14 @@ function renderReportsPage(){
       const meta = REPORT_TYPE_META[r.type] || {label:r.kind==='signal'?'Signal':r.type, icon:'fa-flag', color:'var(--ink-muted)'};
       const statusBg = r.status==='Verified' ? 'var(--teal-bg)' : 'var(--amber-bg)';
       const statusText = r.status==='Verified' ? 'var(--teal-text)' : 'var(--amber-text)';
+      const statusDisplay = r.status==='Verified' ? t('filter_verified') : r.status==='Rejected' ? t('filter_rejected') : t('filter_pending');
       const openCall = r.kind==='road' ? `openRoadDetail(${r.id})` : `openSignalDetail(${r.id})`;
       return `<div class="report-row" onclick="${openCall}" style="cursor:pointer;">
         <div class="report-icon" style="background:${meta.color}22; color:${meta.color};"><i class="fa-solid ${meta.icon}"></i></div>
         <div style="flex:1; min-width:0;"><div style="font-weight:600; font-size:13px;">${r.name}</div><div style="font-size:11.5px; color:var(--ink-muted);">${r.detail || ''}</div></div>
-        <div class="rp-type-pill">${meta.label}</div>
-        <div class="status-pill" style="background:${statusBg}; color:${statusText};">${r.status}</div>
-        <div class="rp-col">${r.confirms||0} votes</div>
+        <div class="rp-type-pill">${reportTypeLabel(r.type)}</div>
+        <div class="status-pill" style="background:${statusBg}; color:${statusText};">${statusDisplay}</div>
+        <div class="rp-col">${r.confirms||0} ${t('votes_label')}</div>
         <div class="rp-col">${r.updated || ''}</div>
         <span class="rp-more" onclick="event.stopPropagation(); ${openCall}"><i class="fa-solid fa-ellipsis"></i></span>
       </div>`;
@@ -2762,13 +2764,13 @@ async function renderAnalyticsPage(){
 
   page.innerHTML = `
     <div class="page-header">
-      <div class="page-title">Analytics</div>
+      <div class="page-title">${t('page_title_analytics')}</div>
       <div class="an-date-pill"><i class="fa-regular fa-calendar"></i>May 21 – May 27, 2024<i class="fa-solid fa-chevron-down" style="font-size:10px;"></i></div>
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
       <div class="chart-card">
-        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 4px;">Average Wait Time</p>
-        <p style="font-size:24px; font-weight:800; font-family:'Sora',sans-serif; margin:0 0 2px;">18 min <span style="font-size:12px; font-weight:700; color:var(--teal-text);"><i class="fa-solid fa-arrow-down"></i> 8% from last week</span></p>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 4px;">${t('avg_wait_time_label')}</p>
+        <p style="font-size:24px; font-weight:800; font-family:'Sora',sans-serif; margin:0 0 2px;">18 ${t('unit_min')} <span style="font-size:12px; font-weight:700; color:var(--teal-text);"><i class="fa-solid fa-arrow-down"></i> 8% ${t('from_last_week_label')}</span></p>
         <svg viewBox="0 0 ${chartW} ${chartH+30}" style="width:100%; height:280px; margin-top:10px;">
           <polyline points="${pts.join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
           ${waitByDay.map((v,i)=>`<circle cx="${(i/(waitByDay.length-1))*chartW}" cy="${chartH-(v/maxWait)*chartH}" r="3.5" fill="var(--accent)"/>`).join('')}
@@ -2776,9 +2778,9 @@ async function renderAnalyticsPage(){
         </svg>
       </div>
       <div class="chart-card">
-        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 4px;">Busiest Time</p>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 4px;">${t('busiest_time_label')}</p>
         <p style="font-size:24px; font-weight:800; font-family:'Sora',sans-serif; margin:0 0 2px;">6 PM – 8 PM</p>
-        <p style="font-size:11.5px; color:var(--ink-muted); margin:0 0 16px;">Daily peak time</p>
+        <p style="font-size:11.5px; color:var(--ink-muted); margin:0 0 16px;">${t('daily_peak_time_label')}</p>
         <div style="display:flex; align-items:flex-end; gap:3px; height:210px;">
           ${hourly.map(n=>`<div style="flex:1; height:${(n/maxHourly)*100}%; background:var(--purple); border-radius:2px; min-height:2px; opacity:.85;"></div>`).join('')}
         </div>
@@ -2787,16 +2789,16 @@ async function renderAnalyticsPage(){
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
       <div class="chart-card" style="display:flex; flex-direction:column; justify-content:center;">
-        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 22px;">Busiest Areas</p>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 22px;">${t('busiest_areas_label')}</p>
         ${areas.map(a=>`<div class="an-area-row" style="margin-bottom:28px;">
           <span class="an-area-dot" style="background:${a.color};"></span>
           <span class="an-area-name">${a.name}</span>
           <div class="bar-track" style="height:10px;"><div class="bar-fill" style="width:${(a.minutes/maxAreaMin)*100}%; background:${a.color};"></div></div>
-          <span class="an-area-time">${a.minutes} min</span>
+          <span class="an-area-time">${a.minutes} ${t('unit_min')}</span>
         </div>`).join('')}
       </div>
       <div class="chart-card" style="display:flex; flex-direction:column; justify-content:center;">
-        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 22px;">Reports Overview</p>
+        <p style="font-size:12px; font-weight:700; color:var(--ink-muted); margin:0 0 22px;">${t('reports_overview_label')}</p>
         <div style="display:flex; align-items:center; gap:32px;">
           <div class="an-donut" style="width:190px; height:190px; background:conic-gradient(${donutStops});">
             <div class="an-donut-hole" style="width:112px; height:112px;"><span class="n" style="font-size:26px;">${reportsTotal}</span><span class="l">Total</span></div>
@@ -3054,20 +3056,20 @@ function renderSettingsPage(){
       const guestLang = gp.language || getCurrentLanguage();
       const guestTz = gp.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
       body = `
-        <p style="font-size:15px; font-weight:700; margin-bottom:8px;">Profile Settings</p>
-        <p style="font-size:13px; color:var(--ink-secondary); line-height:1.6; margin-bottom:20px;">You're browsing as a guest — everything in Pulse works without an account. Log in to sync your saved places and recent searches across devices, or create a business account to manage your own store's wait times.</p>
+        <p style="font-size:15px; font-weight:700; margin-bottom:8px;">${t('profile_settings_title')}</p>
+        <p style="font-size:13px; color:var(--ink-secondary); line-height:1.6; margin-bottom:20px;">${t('guest_intro')}</p>
         <div style="display:flex; gap:10px; margin-bottom:24px;">
           <button class="primary-btn" style="width:auto; padding:11px 20px;" onclick="openAuthModal('login')">${t('btn_login')}</button>
           <button class="primary-btn" style="width:auto; padding:11px 20px; background:var(--surface-2); color:var(--ink);" onclick="openAuthModal('signup')">${t('btn_create_account')}</button>
         </div>
         <div style="padding-top:20px; border-top:1px solid var(--border);">
-          <p style="font-size:12px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:4px;">Even as a guest</p>
-          <p style="font-size:12px; color:var(--ink-muted); margin-bottom:14px;">Language and timezone are saved on this device (not your account) until you clear browser data or log in.</p>
+          <p style="font-size:12px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:4px;">${t('even_as_guest')}</p>
+          <p style="font-size:12px; color:var(--ink-muted); margin-bottom:14px;">${t('even_as_guest_desc')}</p>
           <div class="st-field-row">
-            <div class="st-field"><label>Language</label><select id="profile-lang-select">${SUPPORTED_LANGS.map(code=>`<option value="${code}" ${guestLang===code?'selected':''}>${LANG_DISPLAY_NAMES[code]}</option>`).join('')}</select></div>
-            <div class="st-field"><label>Timezone</label><select id="profile-tz-select">${getAllTimezones().map(tz=>`<option value="${tz}" ${guestTz===tz?'selected':''}>${tz}</option>`).join('')}</select></div>
+            <div class="st-field"><label>${t('language_label')}</label><select id="profile-lang-select">${SUPPORTED_LANGS.map(code=>`<option value="${code}" ${guestLang===code?'selected':''}>${LANG_DISPLAY_NAMES[code]}</option>`).join('')}</select></div>
+            <div class="st-field"><label>${t('timezone_label')}</label><select id="profile-tz-select">${getAllTimezones().map(tz=>`<option value="${tz}" ${guestTz===tz?'selected':''}>${tz}</option>`).join('')}</select></div>
           </div>
-          <button class="primary-btn" style="width:auto; padding:10px 18px; background:var(--surface-2); color:var(--ink);" onclick="saveProfileChanges()">Save on this device</button>
+          <button class="primary-btn" style="width:auto; padding:10px 18px; background:var(--surface-2); color:var(--ink);" onclick="saveProfileChanges()">${t('save_on_device_btn')}</button>
         </div>
       `;
     } else {
@@ -3076,14 +3078,14 @@ function renderSettingsPage(){
       const curLang = currentUser.language || getCurrentLanguage();
       const curTz = currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
       body = `
-        <p style="font-size:15px; font-weight:700; margin-bottom:20px;">Profile Settings</p>
+        <p style="font-size:15px; font-weight:700; margin-bottom:20px;">${t('profile_settings_title')}</p>
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
           <div class="st-avatar-fallback" id="profile-avatar-preview">${currentUser.avatarData ? `<img src="${currentUser.avatarData}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">` : initials}</div>
           <div style="flex:1;">
             <div style="font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px;">${currentUser.name || currentUser.email}${isVerifiedBusiness ? `<span style="display:inline-flex; align-items:center; gap:3px; background:var(--blue-bg); color:var(--blue-text); font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:20px;"><i class="fa-solid fa-circle-check"></i>Verified</span>` : ''}</div>
             <div style="font-size:12px; color:var(--ink-muted);">${currentUser.email}</div>
           </div>
-          <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="triggerPhotoUpload()">Edit Photo</button>
+          <button class="primary-btn" style="width:auto; padding:9px 16px; background:var(--surface-2); color:var(--ink);" onclick="triggerPhotoUpload()">${t('edit_photo_btn')}</button>
         </div>
         ${!currentUser.emailVerified ? `
         <div class="report-row" style="background:var(--amber-bg); border-color:transparent; margin-bottom:20px;">
@@ -3091,15 +3093,15 @@ function renderSettingsPage(){
           <div style="flex:1;"><div style="font-weight:600; font-size:13px; color:var(--amber-text);">Your email isn't verified yet</div><div style="font-size:11.5px; color:var(--amber-text);">${currentUser.role==='business' ? 'Required before you can claim a store.' : 'Verify it to keep your account secure.'}</div></div>
           <button class="primary-btn" style="width:auto; padding:8px 16px;" onclick="resendVerifyCode()">Verify now</button>
         </div>` : ''}
-        <div class="st-field"><label>Full Name</label><input type="text" id="profile-name-input" value="${currentUser.name || ''}"></div>
+        <div class="st-field"><label>${t('full_name_label')}</label><input type="text" id="profile-name-input" value="${currentUser.name || ''}"></div>
         <div class="st-field-row">
-          <div class="st-field"><label>Email</label><input type="email" value="${currentUser.email}" disabled style="opacity:.6;"></div>
-          <div class="st-field"><label>Phone Number</label><input type="text" id="profile-phone-input" value="${currentUser.phone || ''}" placeholder="+92 300 1234567"></div>
+          <div class="st-field"><label>${t('email_label')}</label><input type="email" value="${currentUser.email}" disabled style="opacity:.6;"></div>
+          <div class="st-field"><label>${t('phone_label')}</label><input type="text" id="profile-phone-input" value="${currentUser.phone || ''}" placeholder="+92 300 1234567"></div>
         </div>
-        <div class="st-field"><label>Username</label><input type="text" id="profile-username-input" value="${currentUser.username || ''}" placeholder="e.g. ${(currentUser.email||'').split('@')[0]}"></div>
+        <div class="st-field"><label>${t('username_label')}</label><input type="text" id="profile-username-input" value="${currentUser.username || ''}" placeholder="e.g. ${(currentUser.email||'').split('@')[0]}"></div>
         <div class="st-field-row">
-          <div class="st-field"><label>Language</label><select id="profile-lang-select">${SUPPORTED_LANGS.map(code=>`<option value="${code}" ${curLang===code?'selected':''}>${LANG_DISPLAY_NAMES[code]}</option>`).join('')}</select></div>
-          <div class="st-field"><label>Timezone</label><select id="profile-tz-select">${getAllTimezones().map(tz=>`<option value="${tz}" ${curTz===tz?'selected':''}>${tz}</option>`).join('')}</select></div>
+          <div class="st-field"><label>${t('language_label')}</label><select id="profile-lang-select">${SUPPORTED_LANGS.map(code=>`<option value="${code}" ${curLang===code?'selected':''}>${LANG_DISPLAY_NAMES[code]}</option>`).join('')}</select></div>
+          <div class="st-field"><label>${t('timezone_label')}</label><select id="profile-tz-select">${getAllTimezones().map(tz=>`<option value="${tz}" ${curTz===tz?'selected':''}>${tz}</option>`).join('')}</select></div>
         </div>
         <button class="primary-btn" style="width:auto; padding:11px 22px;" id="profile-save-btn" onclick="saveProfileChanges()">${t('btn_save_changes')}</button>
         ${currentUser.role==='business' ? `
@@ -3150,23 +3152,23 @@ function renderSettingsPage(){
       </div>`;
   } else if(settingsActiveTab==='notifications'){
     const notifRows = [
-      {k:'push', icon:'fa-mobile-screen-button', color:'blue', label:'Push Notifications', sub:'Receive notifications on your device'},
-      {k:'email', icon:'fa-envelope', color:'purple', label:'Email Notifications', sub:'Receive notifications via email'},
-      {k:'queueAlerts', icon:'fa-hourglass-half', color:'coral', label:'Queue Alerts', sub:'Get notified when wait time is above limit'},
-      {k:'nearbyUpdates', icon:'fa-location-dot', color:'teal', label:'Nearby Updates', sub:'Updates about places near you'},
-      {k:'reportUpdates', icon:'fa-flag', color:'amber', label:'Report Updates', sub:'Updates on your reported issues'},
+      {k:'push', icon:'fa-mobile-screen-button', color:'blue', label:t('push_notif_label'), sub:t('push_notif_sub')},
+      {k:'email', icon:'fa-envelope', color:'purple', label:t('email_notif_label'), sub:t('email_notif_sub')},
+      {k:'queueAlerts', icon:'fa-hourglass-half', color:'coral', label:t('queue_alerts_label'), sub:t('queue_alerts_sub')},
+      {k:'nearbyUpdates', icon:'fa-location-dot', color:'teal', label:t('nearby_updates_label'), sub:t('nearby_updates_sub')},
+      {k:'reportUpdates', icon:'fa-flag', color:'amber', label:t('report_updates_label'), sub:t('report_updates_sub')},
     ];
     body = `
-      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">Notification Preferences</p>
-      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:18px;">Choose how you want to be notified. Saved on this device — Pulse doesn't send real push/email yet.</p>
+      <p style="font-size:15px; font-weight:700; margin-bottom:4px;">${t('notif_prefs_title')}</p>
+      <p style="font-size:12px; color:var(--ink-muted); margin-bottom:18px;">${t('notif_prefs_desc')}</p>
       ${notifRows.map(r=>`<div class="report-row">
         <div class="report-icon" style="background:var(--${r.color}-bg); color:var(--${r.color==='purple'?'purple':r.color+'-text'});"><i class="fa-solid ${r.icon}"></i></div>
         <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${r.label}</div><div style="font-size:11.5px; color:var(--ink-muted);">${r.sub}</div></div>
         <label class="np-toggle"><input type="checkbox" ${notifPrefs[r.k]?'checked':''} onchange="toggleNotifPref('${r.k}')"><span class="np-toggle-slider"></span></label>
       </div>`).join('')}
       <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
-        <p style="font-size:13px; font-weight:700; margin-bottom:4px;">Quiet Hours</p>
-        <p style="font-size:11.5px; color:var(--ink-muted); margin-bottom:10px;">No notifications between</p>
+        <p style="font-size:13px; font-weight:700; margin-bottom:4px;">${t('quiet_hours_label')}</p>
+        <p style="font-size:11.5px; color:var(--ink-muted); margin-bottom:10px;">${t('quiet_hours_desc')}</p>
         <div style="display:flex; align-items:center; gap:10px;">
           <input type="time" value="${notifPrefs.quietStart}" onchange="setNotifPref('quietStart', this.value)" style="padding:8px 10px; border-radius:9px; border:1px solid var(--border); font-size:12.5px; background:var(--surface); color:var(--ink);">
           <span style="font-size:12px; color:var(--ink-muted);">to</span>
@@ -3423,6 +3425,10 @@ function createCollection(){
   savedActiveCollection = name;
   renderSavedPage();
 }
+function translateCollectionName(name){
+  const map = {'Favorites':'favorites_collection', 'Home':'home_collection', 'Work':'work_collection', 'Recently Saved':'recently_saved_collection'};
+  return map[name] ? t(map[name]) : name; // user-created custom collections keep their own name
+}
 function renderSavedPage(){
   const page = document.getElementById('saved-page');
   const cols = getSavedCollections();
@@ -3433,11 +3439,11 @@ function renderSavedPage(){
     Object.values(cols).forEach(arr=>arr.forEach(id=>allIds.add(id)));
     activeIds = order.filter(id=>allIds.has(id));
     allIds.forEach(id=>{ if(activeIds.indexOf(id)===-1) activeIds.push(id); });
-    headerLabel = 'Recently Saved';
+    headerLabel = t('recently_saved_collection');
     saveTargetCollection = 'Favorites';
   } else {
     activeIds = cols[savedActiveCollection] || [];
-    headerLabel = savedActiveCollection;
+    headerLabel = translateCollectionName(savedActiveCollection);
     saveTargetCollection = savedActiveCollection;
   }
   const items = activeIds.map(id=>getSavedItemMeta(id)).filter(Boolean);
@@ -3445,17 +3451,17 @@ function renderSavedPage(){
   const collectionsHtml = `
     <div class="sv-col-item ${savedActiveCollection===null?'active':''}" onclick="setSavedCollection(null)">
       <span class="sv-col-icon" style="background:var(--surface-2); color:var(--ink-secondary);"><i class="fa-solid fa-clock-rotate-left"></i></span>
-      <span class="sv-col-name">Recently Saved</span>
+      <span class="sv-col-name">${t('recently_saved_collection')}</span>
     </div>
     ${Object.keys(cols).map(name=>{
       const meta = svColMeta(name);
       return `<div class="sv-col-item ${name===savedActiveCollection?'active':''}" onclick="setSavedCollection('${name}')">
         <span class="sv-col-icon" style="background:${meta.bg}; color:${meta.fg};"><i class="fa-solid ${meta.icon}"></i></span>
-        <span class="sv-col-name">${name}</span>
-        <span class="sv-col-count">${cols[name].length} place${cols[name].length===1?'':'s'}</span>
+        <span class="sv-col-name">${translateCollectionName(name)}</span>
+        <span class="sv-col-count">${cols[name].length} ${t('places_count_label')}</span>
       </div>`;
     }).join('')}
-    <div class="sv-create-btn" onclick="createCollection()"><i class="fa-solid fa-plus"></i>Create Collection</div>
+    <div class="sv-create-btn" onclick="createCollection()"><i class="fa-solid fa-plus"></i>${t('create_collection_btn').replace('+ ','')}</div>
   `;
 
   let rightHtml;
@@ -3473,8 +3479,8 @@ function renderSavedPage(){
       const c = statusColors[l.status];
       return `<div class="sv-row" onclick="openDetail('${l.id}')" style="cursor:pointer;">
         <span class="sv-row-icon" style="background:${c.bg}; color:${c.text};">${emojiFor(l.icon)}</span>
-        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${l.name}</div><div style="font-size:11.5px; color:var(--ink-muted);">${l.distance||'nearby'} away</div></div>
-        <div class="status-pill" style="background:${c.bg}; color:${c.text};">${l.minutes==null?'No data':l.minutes+' min'}</div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${l.name}</div><div style="font-size:11.5px; color:var(--ink-muted);">${l.distance||'nearby'} ${t('away_label')}</div></div>
+        <div class="status-pill" style="background:${c.bg}; color:${c.text};">${l.minutes==null?'No data':l.minutes+' '+t('unit_min')}</div>
         <span class="sv-row-menu" onclick="event.stopPropagation(); ${removeCall}"><i class="fa-solid fa-ellipsis"></i></span>
       </div>`;
     }).join('');
@@ -3486,17 +3492,17 @@ function renderSavedPage(){
         <p style="font-size:12px; color:var(--ink-muted); margin-bottom:0;">Save any address or location to get started.</p>
         <div class="sv-save-form">
           <input type="text" id="sv-save-input" placeholder="Search an address to save...">
-          <button class="primary-btn" id="sv-save-btn" style="width:auto; padding:10px 16px;" onclick="submitSaveAddress('${saveTargetCollection}')">Save</button>
+          <button class="primary-btn" id="sv-save-btn" style="width:auto; padding:10px 16px;" onclick="submitSaveAddress('${saveTargetCollection}')">${t('btn_save')}</button>
         </div>
       </div>
     `;
   }
 
   page.innerHTML = `
-    <div class="page-header"><div class="page-title">Saved Places</div><button class="primary-btn" style="width:auto; padding:10px 18px;" onclick="createCollection()"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Collection</button></div>
+    <div class="page-header"><div class="page-title">${t('page_title_saved')}</div><button class="primary-btn" style="width:auto; padding:10px 18px;" onclick="createCollection()"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>${t('new_collection_btn').replace('+ ','')}</button></div>
     <div style="display:grid; grid-template-columns:220px 1fr; gap:20px;">
       <div>
-        <p style="font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:8px;">Collections</p>
+        <p style="font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:8px;">${t('collections_label')}</p>
         <div class="col-list">${collectionsHtml}</div>
       </div>
       <div>
@@ -3696,13 +3702,13 @@ function renderExplorePanel(){
             <div style="flex:1; min-width:0;">
               <div class="explore-card-name">${l.name}</div>
               <div class="explore-card-meta">
-                ${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : 'No ratings yet'}
-                <span>&middot; ${l.minutes==null ? 'No wait data' : l.minutes+' min wait'}</span>
+                ${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : t('no_ratings_yet')}
+                <span>&middot; ${l.minutes==null ? 'No wait data' : l.minutes+' '+t('unit_min')}</span>
                 <span>&middot; ${realDistanceMi(l).label}</span>
-                ${open===true ? '<span style="color:var(--teal-text);">&middot; Open</span>' : open===false ? '<span style="color:var(--coral-text);">&middot; Closed</span>' : ''}
+                ${open===true ? `<span style="color:var(--teal-text);">&middot; ${t('open_now')}</span>` : open===false ? '<span style="color:var(--coral-text);">&middot; Closed</span>' : ''}
               </div>
               <div class="explore-card-actions">
-                <button class="explore-card-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
+                <button class="explore-card-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>${t('btn_directions')}</button>
               </div>
             </div>
           </div>`;
@@ -3751,9 +3757,9 @@ function renderNearbyPage(q){
           <div class="np-photo" style="${l.photoUrl ? `background-image:url('${l.photoUrl}');` : `background:${c.bg}; color:${c.text};`}">${l.photoUrl ? '' : emojiFor(l.icon)}</div>
           <div class="np-body">
             <div class="np-name">${l.name}</div>
-            <div class="np-meta-row"><i class="fa-solid fa-arrow-down" style="font-size:9px; color:${c.text};"></i><span style="color:${c.text}; font-weight:700;">${l.minutes==null ? 'No data' : l.minutes+' min wait'}</span><span style="color:var(--ink-muted);">\u00B7 ${realDistanceMi(l).label}</span></div>
-            <div class="np-rating">${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : 'No ratings yet'}${l.ownerVerified ? ' \u00B7 <span style="color:var(--teal-text);">Verified</span>' : ''}${isOpenNow(l)===true ? ' \u00B7 <span style="color:var(--teal-text);">Open now</span>' : isOpenNow(l)===false ? ' \u00B7 <span style="color:var(--coral-text);">Closed</span>' : ''}</div>
-            <button class="np-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
+            <div class="np-meta-row"><i class="fa-solid fa-arrow-down" style="font-size:9px; color:${c.text};"></i><span style="color:${c.text}; font-weight:700;">${l.minutes==null ? 'No data' : l.minutes+' '+t('unit_min')+' wait'}</span><span style="color:var(--ink-muted);">\u00B7 ${realDistanceMi(l).label}</span></div>
+            <div class="np-rating">${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : t('no_ratings_yet')}${l.ownerVerified ? ' \u00B7 <span style="color:var(--teal-text);">Verified</span>' : ''}${isOpenNow(l)===true ? ` \u00B7 <span style="color:var(--teal-text);">${t('open_now')}</span>` : isOpenNow(l)===false ? ' \u00B7 <span style="color:var(--coral-text);">Closed</span>' : ''}</div>
+            <button class="np-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>${t('btn_directions')}</button>
           </div>
         </div>`;
       }).join('') : `<p style="grid-column:1/-1; color:var(--ink-muted); font-size:13px;">No places match your search.</p>`}
