@@ -1002,6 +1002,43 @@ function searchQuickCategory(cat, which){
   openExplore(cat);
 }
 let dirDestDebounce;
+let originResolvedPos = null;
+function onDirOriginInput(q, which){
+  originResolvedPos = null;
+  clearTimeout(dirOriginDebounce);
+  const resultsEl = document.getElementById('dir-origin-results-'+which);
+  if(!resultsEl) return;
+  if(!q || q.trim().length < 3){ resultsEl.style.display='none'; resultsEl.innerHTML=''; return; }
+  const m = q.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+  if(m){ resultsEl.style.display='none'; resultsEl.innerHTML=''; return; }
+  dirOriginDebounce = setTimeout(async ()=>{
+    try{
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q);
+      const res = await fetch(url);
+      const results = await res.json();
+      if(!results.length){ resultsEl.innerHTML = `<div class="search-result-item" style="color:var(--ink-muted);">No matches found</div>`; resultsEl.style.display='block'; return; }
+      resultsEl.innerHTML = results.map(r=>`<div class="search-result-item" onclick='selectDirOrigin(${r.lat},${r.lon},${JSON.stringify(r.display_name.split(",")[0])},"${which}")'>${r.display_name}</div>`).join('');
+      resultsEl.style.display='block';
+    }catch(e){ resultsEl.style.display='none'; }
+  }, 400);
+}
+function selectDirOrigin(lat, lng, label, which){
+  originResolvedPos = {lat, lng};
+  const input = document.getElementById('dir-origin-input-'+which);
+  if(input) input.value = label;
+  const resultsEl = document.getElementById('dir-origin-results-'+which);
+  if(resultsEl){ resultsEl.style.display='none'; resultsEl.innerHTML=''; }
+}
+async function geocodeText(q){
+  try{
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q);
+    const res = await fetch(url);
+    const results = await res.json();
+    if(!results.length) return null;
+    return {lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon)};
+  }catch(e){ return null; }
+}
+let dirOriginDebounce;
 function onDirDestInput(q, which){
   clearTimeout(dirDestDebounce);
   const resultsEl = document.getElementById('dir-dest-results-'+which);
@@ -1021,11 +1058,22 @@ function onDirDestInput(q, which){
 async function selectDirDest(lat, lng, label){
   const originEl = document.getElementById('dir-origin-input-desktop') || document.getElementById('dir-origin-input-mobile');
   let originOverride = null;
-  if(originEl && originEl.value.trim()){
-    const m = originEl.value.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
-    if(m) originOverride = {lat: parseFloat(m[1]), lng: parseFloat(m[2])};
+  if(originResolvedPos){
+    originOverride = originResolvedPos;
+  } else if(originEl && originEl.value.trim()){
+    const typed = originEl.value.trim();
+    const m = typed.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if(m){
+      originOverride = {lat: parseFloat(m[1]), lng: parseFloat(m[2])};
+    } else {
+      toast('Looking up "'+typed+'"\u2026');
+      originOverride = await geocodeText(typed);
+      if(!originOverride) toast('Couldn\u2019t find that starting point \u2014 trying GPS instead');
+    }
   }
   await startRouteTo({lat,lng}, label, 'ti-map-pin', 'var(--accent)', originOverride);
+  closeSearchPanel('desktop');
+  closeSearchPanel('mobile');
 }
 function reverseDirEndpoints(which){
   const originEl = document.getElementById('dir-origin-input-'+which);
@@ -1034,15 +1082,18 @@ function reverseDirEndpoints(which){
   const tmp = originEl.value;
   originEl.value = destEl.value;
   destEl.value = tmp;
+  originResolvedPos = null;
 }
 function useGpsForOrigin(which){
   const originEl = document.getElementById('dir-origin-input-'+which);
   if(!originEl) return;
+  originResolvedPos = null;
   originEl.placeholder = 'Getting your location...';
   originEl.value = '';
   getUserLocation().then(loc=>{
     if(loc.error){ originEl.placeholder = 'Couldn\u2019t get GPS \u2014 type coordinates or an address'; return; }
     originEl.value = loc.lat.toFixed(7) + ', ' + loc.lng.toFixed(7);
+    originResolvedPos = {lat: loc.lat, lng: loc.lng};
   });
 }
 function showRecentSearches(which){
@@ -1054,8 +1105,9 @@ function showRecentSearches(which){
   let leftHtml = `<div class="dir-combo-label">Get directions</div>
     <div class="dir-mode-row-mini">${modes.map(m=>`<div class="dir-mode-icon-mini ${directionsMode===m.k?'active':''}" data-mode="${m.k}" onclick="setDirectionsMode('${m.k}')" title="${m.k}"><i class="fa-solid ${m.icon}"></i></div>`).join('')}</div>
     <div class="dir-loc-row">
-      <input type="text" class="dir-loc-input" id="dir-origin-input-${which}" placeholder="Starting point, or use GPS" value="${userLoc ? userLoc.lat.toFixed(7)+', '+userLoc.lng.toFixed(7) : ''}">
+      <input type="text" class="dir-loc-input" id="dir-origin-input-${which}" placeholder="Starting point, or use GPS" value="${userLoc ? userLoc.lat.toFixed(7)+', '+userLoc.lng.toFixed(7) : ''}" oninput="onDirOriginInput(this.value,'${which}')">
       <button type="button" class="dir-loc-gps-btn" title="Use my GPS location" onclick="useGpsForOrigin('${which}')"><i class="fa-solid fa-location-crosshairs"></i></button>
+      <div class="dir-dest-results" id="dir-origin-results-${which}"></div>
     </div>
     <div class="dir-reverse-wrap"><div class="dir-reverse-btn" title="Reverse start and destination" onclick="reverseDirEndpoints('${which}')"><i class="fa-solid fa-arrow-down-arrow-up"></i></div></div>
     <div class="dir-dest-wrap">
@@ -1079,7 +1131,8 @@ function showRecentSearches(which){
   resultsEl.classList.add('show');
 }
 function closeSearchPanel(which){
-  document.getElementById('search-results-'+which).classList.remove('show');
+  const el = document.getElementById('search-results-'+which);
+  if(el) el.classList.remove('show');
   const input = document.getElementById('search-input-'+which);
   if(input) input.blur();
 }
