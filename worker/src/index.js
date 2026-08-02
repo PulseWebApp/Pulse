@@ -330,15 +330,18 @@ export default {
       });
     }
 
-    // GET /api/directions?from=lat,lng&to=lat,lng&profile=driving-car
+    // GET /api/directions?from=lat,lng&to=lat,lng&profile=driving-car&alternatives=true
     // Proxies OpenRouteService so the API key never ships to the browser.
     // Requires a Worker secret: `wrangler secret put ORS_API_KEY` (free key from openrouteservice.org).
+    // alternatives=true asks ORS for up to 3 route options (driving-car only — ORS only
+    // supports alternatives for that profile with a single origin/destination pair).
     if (path === '/api/directions' && method === 'GET') {
       if (!env.ORS_API_KEY) return json({ error: 'Routing not configured — missing ORS_API_KEY secret' }, 500);
 
       const from = url.searchParams.get('from');
       const to = url.searchParams.get('to');
       const profile = url.searchParams.get('profile') || 'driving-car';
+      const wantAlternatives = url.searchParams.get('alternatives') === 'true';
       if (!from || !to) return json({ error: 'from and to query params are required, format lat,lng' }, 400);
 
       const [fromLat, fromLng] = from.split(',').map(Number);
@@ -348,31 +351,39 @@ export default {
       }
 
       try {
+        const reqBody = { coordinates: [[fromLng, fromLat], [toLng, toLat]] };
+        if (wantAlternatives && profile === 'driving-car') {
+          reqBody.alternative_routes = { target_count: 3, share_factor: 0.6, weight_factor: 1.4 };
+        }
         const orsRes = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}/geojson`, {
           method: 'POST',
           headers: { 'Authorization': env.ORS_API_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coordinates: [[fromLng, fromLat], [toLng, toLat]] }),
+          body: JSON.stringify(reqBody),
         });
         if (!orsRes.ok) {
           const detail = await orsRes.text();
           return json({ error: 'Routing service error', detail: detail.slice(0, 300) }, 502);
         }
         const data = await orsRes.json();
-        const feature = data.features && data.features[0];
-        if (!feature) return json({ error: 'No route found' }, 404);
+        const features = data.features || [];
+        if (!features.length) return json({ error: 'No route found' }, 404);
 
-        const summary = feature.properties.summary || {};
-        const steps = (feature.properties.segments || [])
-          .flatMap(seg => seg.steps || [])
-          .map(s => ({ instruction: s.instruction, distance: s.distance, duration: s.duration }));
-        const geometry = feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]); // GeoJSON is [lng,lat]; Leaflet wants [lat,lng]
-
-        return json({
-          distanceMeters: Math.round(summary.distance || 0),
-          durationSeconds: Math.round(summary.duration || 0),
-          geometry,
-          steps,
+        const routes = features.map(feature => {
+          const summary = feature.properties.summary || {};
+          const steps = (feature.properties.segments || [])
+            .flatMap(seg => seg.steps || [])
+            .map(s => ({ instruction: s.instruction, distance: s.distance, duration: s.duration }));
+          const geometry = feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]); // GeoJSON is [lng,lat]; Leaflet wants [lat,lng]
+          return {
+            distanceMeters: Math.round(summary.distance || 0),
+            durationSeconds: Math.round(summary.duration || 0),
+            geometry,
+            steps,
+          };
         });
+        // Old shape (distanceMeters/geometry/steps at top level) kept for any existing
+        // caller — it's just routes[0]. New callers use `routes` for all options.
+        return json({ ...routes[0], routes });
       } catch (e) {
         return json({ error: 'Routing request failed', detail: String(e) }, 500);
       }
@@ -587,6 +598,45 @@ export default {
       if (!body.claimId) return json({ error: 'claimId is required' }, 400);
       await env.DB.prepare('DELETE FROM owner_claims WHERE id = ?').bind(body.claimId).run();
       return json({ ok: true });
+    }
+
+    // GET /api/busy-times?locationId=X
+    // Real hour-of-day pattern from this location's actual check-in history.
+    // No data yet for a location -> hasData:false, not a guessed pattern.
+    if (path === '/api/busy-times' && method === 'GET') {
+      const locationId = url.searchParams.get('locationId');
+      if (!locationId) return json({ error: 'locationId is required' }, 400);
+      const rows = await env.DB.prepare(
+        `SELECT CAST(strftime('%H', datetime(created_at/1000,'unixepoch')) AS INTEGER) AS hour,
+                AVG(minutes) AS avgWait, COUNT(*) AS n
+         FROM checkins WHERE location_id = ? AND minutes IS NOT NULL
+         GROUP BY hour ORDER BY hour`
+      ).bind(locationId).all();
+      const buckets = rows.results.map(r => ({ hour: r.hour, avgWait: Math.round(r.avgWait), count: r.n }));
+      if (!buckets.length) return json({ locationId, hasData: false, buckets: [] });
+      const busiest = buckets.reduce((a, b) => (b.avgWait > a.avgWait ? b : a), buckets[0]);
+      return json({ locationId, hasData: true, buckets, busiestHour: busiest.hour, busiestAvgWait: busiest.avgWait });
+    }
+
+    // GET /api/busy-roads
+    // Real hour-of-day jam pattern across all roads, from actual road_reports history.
+    if (path === '/api/busy-roads' && method === 'GET') {
+      const rows = await env.DB.prepare(
+        `SELECT name, CAST(strftime('%H', datetime(created_at/1000,'unixepoch')) AS INTEGER) AS hour, COUNT(*) AS n
+         FROM road_reports WHERE type IN ('jam','closure')
+         GROUP BY name, hour ORDER BY name, hour`
+      ).all();
+      if (!rows.results.length) return json({ hasData: false, roads: [] });
+      const byRoad = {};
+      rows.results.forEach(r => {
+        if (!byRoad[r.name]) byRoad[r.name] = [];
+        byRoad[r.name].push({ hour: r.hour, count: r.n });
+      });
+      const roads = Object.entries(byRoad).map(([name, buckets]) => {
+        const busiest = buckets.reduce((a, b) => (b.count > a.count ? b : a), buckets[0]);
+        return { name, buckets, busiestHour: busiest.hour, reportCount: buckets.reduce((s, b) => s + b.count, 0) };
+      });
+      return json({ hasData: true, roads });
     }
 
     return json({ error: 'not found', path }, 404);
