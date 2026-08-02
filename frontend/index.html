@@ -170,7 +170,7 @@
   .search-kbd{flex-shrink:0; font-size:10px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); padding:3px 7px; border-radius:6px; pointer-events:none;}
   .search-pill .search-input{flex:1; min-width:0; width:auto; padding:0; margin:0; height:100%; box-sizing:border-box; border:none; font-size:14.5px; font-family:'Inter',sans-serif; background:none; color:var(--ink); outline:none;}
   [data-theme="dark"] .search-pill{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
-  .search-results{position:absolute; left:0; right:0; top:calc(100% + 10px); background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); z-index:1250; max-height:340px; overflow-y:auto; display:none; padding:14px;}
+  .search-results{position:absolute; left:0; right:0; top:calc(100% + 10px); background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); z-index:1250; max-height:420px; overflow-y:auto; display:none; padding:14px;}
   [data-theme="dark"] .search-results{background:var(--surface);}
   .search-results.show{display:block;}
   .src-chips{display:flex; gap:16px; padding:2px 4px 12px; margin-bottom:8px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
@@ -182,6 +182,17 @@
   .src-cat-icon{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;}
   .src-cat-name{font-size:13.5px; font-weight:600; color:var(--ink);}
   .src-more{display:block; text-align:left; padding:9px 6px 2px; font-size:13px; font-weight:600; color:var(--accent-text); cursor:pointer;}
+  .search-combo{display:flex; align-items:flex-start;}
+  .search-combo-left{width:200px; flex-shrink:0; border-right:1px solid var(--border); padding-right:14px; margin-right:14px;}
+  .search-combo-right{flex:1; min-width:0;}
+  .dir-combo-label{font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:8px;}
+  .dir-mode-row-mini{display:flex; gap:6px; margin-bottom:12px;}
+  .dir-mode-icon-mini{width:28px; height:28px; border-radius:50%; background:var(--surface-2); color:var(--ink-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; flex-shrink:0;}
+  .dir-mode-icon-mini.active{background:var(--accent); color:#fff;}
+  .dir-dest-wrap{position:relative; margin-bottom:8px;}
+  .dir-dest-input{width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border); font-size:12px; background:var(--surface); color:var(--ink); box-sizing:border-box;}
+  .dir-dest-results{position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-lg); max-height:180px; overflow-y:auto; z-index:30; display:none;}
+  .dir-my-loc-row{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--ink-secondary); padding:6px 2px;}
   @media (min-width:900px){
     .search-bar-wrap{top:44px; left:calc(355px + 40px); right:auto; width:min(420px, 38%); transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .search-bar-wrap{left:calc(132px + 40px);}
@@ -214,6 +225,7 @@
     .map-pane-desktop .weather-card{bottom:64px; right:64px;}
     .map-pane-desktop .route-panel{bottom:64px; left:calc(355px + 40px); right:auto; width:340px; transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .route-panel{left:calc(132px + 40px);}
+    .map-pane-desktop .search-results{width:560px; right:auto;}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -578,6 +590,7 @@
         <div class="search-pill">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
           <input type="text" id="search-input-desktop" class="search-input" placeholder="Search places, businesses, addresses" oninput="onSearchInput(this.value,'desktop')" onfocus="if(!this.value) showRecentSearches('desktop')">
+          <button type="button" class="search-filter-btn" title="Use my location" style="background:var(--accent-bg); color:var(--accent-text);" onclick="useMyLocationFromSearch()"><i class="fa-solid fa-location-crosshairs"></i></button>
           <button type="button" class="search-filter-btn" title="Filters"><i class="fa-solid fa-sliders"></i></button>
         </div>
         <div id="search-results-desktop" class="search-results"></div>
@@ -958,24 +971,54 @@ function searchQuickCategory(cat, which){
   showDesktopPage('nearby');
   setNearbyFilter(cat);
 }
+let dirDestDebounce;
+function onDirDestInput(q, which){
+  clearTimeout(dirDestDebounce);
+  const resultsEl = document.getElementById('dir-dest-results-'+which);
+  if(!resultsEl) return;
+  if(!q || q.trim().length < 3){ resultsEl.style.display='none'; resultsEl.innerHTML=''; return; }
+  dirDestDebounce = setTimeout(async ()=>{
+    try{
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q);
+      const res = await fetch(url);
+      const results = await res.json();
+      if(!results.length){ resultsEl.innerHTML = `<div class="search-result-item" style="color:var(--ink-muted);">No matches found</div>`; resultsEl.style.display='block'; return; }
+      resultsEl.innerHTML = results.map(r=>`<div class="search-result-item" onclick='selectDirDest(${r.lat},${r.lon},${JSON.stringify(r.display_name.split(",")[0])})'>${r.display_name}</div>`).join('');
+      resultsEl.style.display='block';
+    }catch(e){ resultsEl.style.display='none'; }
+  }, 400);
+}
+async function selectDirDest(lat, lng, label){
+  await startRouteTo({lat,lng}, label, 'ti-map-pin', 'var(--accent)');
+}
 function showRecentSearches(which){
   const resultsEl = document.getElementById('search-results-'+which);
   const recent = getRecentSearches();
   const suggestions = locations.filter(l=>!l.osm).slice(0,4);
+  const modes = [{k:'driving', icon:'fa-car'}, {k:'walking', icon:'fa-person-walking'}, {k:'cycling', icon:'fa-bicycle'}, {k:'transit', icon:'fa-bus'}];
 
-  let html = '';
-  html += `<div class="src-chips">${SEARCH_CHIP_CATS.map((c,i)=>`<span class="src-chip${i===0?' active':''}" onclick="searchQuickCategory('${c.k}','${which}')">${c.label}</span>`).join('')}</div>`;
+  let leftHtml = `<div class="dir-combo-label">Get directions</div>
+    <div class="dir-mode-row-mini">${modes.map(m=>`<div class="dir-mode-icon-mini ${directionsMode===m.k?'active':''}" data-mode="${m.k}" onclick="setDirectionsMode('${m.k}')" title="${m.k}"><i class="fa-solid ${m.icon}"></i></div>`).join('')}</div>
+    <div class="dir-my-loc-row"><i class="fa-solid fa-location-crosshairs" style="color:var(--accent-text);"></i>Your location</div>
+    <div class="dir-dest-wrap">
+      <input type="text" class="dir-dest-input" id="dir-dest-input-${which}" placeholder="Choose destination" oninput="onDirDestInput(this.value,'${which}')">
+      <div class="dir-dest-results" id="dir-dest-results-${which}"></div>
+    </div>`;
+
+  let rightHtml = '';
+  rightHtml += `<div class="src-chips">${SEARCH_CHIP_CATS.map((c,i)=>`<span class="src-chip${i===0?' active':''}" onclick="searchQuickCategory('${c.k}','${which}')">${c.label}</span>`).join('')}</div>`;
   if(recent.length){
-    html += `<div class="search-panel-head"><span>Recent Searches</span><span class="search-clear" onclick="clearRecentSearches('${which}')">Clear</span></div>`;
-    html += recent.map((r,i) => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'><span class="search-dot" style="background:${RECENT_DOT_COLORS[i % RECENT_DOT_COLORS.length]};"></span>${r.label}</div>`).join('');
+    rightHtml += `<div class="search-panel-head"><span>Recent Searches</span><span class="search-clear" onclick="clearRecentSearches('${which}')">Clear</span></div>`;
+    rightHtml += recent.map((r,i) => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'><span class="search-dot" style="background:${RECENT_DOT_COLORS[i % RECENT_DOT_COLORS.length]};"></span>${r.label}</div>`).join('');
   }
-  html += `<div class="src-cat-list">${SEARCH_QUICK_CATS.map(c=>`<div class="src-cat-item" onclick="searchQuickCategory('${c.k}','${which}')"><span class="src-cat-icon" style="background:${c.bg}; color:${c.fg};"><i class="fa-solid ${c.icon}"></i></span><span class="src-cat-name">${c.label}</span></div>`).join('')}</div>`;
-  html += `<span class="src-more" onclick="closeSearchPanel('${which}'); showDesktopPage('nearby');">More categories</span>`;
+  rightHtml += `<div class="src-cat-list">${SEARCH_QUICK_CATS.map(c=>`<div class="src-cat-item" onclick="searchQuickCategory('${c.k}','${which}')"><span class="src-cat-icon" style="background:${c.bg}; color:${c.fg};"><i class="fa-solid ${c.icon}"></i></span><span class="src-cat-name">${c.label}</span></div>`).join('')}</div>`;
+  rightHtml += `<span class="src-more" onclick="closeSearchPanel('${which}'); showDesktopPage('nearby');">More categories</span>`;
   if(suggestions.length){
-    html += `<div class="search-panel-head" style="margin-top:6px;"><span>Suggestions</span></div>`;
-    html += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><span style="font-size:15px; width:18px; text-align:center; flex-shrink:0;">${emojiFor(l.icon)}</span>${l.name}</div>`).join('');
+    rightHtml += `<div class="search-panel-head" style="margin-top:6px;"><span>Suggestions</span></div>`;
+    rightHtml += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><span style="font-size:15px; width:18px; text-align:center; flex-shrink:0;">${emojiFor(l.icon)}</span>${l.name}</div>`).join('');
   }
-  resultsEl.innerHTML = html;
+
+  resultsEl.innerHTML = `<div class="search-combo"><div class="search-combo-left">${leftHtml}</div><div class="search-combo-right">${rightHtml}</div></div>`;
   resultsEl.classList.add('show');
 }
 function closeSearchPanel(which){
@@ -1769,11 +1812,14 @@ function closeRoute(){
   const panel = document.getElementById('route-panel');
   if(panel) panel.classList.remove('show');
 }
-async function openDirections(id){
-  const l = locations.find(x=>String(x.id)===String(id));
-  if(!l) return;
-  const destPos = l.osm ? {lat:l.lat, lng:l.lng} : demoToLatLng(l.x, l.y);
-
+const ORS_PROFILES = {driving:'driving-car', walking:'foot-walking', cycling:'cycling-regular'};
+let directionsMode = 'driving';
+function setDirectionsMode(mode){
+  if(mode==='transit'){ toast('Transit directions aren\u2019t supported yet.'); return; }
+  directionsMode = mode;
+  document.querySelectorAll('.dir-mode-icon').forEach(el=>el.classList.toggle('active', el.dataset.mode===mode));
+}
+async function startRouteTo(destPos, destName, destIcon, destFill){
   closeModal();
   showDesktopPage('livemap');
   initMapIfNeeded();
@@ -1781,7 +1827,7 @@ async function openDirections(id){
   const panel = document.getElementById('route-panel');
   if(!panel) return;
   panel.classList.add('show');
-  panel.innerHTML = `<div style="text-align:center; padding:16px 0; color:var(--ink-muted); font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Finding a route to ${l.name}...</div>`;
+  panel.innerHTML = `<div style="text-align:center; padding:16px 0; color:var(--ink-muted); font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Finding a route to ${destName}...</div>`;
 
   const origin = await getUserLocation();
   if(origin.error){
@@ -1792,7 +1838,8 @@ async function openDirections(id){
     return;
   }
 
-  const data = await api(`/api/directions?from=${origin.lat},${origin.lng}&to=${destPos.lat},${destPos.lng}`);
+  const profile = ORS_PROFILES[directionsMode] || 'driving-car';
+  const data = await api(`/api/directions?from=${origin.lat},${origin.lng}&to=${destPos.lat},${destPos.lng}&profile=${profile}`);
   if(!data || data.error){
     panel.innerHTML = `<div>
       <p style="font-size:13px; color:var(--ink-secondary); margin-bottom:14px;">Couldn't load a route right now${data && data.error ? ' — '+data.error : ''}.</p>
@@ -1804,11 +1851,10 @@ async function openDirections(id){
   closeRoute();
   panel.classList.add('show');
 
-  const c = statusColors[l.status] || statusColors.unknown;
   if(typeof L !== 'undefined' && leafletMap){
     routeLayer = L.polyline(data.geometry, {color:'#2563EB', weight:5, opacity:.85, lineJoin:'round'}).addTo(leafletMap);
     routeStartMarker = L.circleMarker([origin.lat, origin.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
-    routeEndMarker = L.marker([destPos.lat, destPos.lng], {icon: pinIcon(l.icon, c.fill)}).addTo(leafletMap);
+    routeEndMarker = L.marker([destPos.lat, destPos.lng], {icon: pinIcon(destIcon || 'ti-map-pin', destFill || 'var(--accent)')}).addTo(leafletMap);
     leafletMap.fitBounds(routeLayer.getBounds(), {paddingTopLeft:[360,40], paddingBottomRight:[40,40]});
   }
 
@@ -1819,7 +1865,7 @@ async function openDirections(id){
     <div class="route-panel-head">
       <div>
         <div class="route-summary">${mins} min</div>
-        <div class="route-sub">${km} km &middot; to ${l.name}</div>
+        <div class="route-sub">${km} km &middot; to ${destName}</div>
       </div>
       <button class="close-btn" onclick="closeRoute()" title="Exit navigation"><i class="fa-solid fa-xmark"></i></button>
     </div>
@@ -1830,6 +1876,13 @@ async function openDirections(id){
       </div>`).join('') : `<p style="font-size:12px; color:var(--ink-muted);">Step-by-step turns aren't available for this route, but the path is drawn on the map.</p>`}
     </div>
   `;
+}
+async function openDirections(id){
+  const l = locations.find(x=>String(x.id)===String(id));
+  if(!l) return;
+  const destPos = l.osm ? {lat:l.lat, lng:l.lng} : demoToLatLng(l.x, l.y);
+  const c = statusColors[l.status] || statusColors.unknown;
+  await startRouteTo(destPos, l.name, l.icon, c.fill);
 }
 
 async function loadWaitSparkline(id){
@@ -2093,6 +2146,15 @@ function retryLocation(){
   resolveLocation();
 }
 
+async function useMyLocationFromSearch(){
+  document.getElementById('loc-banner').style.display = 'none';
+  await resolveLocation();
+  showDesktopPage('livemap');
+  if(leafletMap && userLoc){
+    leafletMap.setView([userLoc.lat, userLoc.lng], 15);
+    toast(usingRealLocation ? 'Using your current location' : 'Couldn\u2019t get your exact location \u2014 using the default area');
+  }
+}
 function recenterOnMe(){
   if(!leafletMap){ toast('Open the map first'); return; }
   if(!userLoc){ toast('Location not available yet'); return; }
