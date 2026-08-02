@@ -183,7 +183,26 @@
   .src-cat-name{font-size:13.5px; font-weight:600; color:var(--ink);}
   .src-more{display:block; text-align:left; padding:9px 6px 2px; font-size:13px; font-weight:600; color:var(--accent-text); cursor:pointer;}
   .search-combo{display:flex; align-items:flex-start;}
-  .search-combo-left{width:200px; flex-shrink:0; border-right:1px solid var(--border); padding-right:14px; margin-right:14px;}
+  .search-combo-left{width:340px; flex-shrink:0; border-right:1px solid var(--border); padding-right:16px; margin-right:16px;}
+  .dir-head-row{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+  .dir-head-icon{width:38px; height:38px; border-radius:50%; background:var(--accent-bg); color:var(--accent-text); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+  .dir-head-title{font-size:15px; font-weight:800; font-family:'Sora',sans-serif; color:var(--ink);}
+  .dir-head-sub{font-size:11.5px; color:var(--ink-muted); margin-top:1px;}
+  .dir-mode-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px;}
+  .dir-mode-card{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:14px; background:var(--surface-2); border:1.5px solid transparent; cursor:pointer; font-size:11px; font-weight:600; color:var(--ink-secondary);}
+  .dir-mode-card i{font-size:16px;}
+  .dir-mode-card.active{background:var(--accent-bg); border-color:var(--accent); color:var(--accent-text);}
+  .dir-route-card{background:var(--surface-2); border-radius:14px; padding:14px; position:relative;}
+  .dir-route-row{display:flex; align-items:center; gap:10px; position:relative;}
+  .dir-route-dot{width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0;}
+  .dir-route-pin{color:var(--coral-text); font-size:14px; flex-shrink:0; width:8px; text-align:center;}
+  .dir-route-label{font-size:10.5px; font-weight:700; color:var(--accent-text); margin-bottom:2px;}
+  .dir-route-input{width:100%; border:none; background:none; outline:none; font-size:12.5px; color:var(--ink); font-family:'Inter',sans-serif; padding:0;}
+  .dir-route-input::placeholder{color:var(--ink-muted);}
+  .dir-route-icon-btn{width:28px; height:28px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--ink-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px; flex-shrink:0;}
+  .dir-swap-btn{flex-direction:column; gap:1px;}
+  .dir-swap-btn i{font-size:8px; line-height:1;}
+  .dir-route-connector{width:1px; height:16px; border-left:1px dashed var(--border-strong); margin:6px 0 6px 4px;}
   .search-combo-mid{width:190px; flex-shrink:0; border-right:1px solid var(--border); padding-right:14px; margin-right:14px;}
   .search-combo-right{width:170px; flex-shrink:0;}
   .dir-sugg-item{display:flex; align-items:center; gap:8px; padding:7px 4px; border-radius:8px; cursor:pointer;}
@@ -237,7 +256,7 @@
     .app-shell.collapsed ~ .map-pane-desktop .route-panel{left:calc(132px + 40px);}
     .map-pane-desktop .explore-panel{top:112px; bottom:64px; left:calc(355px + 40px); right:auto; width:460px; transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .explore-panel{left:calc(132px + 40px);}
-    .map-pane-desktop .search-results{width:680px; right:auto;}
+    .map-pane-desktop .search-results{width:820px; right:auto;}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -1100,19 +1119,33 @@ function showRecentSearches(which){
   const resultsEl = document.getElementById('search-results-'+which);
   const recent = getRecentSearches();
   const suggestions = locations.filter(l=>!l.osm).slice(0,4);
-  const modes = [{k:'driving', icon:'fa-car'}, {k:'walking', icon:'fa-person-walking'}, {k:'cycling', icon:'fa-bicycle'}, {k:'transit', icon:'fa-bus'}];
+  const modes = [{k:'driving', icon:'fa-car', label:'Drive'}, {k:'walking', icon:'fa-person-walking', label:'Walk'}, {k:'cycling', icon:'fa-bicycle', label:'Bike'}, {k:'transit', icon:'fa-bus', label:'Transit'}];
 
-  let leftHtml = `<div class="dir-combo-label">Get directions</div>
-    <div class="dir-mode-row-mini">${modes.map(m=>`<div class="dir-mode-icon-mini ${directionsMode===m.k?'active':''}" data-mode="${m.k}" onclick="setDirectionsMode('${m.k}')" title="${m.k}"><i class="fa-solid ${m.icon}"></i></div>`).join('')}</div>
-    <div class="dir-loc-row">
-      <input type="text" class="dir-loc-input" id="dir-origin-input-${which}" placeholder="Starting point, or use GPS" value="${userLoc ? userLoc.lat.toFixed(7)+', '+userLoc.lng.toFixed(7) : ''}" oninput="onDirOriginInput(this.value,'${which}')">
-      <button type="button" class="dir-loc-gps-btn" title="Use my GPS location" onclick="useGpsForOrigin('${which}')"><i class="fa-solid fa-location-crosshairs"></i></button>
-      <div class="dir-dest-results" id="dir-origin-results-${which}"></div>
+  let leftHtml = `
+    <div class="dir-head-row">
+      <div class="dir-head-icon"><i class="fa-solid fa-location-arrow"></i></div>
+      <div style="flex:1;"><div class="dir-head-title">Get Directions</div><div class="dir-head-sub">Choose your travel mode</div></div>
     </div>
-    <div class="dir-reverse-wrap"><div class="dir-reverse-btn" title="Reverse start and destination" onclick="reverseDirEndpoints('${which}')"><i class="fa-solid fa-arrow-down-arrow-up"></i></div></div>
-    <div class="dir-dest-wrap">
-      <input type="text" class="dir-dest-input" id="dir-dest-input-${which}" placeholder="Choose destination" oninput="onDirDestInput(this.value,'${which}')">
-      <div class="dir-dest-results" id="dir-dest-results-${which}"></div>
+    <div class="dir-mode-grid">${modes.map(m=>`<div class="dir-mode-card ${directionsMode===m.k?'active':''}" data-mode="${m.k}" onclick="setDirectionsMode('${m.k}')"><i class="fa-solid ${m.icon}"></i><span>${m.label}</span></div>`).join('')}</div>
+    <div class="dir-route-card">
+      <div class="dir-route-row">
+        <span class="dir-route-dot"></span>
+        <div style="flex:1; min-width:0;">
+          <div class="dir-route-label">Your location</div>
+          <input type="text" class="dir-route-input" id="dir-origin-input-${which}" placeholder="Starting point, or use GPS" value="${userLoc ? userLoc.lat.toFixed(7)+', '+userLoc.lng.toFixed(7) : ''}" oninput="onDirOriginInput(this.value,'${which}')">
+        </div>
+        <button type="button" class="dir-route-icon-btn" title="Use my GPS location" onclick="useGpsForOrigin('${which}')"><i class="fa-solid fa-location-crosshairs"></i></button>
+        <div class="dir-dest-results" id="dir-origin-results-${which}"></div>
+      </div>
+      <div class="dir-route-connector"></div>
+      <div class="dir-route-row">
+        <span class="dir-route-pin"><i class="fa-solid fa-location-dot"></i></span>
+        <div style="flex:1; min-width:0;">
+          <input type="text" class="dir-route-input" id="dir-dest-input-${which}" placeholder="Choose destination" oninput="onDirDestInput(this.value,'${which}')">
+        </div>
+        <button type="button" class="dir-route-icon-btn dir-swap-btn" title="Reverse start and destination" onclick="reverseDirEndpoints('${which}')"><i class="fa-solid fa-arrow-up"></i><i class="fa-solid fa-arrow-down"></i></button>
+        <div class="dir-dest-results" id="dir-dest-results-${which}"></div>
+      </div>
     </div>`;
 
   let midHtml = '';
