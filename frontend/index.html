@@ -184,7 +184,12 @@
   .src-more{display:block; text-align:left; padding:9px 6px 2px; font-size:13px; font-weight:600; color:var(--accent-text); cursor:pointer;}
   .search-combo{display:flex; align-items:flex-start;}
   .search-combo-left{width:200px; flex-shrink:0; border-right:1px solid var(--border); padding-right:14px; margin-right:14px;}
-  .search-combo-right{flex:1; min-width:0;}
+  .search-combo-mid{width:190px; flex-shrink:0; border-right:1px solid var(--border); padding-right:14px; margin-right:14px;}
+  .search-combo-right{width:170px; flex-shrink:0;}
+  .dir-sugg-item{display:flex; align-items:center; gap:8px; padding:7px 4px; border-radius:8px; cursor:pointer;}
+  .dir-sugg-item:hover{background:var(--surface-2);}
+  .dir-sugg-icon{font-size:15px; width:18px; text-align:center; flex-shrink:0;}
+  .dir-sugg-name{font-size:12px; color:var(--ink);}
   .dir-combo-label{font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:8px;}
   .dir-mode-row-mini{display:flex; gap:6px; margin-bottom:12px;}
   .dir-mode-icon-mini{width:28px; height:28px; border-radius:50%; background:var(--surface-2); color:var(--ink-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; flex-shrink:0;}
@@ -193,6 +198,11 @@
   .dir-dest-input{width:100%; padding:8px 10px; border-radius:9px; border:1px solid var(--border); font-size:12px; background:var(--surface); color:var(--ink); box-sizing:border-box;}
   .dir-dest-results{position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-lg); max-height:180px; overflow-y:auto; z-index:30; display:none;}
   .dir-my-loc-row{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--ink-secondary); padding:6px 2px;}
+  .dir-loc-row{position:relative; display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .dir-loc-input{width:100%; padding:8px 28px 8px 10px; border-radius:9px; border:1px solid var(--border); font-size:11.5px; background:var(--surface); color:var(--ink); box-sizing:border-box;}
+  .dir-loc-gps-btn{position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--accent-text); cursor:pointer; font-size:12px; padding:2px;}
+  .dir-reverse-wrap{display:flex; justify-content:center; margin:-3px 0;}
+  .dir-reverse-btn{width:24px; height:24px; border-radius:50%; background:var(--surface-2); border:1px solid var(--border); color:var(--ink-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px;}
   @media (min-width:900px){
     .search-bar-wrap{top:44px; left:calc(355px + 40px); right:auto; width:min(420px, 38%); transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .search-bar-wrap{left:calc(132px + 40px);}
@@ -225,7 +235,9 @@
     .map-pane-desktop .weather-card{bottom:64px; right:64px;}
     .map-pane-desktop .route-panel{bottom:64px; left:calc(355px + 40px); right:auto; width:340px; transition:left .25s;}
     .app-shell.collapsed ~ .map-pane-desktop .route-panel{left:calc(132px + 40px);}
-    .map-pane-desktop .search-results{width:560px; right:auto;}
+    .map-pane-desktop .explore-panel{top:112px; bottom:64px; left:calc(355px + 40px); right:auto; width:460px; transition:left .25s;}
+    .app-shell.collapsed ~ .map-pane-desktop .explore-panel{left:calc(132px + 40px);}
+    .map-pane-desktop .search-results{width:680px; right:auto;}
   }
   .leaflet-div-icon{background:none; border:none;}
   .pin-dot{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(18,35,59,0.3); border:2px solid #fff;}
@@ -290,6 +302,21 @@
 
   .weather-card{position:absolute; bottom:14px; right:14px; z-index:900; background:rgba(255,255,255,.85); -webkit-border:1px solid rgba(255,255,255,.7); border-radius:16px; padding:10px 14px; box-shadow:var(--shadow-card); display:none; align-items:center; gap:9px;}
   .route-panel{position:absolute; bottom:14px; left:14px; right:14px; z-index:950; max-height:56vh; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); padding:18px; display:none;}
+  .explore-panel{position:absolute; top:14px; bottom:14px; left:14px; right:14px; z-index:960; overflow:hidden; background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); padding:18px; display:none;}
+  .explore-panel.show{display:block;}
+  .explore-back-row{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-shrink:0;}
+  .explore-back-btn{width:32px; height:32px; border-radius:50%; background:var(--surface-2); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink); flex-shrink:0; border:none;}
+  .explore-title{font-size:17px; font-weight:800; font-family:'Sora',sans-serif;}
+  .explore-count{font-size:12.5px; color:var(--ink-muted); font-weight:500; margin-left:6px;}
+  .explore-chips-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:12px; margin-bottom:6px; border-bottom:1px solid var(--border); flex-shrink:0;}
+  .explore-chip{font-size:12px; font-weight:600; padding:6px 13px; border-radius:20px; background:var(--surface-2); color:var(--ink-secondary); cursor:pointer; white-space:nowrap; flex-shrink:0;}
+  .explore-chip.active{background:var(--accent); color:#fff;}
+  .explore-card{display:flex; gap:12px; padding:13px 4px; border-bottom:1px solid var(--border);}
+  .explore-card-photo{width:52px; height:52px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px;}
+  .explore-card-name{font-size:13.5px; font-weight:700; color:var(--ink);}
+  .explore-card-meta{font-size:11.5px; color:var(--ink-muted); margin-top:3px; display:flex; align-items:center; gap:5px; flex-wrap:wrap;}
+  .explore-card-actions{display:flex; gap:8px; margin-top:9px;}
+  .explore-card-dir-btn{font-size:11.5px; font-weight:700; color:#fff; background:var(--accent); border:none; border-radius:9px; padding:7px 14px; cursor:pointer; display:flex; align-items:center; gap:6px;}
   .route-panel.show{display:block;}
   .route-panel-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;}
   .route-summary{font-size:22px; font-weight:800; font-family:'Sora',sans-serif; color:var(--ink);}
@@ -613,6 +640,7 @@
       </div>
       <div class="weather-card" id="weather-card-desktop"></div>
       <div class="route-panel" id="route-panel"></div>
+      <div class="explore-panel" id="explore-panel"></div>
     </div>
   </div>
   <div id="modal-holder"></div>
@@ -966,10 +994,12 @@ const SEARCH_QUICK_CATS = [
   {k:'service', label:'Barbers', icon:'fa-scissors', bg:'var(--surface-2)', fg:'var(--ink-secondary)'},
   {k:'fuel', label:'Fuel Stations', icon:'fa-gas-pump', bg:'var(--amber-bg)', fg:'var(--amber-text)'}
 ];
+let exploreOpenedFrom = 'desktop';
+let exploreArmed = false;
 function searchQuickCategory(cat, which){
+  exploreOpenedFrom = which;
   closeSearchPanel(which);
-  showDesktopPage('nearby');
-  setNearbyFilter(cat);
+  openExplore(cat);
 }
 let dirDestDebounce;
 function onDirDestInput(q, which){
@@ -989,7 +1019,31 @@ function onDirDestInput(q, which){
   }, 400);
 }
 async function selectDirDest(lat, lng, label){
-  await startRouteTo({lat,lng}, label, 'ti-map-pin', 'var(--accent)');
+  const originEl = document.getElementById('dir-origin-input-desktop') || document.getElementById('dir-origin-input-mobile');
+  let originOverride = null;
+  if(originEl && originEl.value.trim()){
+    const m = originEl.value.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if(m) originOverride = {lat: parseFloat(m[1]), lng: parseFloat(m[2])};
+  }
+  await startRouteTo({lat,lng}, label, 'ti-map-pin', 'var(--accent)', originOverride);
+}
+function reverseDirEndpoints(which){
+  const originEl = document.getElementById('dir-origin-input-'+which);
+  const destEl = document.getElementById('dir-dest-input-'+which);
+  if(!originEl || !destEl) return;
+  const tmp = originEl.value;
+  originEl.value = destEl.value;
+  destEl.value = tmp;
+}
+function useGpsForOrigin(which){
+  const originEl = document.getElementById('dir-origin-input-'+which);
+  if(!originEl) return;
+  originEl.placeholder = 'Getting your location...';
+  originEl.value = '';
+  getUserLocation().then(loc=>{
+    if(loc.error){ originEl.placeholder = 'Couldn\u2019t get GPS \u2014 type coordinates or an address'; return; }
+    originEl.value = loc.lat.toFixed(7) + ', ' + loc.lng.toFixed(7);
+  });
 }
 function showRecentSearches(which){
   const resultsEl = document.getElementById('search-results-'+which);
@@ -999,30 +1053,35 @@ function showRecentSearches(which){
 
   let leftHtml = `<div class="dir-combo-label">Get directions</div>
     <div class="dir-mode-row-mini">${modes.map(m=>`<div class="dir-mode-icon-mini ${directionsMode===m.k?'active':''}" data-mode="${m.k}" onclick="setDirectionsMode('${m.k}')" title="${m.k}"><i class="fa-solid ${m.icon}"></i></div>`).join('')}</div>
-    <div class="dir-my-loc-row"><i class="fa-solid fa-location-crosshairs" style="color:var(--accent-text);"></i>Your location</div>
+    <div class="dir-loc-row">
+      <input type="text" class="dir-loc-input" id="dir-origin-input-${which}" placeholder="Starting point, or use GPS" value="${userLoc ? userLoc.lat.toFixed(7)+', '+userLoc.lng.toFixed(7) : ''}">
+      <button type="button" class="dir-loc-gps-btn" title="Use my GPS location" onclick="useGpsForOrigin('${which}')"><i class="fa-solid fa-location-crosshairs"></i></button>
+    </div>
+    <div class="dir-reverse-wrap"><div class="dir-reverse-btn" title="Reverse start and destination" onclick="reverseDirEndpoints('${which}')"><i class="fa-solid fa-arrow-down-arrow-up"></i></div></div>
     <div class="dir-dest-wrap">
       <input type="text" class="dir-dest-input" id="dir-dest-input-${which}" placeholder="Choose destination" oninput="onDirDestInput(this.value,'${which}')">
       <div class="dir-dest-results" id="dir-dest-results-${which}"></div>
     </div>`;
 
-  let rightHtml = '';
-  rightHtml += `<div class="src-chips">${SEARCH_CHIP_CATS.map((c,i)=>`<span class="src-chip${i===0?' active':''}" onclick="searchQuickCategory('${c.k}','${which}')">${c.label}</span>`).join('')}</div>`;
+  let midHtml = '';
+  midHtml += `<div class="src-chips">${SEARCH_CHIP_CATS.map((c,i)=>`<span class="src-chip${i===0?' active':''}" onclick="searchQuickCategory('${c.k}','${which}')">${c.label}</span>`).join('')}</div>`;
   if(recent.length){
-    rightHtml += `<div class="search-panel-head"><span>Recent Searches</span><span class="search-clear" onclick="clearRecentSearches('${which}')">Clear</span></div>`;
-    rightHtml += recent.map((r,i) => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'><span class="search-dot" style="background:${RECENT_DOT_COLORS[i % RECENT_DOT_COLORS.length]};"></span>${r.label}</div>`).join('');
+    midHtml += `<div class="search-panel-head"><span>Recent Searches</span><span class="search-clear" onclick="clearRecentSearches('${which}')">Clear</span></div>`;
+    midHtml += recent.map((r,i) => `<div class="search-result-item" onclick='selectSearchResult(${r.lat},${r.lng},${JSON.stringify(r.label)},"${which}")'><span class="search-dot" style="background:${RECENT_DOT_COLORS[i % RECENT_DOT_COLORS.length]};"></span>${r.label}</div>`).join('');
   }
-  rightHtml += `<div class="src-cat-list">${SEARCH_QUICK_CATS.map(c=>`<div class="src-cat-item" onclick="searchQuickCategory('${c.k}','${which}')"><span class="src-cat-icon" style="background:${c.bg}; color:${c.fg};"><i class="fa-solid ${c.icon}"></i></span><span class="src-cat-name">${c.label}</span></div>`).join('')}</div>`;
-  rightHtml += `<span class="src-more" onclick="closeSearchPanel('${which}'); showDesktopPage('nearby');">More categories</span>`;
-  if(suggestions.length){
-    rightHtml += `<div class="search-panel-head" style="margin-top:6px;"><span>Suggestions</span></div>`;
-    rightHtml += suggestions.map(l => `<div class="search-result-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><span style="font-size:15px; width:18px; text-align:center; flex-shrink:0;">${emojiFor(l.icon)}</span>${l.name}</div>`).join('');
-  }
+  midHtml += `<div class="src-cat-list">${SEARCH_QUICK_CATS.map(c=>`<div class="src-cat-item" onclick="searchQuickCategory('${c.k}','${which}')"><span class="src-cat-icon" style="background:${c.bg}; color:${c.fg};"><i class="fa-solid ${c.icon}"></i></span><span class="src-cat-name">${c.label}</span></div>`).join('')}</div>`;
+  midHtml += `<span class="src-more" onclick="exploreOpenedFrom='${which}'; closeSearchPanel('${which}'); openExplore('all');">More categories</span>`;
 
-  resultsEl.innerHTML = `<div class="search-combo"><div class="search-combo-left">${leftHtml}</div><div class="search-combo-right">${rightHtml}</div></div>`;
+  let rightHtml = `<div class="dir-combo-label">Suggestions</div>`;
+  rightHtml += suggestions.length ? suggestions.map(l => `<div class="dir-sugg-item" onclick="closeSearchPanel('${which}'); openDetail('${l.id}')"><span class="dir-sugg-icon">${emojiFor(l.icon)}</span><span class="dir-sugg-name">${l.name}</span></div>`).join('') : `<p style="font-size:11.5px; color:var(--ink-muted);">Nothing to suggest yet.</p>`;
+
+  resultsEl.innerHTML = `<div class="search-combo"><div class="search-combo-left">${leftHtml}</div><div class="search-combo-mid">${midHtml}</div><div class="search-combo-right">${rightHtml}</div></div>`;
   resultsEl.classList.add('show');
 }
 function closeSearchPanel(which){
   document.getElementById('search-results-'+which).classList.remove('show');
+  const input = document.getElementById('search-input-'+which);
+  if(input) input.blur();
 }
 function iconForNominatim(cls, type){
   const map = {
@@ -1819,7 +1878,7 @@ function setDirectionsMode(mode){
   directionsMode = mode;
   document.querySelectorAll('.dir-mode-icon').forEach(el=>el.classList.toggle('active', el.dataset.mode===mode));
 }
-async function startRouteTo(destPos, destName, destIcon, destFill){
+async function startRouteTo(destPos, destName, destIcon, destFill, originOverride){
   closeModal();
   showDesktopPage('livemap');
   initMapIfNeeded();
@@ -1829,10 +1888,10 @@ async function startRouteTo(destPos, destName, destIcon, destFill){
   panel.classList.add('show');
   panel.innerHTML = `<div style="text-align:center; padding:16px 0; color:var(--ink-muted); font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Finding a route to ${destName}...</div>`;
 
-  const origin = await getUserLocation();
+  const origin = originOverride || await getUserLocation();
   if(origin.error){
     panel.innerHTML = `<div>
-      <p style="font-size:13px; color:var(--ink-secondary); margin-bottom:14px;">Couldn't get your location to route from (${origin.error.replace(/_/g,' ')}). Enable location access and try again.</p>
+      <p style="font-size:13px; color:var(--ink-secondary); margin-bottom:14px;">Couldn't get your location to route from (${origin.error.replace(/_/g,' ')}). Enable location access, or type a starting point manually in the search box.</p>
       <button class="primary-btn" style="width:100%;" onclick="closeRoute()">Close</button>
     </div>`;
     return;
@@ -3213,6 +3272,82 @@ function resetNpFilters(){
 }
 function toggleShowAllNearby(){ npShowAll = !npShowAll; renderNearbyPage(); }
 
+const EXPLORE_CATS = {
+  food:{label:'Restaurants', match:l=>l.category==='food'},
+  fuel:{label:'Fuel Stations', match:l=>l.category==='fuel'},
+  health:{label:'Health', match:l=>l.category==='health'},
+  errand:{label:'Errands', match:l=>l.category==='errand'},
+  all:{label:'Explore Nearby', match:l=>true},
+};
+let exploreActive = null;
+let exploreSub = 'all';
+function openExplore(category){
+  exploreActive = category;
+  exploreSub = 'all';
+  exploreArmed = false;
+  showDesktopPage('livemap');
+  renderExplorePanel();
+  setTimeout(()=>{ exploreArmed = true; }, 0);
+}
+function closeExplore(){
+  exploreActive = null;
+  const panel = document.getElementById('explore-panel');
+  if(panel) panel.classList.remove('show');
+  setTimeout(()=>{
+    const input = document.getElementById('search-input-'+exploreOpenedFrom);
+    if(input){
+      input.focus();
+      showRecentSearches(exploreOpenedFrom);
+    }
+  }, 0);
+}
+function setExploreSub(sub){ exploreSub = sub; renderExplorePanel(); }
+function renderExplorePanel(){
+  const panel = document.getElementById('explore-panel');
+  if(!panel || !exploreActive) return;
+  const cfg = EXPLORE_CATS[exploreActive] || EXPLORE_CATS.all;
+  let items = locations.filter(cfg.match);
+  if(exploreSub==='openNow') items = items.filter(l=>isOpenNow(l)===true);
+  else if(exploreSub==='under15') items = items.filter(l=>l.minutes!=null && l.minutes<15);
+  else if(exploreSub==='topRated') items = items.filter(l=>l.ratingCount && l.ratingAvg>=4);
+  items = items.slice().sort((a,b)=>realDistanceMi(a).miles-realDistanceMi(b).miles);
+
+  const subChips = [
+    {k:'all', label:'All'}, {k:'openNow', label:'Open Now'},
+    {k:'under15', label:'Wait < 15 min'}, {k:'topRated', label:'4+ rated'},
+  ];
+
+  panel.innerHTML = `
+    <div style="display:flex; flex-direction:column; height:100%;">
+      <div class="explore-back-row">
+        <button class="explore-back-btn" onclick="closeExplore()"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="explore-title">${cfg.label}</span><span class="explore-count">(${items.length})</span>
+      </div>
+      <div class="explore-chips-row">${subChips.map(c=>`<div class="explore-chip ${exploreSub===c.k?'active':''}" onclick="setExploreSub('${c.k}')">${c.label}</div>`).join('')}</div>
+      <div style="flex:1; overflow-y:auto;">
+        ${items.length ? items.map(l=>{
+          const c = statusColors[l.status] || statusColors.unknown;
+          const open = isOpenNow(l);
+          return `<div class="explore-card">
+            <div class="explore-card-photo" style="background:${c.bg};">${emojiFor(l.icon)}</div>
+            <div style="flex:1; min-width:0;">
+              <div class="explore-card-name">${l.name}</div>
+              <div class="explore-card-meta">
+                ${l.ratingCount ? renderStars(l.ratingAvg, l.ratingCount) : 'No ratings yet'}
+                <span>&middot; ${l.minutes==null ? 'No wait data' : l.minutes+' min wait'}</span>
+                <span>&middot; ${realDistanceMi(l).label}</span>
+                ${open===true ? '<span style="color:var(--teal-text);">&middot; Open</span>' : open===false ? '<span style="color:var(--coral-text);">&middot; Closed</span>' : ''}
+              </div>
+              <div class="explore-card-actions">
+                <button class="explore-card-dir-btn" onclick="openDirections('${l.id}')"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('') : `<p style="color:var(--ink-muted); font-size:13px; padding:20px 4px;">No places match this filter yet.</p>`}
+      </div>
+    </div>`;
+  panel.classList.add('show');
+}
 function renderNearbyPage(q){
   const page = document.getElementById('nearby-page');
   const query = (q!=null ? q : (document.getElementById('np-search-input')?.value || '')).toLowerCase();
@@ -3328,6 +3463,11 @@ document.addEventListener('click', (e)=>{
   const sortMenu = document.getElementById('np-sort-menu');
   if(sortMenu && sortMenu.style.display==='block' && !sortMenu.closest('.np-sort-wrap').contains(e.target)){
     sortMenu.style.display = 'none';
+  }
+  const explorePanel = document.getElementById('explore-panel');
+  if(exploreArmed && explorePanel && explorePanel.classList.contains('show') && !e.composedPath().includes(explorePanel)){
+    exploreActive = null;
+    explorePanel.classList.remove('show');
   }
 });
 
