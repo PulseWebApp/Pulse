@@ -343,6 +343,12 @@
   .route-step{display:flex; gap:10px; padding:9px 0; border-top:1px solid var(--border); font-size:12.5px; color:var(--ink);}
   .route-step:first-child{border-top:none;}
   .route-step-icon{width:22px; height:22px; border-radius:50%; background:var(--accent-bg); color:var(--accent-text); display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; margin-top:1px;}
+  .route-opt-row{display:flex; gap:8px; margin-bottom:12px; overflow-x:auto;}
+  .route-opt-card{flex-shrink:0; min-width:88px; border:1.5px solid var(--border); border-radius:12px; padding:8px 12px; cursor:pointer; text-align:center;}
+  .route-opt-card.active{border-color:var(--accent); background:var(--accent-bg);}
+  .route-opt-time{font-size:13px; font-weight:700; color:var(--ink);}
+  .route-opt-dist{font-size:10.5px; color:var(--ink-muted); margin-top:2px;}
+  .route-warning{display:flex; align-items:flex-start; gap:8px; font-size:11.5px; color:var(--amber-text); background:var(--amber-bg); border-radius:10px; padding:9px 11px; margin-bottom:12px;}
   .leaflet-bottom.leaflet-right{right:auto !important; left:0 !important;}
   .leaflet-control-attribution{display:none !important;}
   [data-theme="dark"] .weather-card{background:rgba(24,34,52,.85); border-color:rgba(255,255,255,.08);}
@@ -1928,6 +1934,7 @@ function openDetail(id){
             <div class="cap" style="text-align:left;">${c.label.toUpperCase()}</div>
           </div>
           <div id="wait-sparkline-${l.id}"></div>
+          <div id="busy-times-${l.id}"></div>
         </div>
         <div class="dg-actions" style="display:flex; gap:8px;">
           <button class="opt-btn" onclick="openDirections('${l.id}')" style="justify-content:center; gap:6px; flex:1; margin-bottom:0;"><i class="fa-solid fa-diamond-turn-right"></i>Directions</button>
@@ -1947,13 +1954,16 @@ function openDetail(id){
     </div>
   </div>`;
   loadWaitSparkline(l.id);
+  loadBusyTimes(l.id);
 }
 
-let routeLayer = null, routeStartMarker = null, routeEndMarker = null;
+let routeLayer = null, routeStartMarker = null, routeEndMarker = null, routeAltLayers = [];
 function closeRoute(){
   if(routeLayer && leafletMap){ leafletMap.removeLayer(routeLayer); routeLayer = null; }
   if(routeStartMarker && leafletMap){ leafletMap.removeLayer(routeStartMarker); routeStartMarker = null; }
   if(routeEndMarker && leafletMap){ leafletMap.removeLayer(routeEndMarker); routeEndMarker = null; }
+  if(routeAltLayers && routeAltLayers.length && leafletMap){ routeAltLayers.forEach(l=>leafletMap.removeLayer(l)); routeAltLayers = []; }
+  currentRouteOptions = [];
   const panel = document.getElementById('route-panel');
   if(panel) panel.classList.remove('show');
 }
@@ -1964,8 +1974,76 @@ function setDirectionsMode(mode){
   directionsMode = mode;
   document.querySelectorAll('.dir-mode-icon').forEach(el=>el.classList.toggle('active', el.dataset.mode===mode));
 }
+let currentRouteOptions = [];
+let selectedRouteIdx = 0;
+let currentRouteDestInfo = null;
+function reportLatLng(r){
+  return { lat: (r.lat!=null ? r.lat : demoToLatLng(r.x, r.y).lat), lng: (r.lng!=null ? r.lng : demoToLatLng(r.x, r.y).lng) };
+}
+function findRealTrafficWarnings(geometry){
+  // Real check: any jam/closure report from roadReports within ~400m of the actual route path.
+  // Sample toward ~40 points regardless of route length so short routes aren't under-sampled.
+  const stride = Math.max(1, Math.floor(geometry.length / 40));
+  const sample = geometry.filter((_, i) => i % stride === 0 || i === geometry.length - 1);
+  const hits = [];
+  roadReports.forEach(r => {
+    if(r.type !== 'jam' && r.type !== 'closure') return;
+    const pos = reportLatLng(r);
+    const near = sample.some(([lat,lng]) => haversineMiles(lat, lng, pos.lat, pos.lng) * 1609 < 400);
+    if(near) hits.push(r);
+  });
+  return hits;
+}
+function renderRoutePanel(){
+  const panel = document.getElementById('route-panel');
+  if(!panel || !currentRouteOptions.length) return;
+  const route = currentRouteOptions[selectedRouteIdx];
+  const km = (route.distanceMeters/1000).toFixed(1);
+  const mins = Math.max(1, Math.round(route.durationSeconds/60));
+  const warnings = findRealTrafficWarnings(route.geometry);
+
+  if(typeof L !== 'undefined' && leafletMap){
+    if(routeLayer) leafletMap.removeLayer(routeLayer);
+    if(routeAltLayers){ routeAltLayers.forEach(l=>leafletMap.removeLayer(l)); }
+    routeAltLayers = currentRouteOptions.map((r,i)=> i===selectedRouteIdx ? null :
+      L.polyline(r.geometry, {color:'#9CA3AF', weight:4, opacity:.6}).addTo(leafletMap).on('click', ()=>{ selectRouteOption(i); })
+    ).filter(Boolean);
+    routeLayer = L.polyline(route.geometry, {color:'#2563EB', weight:5, opacity:.9, lineJoin:'round'}).addTo(leafletMap);
+    routeLayer.bringToFront();
+  }
+
+  panel.innerHTML = `
+    <div class="route-panel-head">
+      <div>
+        <div class="route-summary">${mins} min</div>
+        <div class="route-sub">${km} km &middot; to ${currentRouteDestInfo.name}</div>
+      </div>
+      <button class="close-btn" onclick="closeRoute()" title="Exit navigation"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    ${currentRouteOptions.length > 1 ? `<div class="route-opt-row">${currentRouteOptions.map((r,i)=>{
+      const m = Math.max(1, Math.round(r.durationSeconds/60));
+      const k = (r.distanceMeters/1000).toFixed(1);
+      return `<div class="route-opt-card ${i===selectedRouteIdx?'active':''}" onclick="selectRouteOption(${i})"><div class="route-opt-time">${m} min</div><div class="route-opt-dist">${k} km${i===0?' &middot; Fastest':''}</div></div>`;
+    }).join('')}</div>` : ''}
+    ${warnings.length ? `<div class="route-warning"><i class="fa-solid fa-triangle-exclamation"></i>${warnings.length===1 ? warnings[0].detail || (warnings[0].type==='closure'?'Road closure':'Traffic jam')+' reported near '+warnings[0].name : warnings.length+' real reports (jam/closure) along this route'}</div>` : ''}
+    <div>
+      ${route.steps && route.steps.length ? route.steps.map(s=>`<div class="route-step">
+        <span class="route-step-icon"><i class="fa-solid fa-arrow-up"></i></span>
+        <div style="flex:1;">${s.instruction}${s.distance ? `<div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">${s.distance < 1000 ? Math.round(s.distance)+' m' : (s.distance/1000).toFixed(1)+' km'}</div>` : ''}</div>
+      </div>`).join('') : `<p style="font-size:12px; color:var(--ink-muted);">Step-by-step turns aren't available for this route, but the path is drawn on the map.</p>`}
+    </div>
+  `;
+}
+function selectRouteOption(idx){
+  selectedRouteIdx = idx;
+  renderRoutePanel();
+  if(leafletMap && routeLayer) leafletMap.fitBounds(routeLayer.getBounds(), {paddingTopLeft:[360,40], paddingBottomRight:[40,40]});
+}
 async function startRouteTo(destPos, destName, destIcon, destFill, originOverride){
   closeModal();
+  exploreActive = null;
+  const explorePanel = document.getElementById('explore-panel');
+  if(explorePanel) explorePanel.classList.remove('show');
   showDesktopPage('livemap');
   initMapIfNeeded();
 
@@ -1984,7 +2062,8 @@ async function startRouteTo(destPos, destName, destIcon, destFill, originOverrid
   }
 
   const profile = ORS_PROFILES[directionsMode] || 'driving-car';
-  const data = await api(`/api/directions?from=${origin.lat},${origin.lng}&to=${destPos.lat},${destPos.lng}&profile=${profile}`);
+  const wantAlt = profile === 'driving-car';
+  const data = await api(`/api/directions?from=${origin.lat},${origin.lng}&to=${destPos.lat},${destPos.lng}&profile=${profile}${wantAlt ? '&alternatives=true' : ''}`);
   if(!data || data.error){
     panel.innerHTML = `<div>
       <p style="font-size:13px; color:var(--ink-secondary); margin-bottom:14px;">Couldn't load a route right now${data && data.error ? ' — '+data.error : ''}.</p>
@@ -1996,31 +2075,16 @@ async function startRouteTo(destPos, destName, destIcon, destFill, originOverrid
   closeRoute();
   panel.classList.add('show');
 
+  currentRouteOptions = (data.routes && data.routes.length ? data.routes : [data]);
+  selectedRouteIdx = 0;
+  currentRouteDestInfo = {name: destName};
+
   if(typeof L !== 'undefined' && leafletMap){
-    routeLayer = L.polyline(data.geometry, {color:'#2563EB', weight:5, opacity:.85, lineJoin:'round'}).addTo(leafletMap);
     routeStartMarker = L.circleMarker([origin.lat, origin.lng], {radius:7, color:'#fff', weight:2, fillColor:'#378ADD', fillOpacity:1}).addTo(leafletMap);
     routeEndMarker = L.marker([destPos.lat, destPos.lng], {icon: pinIcon(destIcon || 'ti-map-pin', destFill || 'var(--accent)')}).addTo(leafletMap);
-    leafletMap.fitBounds(routeLayer.getBounds(), {paddingTopLeft:[360,40], paddingBottomRight:[40,40]});
   }
-
-  const km = (data.distanceMeters/1000).toFixed(1);
-  const mins = Math.max(1, Math.round(data.durationSeconds/60));
-
-  panel.innerHTML = `
-    <div class="route-panel-head">
-      <div>
-        <div class="route-summary">${mins} min</div>
-        <div class="route-sub">${km} km &middot; to ${destName}</div>
-      </div>
-      <button class="close-btn" onclick="closeRoute()" title="Exit navigation"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div>
-      ${data.steps && data.steps.length ? data.steps.map(s=>`<div class="route-step">
-        <span class="route-step-icon"><i class="fa-solid fa-arrow-up"></i></span>
-        <div style="flex:1;">${s.instruction}${s.distance ? `<div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">${s.distance < 1000 ? Math.round(s.distance)+' m' : (s.distance/1000).toFixed(1)+' km'}</div>` : ''}</div>
-      </div>`).join('') : `<p style="font-size:12px; color:var(--ink-muted);">Step-by-step turns aren't available for this route, but the path is drawn on the map.</p>`}
-    </div>
-  `;
+  renderRoutePanel();
+  if(leafletMap && routeLayer) leafletMap.fitBounds(routeLayer.getBounds(), {paddingTopLeft:[360,40], paddingBottomRight:[40,40]});
 }
 async function openDirections(id){
   const l = locations.find(x=>String(x.id)===String(id));
@@ -2030,6 +2094,15 @@ async function openDirections(id){
   await startRouteTo(destPos, l.name, l.icon, c.fill);
 }
 
+async function loadBusyTimes(id){
+  const data = await api('/api/busy-times?locationId=' + encodeURIComponent(id));
+  const holder = document.getElementById('busy-times-' + id);
+  if(!holder || !data || !data.hasData) return;
+  const hourLabel = h => h===0 ? '12 AM' : h<12 ? h+' AM' : h===12 ? '12 PM' : (h-12)+' PM';
+  holder.innerHTML = `<div style="margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border);">
+    <p style="font-size:11px; color:var(--ink-muted); margin:0;">Based on ${data.buckets.reduce((s,b)=>s+b.count,0)} real check-ins, this place tends to be busiest around <strong style="color:var(--ink);">${hourLabel(data.busiestHour)}</strong> (avg ${data.busiestAvgWait} min wait).</p>
+  </div>`;
+}
 async function loadWaitSparkline(id){
   const data = await api('/api/location-history?locationId=' + encodeURIComponent(id));
   const holder = document.getElementById('wait-sparkline-' + id);
