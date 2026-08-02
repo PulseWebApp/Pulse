@@ -1080,22 +1080,22 @@ function onDirDestInput(q, which){
     }catch(e){ resultsEl.style.display='none'; }
   }, 400);
 }
-async function selectDirDest(lat, lng, label){
+async function resolveTypedOrigin(){
   const originEl = document.getElementById('dir-origin-input-desktop') || document.getElementById('dir-origin-input-mobile');
-  let originOverride = null;
-  if(originResolvedPos){
-    originOverride = originResolvedPos;
-  } else if(originEl && originEl.value.trim()){
+  if(originResolvedPos) return originResolvedPos;
+  if(originEl && originEl.value.trim()){
     const typed = originEl.value.trim();
     const m = typed.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
-    if(m){
-      originOverride = {lat: parseFloat(m[1]), lng: parseFloat(m[2])};
-    } else {
-      toast('Looking up "'+typed+'"\u2026');
-      originOverride = await geocodeText(typed);
-      if(!originOverride) toast('Couldn\u2019t find that starting point \u2014 trying GPS instead');
-    }
+    if(m) return {lat: parseFloat(m[1]), lng: parseFloat(m[2])};
+    toast('Looking up "'+typed+'"\u2026');
+    const geocoded = await geocodeText(typed);
+    if(!geocoded) toast('Couldn\u2019t find that starting point \u2014 trying GPS instead');
+    return geocoded;
   }
+  return null;
+}
+async function selectDirDest(lat, lng, label){
+  const originOverride = await resolveTypedOrigin();
   await startRouteTo({lat,lng}, label, 'ti-map-pin', 'var(--accent)', originOverride);
   closeSearchPanel('desktop');
   closeSearchPanel('mobile');
@@ -2091,7 +2091,8 @@ async function openDirections(id){
   if(!l) return;
   const destPos = l.osm ? {lat:l.lat, lng:l.lng} : demoToLatLng(l.x, l.y);
   const c = statusColors[l.status] || statusColors.unknown;
-  await startRouteTo(destPos, l.name, l.icon, c.fill);
+  const originOverride = await resolveTypedOrigin();
+  await startRouteTo(destPos, l.name, l.icon, c.fill, originOverride);
 }
 
 async function loadBusyTimes(id){
