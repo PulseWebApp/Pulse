@@ -335,6 +335,9 @@ export default {
     // Requires a Worker secret: `wrangler secret put ORS_API_KEY` (free key from openrouteservice.org).
     // alternatives=true asks ORS for up to 3 route options (driving-car only — ORS only
     // supports alternatives for that profile with a single origin/destination pair).
+    // ORS can reject alternative_routes for some origin/destination pairs (route too
+    // long, no viable alternative under the share_factor, etc.) — if that happens we
+    // silently retry without alternatives rather than failing the whole request.
     if (path === '/api/directions' && method === 'GET') {
       if (!env.ORS_API_KEY) return json({ error: 'Routing not configured — missing ORS_API_KEY secret' }, 500);
 
@@ -350,16 +353,28 @@ export default {
         return json({ error: 'invalid coordinates' }, 400);
       }
 
-      try {
-        const reqBody = { coordinates: [[fromLng, fromLat], [toLng, toLat]] };
-        if (wantAlternatives && profile === 'driving-car') {
+      const coordinates = [[fromLng, fromLat], [toLng, toLat]];
+
+      async function callOrs(withAlternatives) {
+        const reqBody = { coordinates };
+        if (withAlternatives) {
           reqBody.alternative_routes = { target_count: 3, share_factor: 0.6, weight_factor: 1.4 };
         }
-        const orsRes = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}/geojson`, {
+        const res = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}/geojson`, {
           method: 'POST',
           headers: { 'Authorization': env.ORS_API_KEY, 'Content-Type': 'application/json' },
           body: JSON.stringify(reqBody),
         });
+        return res;
+      }
+
+      try {
+        let orsRes = await callOrs(wantAlternatives && profile === 'driving-car');
+        // Alternatives can be rejected for routes ORS can't find suitable alternates
+        // for — retry once as a plain single-route request before giving up.
+        if (!orsRes.ok && wantAlternatives) {
+          orsRes = await callOrs(false);
+        }
         if (!orsRes.ok) {
           const detail = await orsRes.text();
           return json({ error: 'Routing service error', detail: detail.slice(0, 300) }, 502);
