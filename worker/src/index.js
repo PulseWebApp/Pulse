@@ -45,13 +45,19 @@ async function getUserFromToken(env, request) {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) return null;
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.role, u.name, u.email_verified FROM auth_tokens t
+    `SELECT u.* FROM auth_tokens t
      JOIN users u ON u.id = t.user_id WHERE t.token = ? AND t.expires_at > ?`
   ).bind(token, Date.now()).first();
   return row || null;
 }
 function publicUser(u) {
-  return { id: u.id, email: u.email, role: u.role, name: u.name || null, emailVerified: !!u.email_verified };
+  return {
+    id: u.id, email: u.email, role: u.role, name: u.name || null,
+    phone: u.phone || null, username: u.username || null,
+    language: u.language || null, timezone: u.timezone || null,
+    avatarData: u.avatar_data || null,
+    emailVerified: !!u.email_verified,
+  };
 }
 
 // ---------- Email verification ----------
@@ -494,6 +500,35 @@ export default {
       const user = await getUserFromToken(env, request);
       if (!user) return json({ error: 'Not authenticated' }, 401);
       return json({ user: publicUser(user) });
+    }
+
+    // POST /api/auth/profile  { name?, phone?, username?, language?, timezone?, avatarData? }
+    // Only touches fields that are actually present in the request body, so a partial
+    // save (e.g. just changing timezone) doesn't clobber the rest.
+    if (path === '/api/auth/profile' && method === 'POST') {
+      const user = await getUserFromToken(env, request);
+      if (!user) return json({ error: 'Not authenticated' }, 401);
+      const body = await request.json().catch(() => ({}));
+
+      if (typeof body.avatarData === 'string' && body.avatarData.length > 400000) {
+        return json({ error: 'Photo is too large — please use a smaller image' }, 400);
+      }
+
+      const fields = [];
+      const values = [];
+      const map = { name: 'name', phone: 'phone', username: 'username', language: 'language', timezone: 'timezone', avatarData: 'avatar_data' };
+      for (const [bodyKey, col] of Object.entries(map)) {
+        if (Object.prototype.hasOwnProperty.call(body, bodyKey)) {
+          fields.push(`${col} = ?`);
+          values.push(body[bodyKey] === '' ? null : body[bodyKey]);
+        }
+      }
+      if (!fields.length) return json({ error: 'Nothing to update' }, 400);
+      values.push(user.id);
+      await env.DB.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
+
+      const updated = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(user.id).first();
+      return json({ user: publicUser(updated) });
     }
 
     // ---------- Per-account saved places & recent searches ----------
