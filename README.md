@@ -1,18 +1,53 @@
-# Pulse — hackathon build
+# Pulse — real-time local conditions
 
-Real-time local conditions: wait times at nearby shops/clinics/gas
-stations, road hazards and closures, and crowd-reported signal
-states — plus a business-owner portal so shops can self-report.
+Live wait times at nearby shops, clinics, and gas stations; crowd-reported
+road hazards, closures, and traffic-signal states; and a business-owner
+portal so shops can self-report their own status. Built for **RLC Hacks
+2026**.
 
-## Current status: Day 1
+**Live app:** https://pulse-app.asadzahid100.workers.dev
+**API:** https://pulse.as4dzahid.workers.dev
 
-The Worker API (`/worker`) is deployed and returns real (if
-hardcoded) data. The frontend (`/frontend`) calls it over `fetch`,
-with a graceful fallback to local demo data if the API is
-unreachable — so the app never shows a blank screen, even mid-build.
+## What's built
 
-D1 (the real database) is not wired in yet — that's Day 2. See
-`worker/schema.sql` for the schema already written and ready to go.
+- **Real-time feed** — wait times, live-user counts (distinct sessions
+  seen in the last 2 minutes), and crowd check-ins per location, backed
+  by Cloudflare D1 (not hardcoded demo data).
+- **Auth** — email/password signup with 6-digit email verification,
+  PBKDF2-SHA256 hashing via native Web Crypto, bearer-token sessions.
+  Guest mode also available.
+- **Verified business-owner updates** — an owner can only update a
+  location's status after their claim on it is verified
+  (`owner_claims` table); unverified or mismatched claims are rejected
+  server-side.
+- **Road & signal reporting** — crowd-sourced hazards, closures, jams,
+  and traffic-signal state, with confirm/clear voting.
+- **Real analytics** — busiest times and busiest areas computed from
+  actual check-in and report history, never fabricated.
+- **Directions** — multi-route options via OpenRouteService, with
+  traffic warnings sourced from real user reports, typed-origin
+  geocoding via Nominatim, and drive/walk/bike/transit modes.
+- **Full settings & personalization** — profile with photo upload,
+  notifications, theme (light/dark/system), accent color, map style
+  (standard/dark/satellite), saved places, recent searches.
+- **8-language i18n** — English, Chinese, Hindi, Spanish, French,
+  Arabic, Urdu, Portuguese. RTL languages translate text only; layout
+  stays fixed LTR by design.
+
+## Stack
+
+- **Frontend**: single static `frontend/index.html` (vanilla HTML/CSS/JS,
+  no build step, no framework), Leaflet.js for the map.
+- **Backend**: Cloudflare Worker (`worker/src/index.js`) exposing a
+  JSON API under `/api/*`.
+- **Database**: Cloudflare D1 (SQLite-compatible); schema in
+  `worker/schema.sql`.
+
+## Map attribution
+
+Map tiles are provided by OpenStreetMap, CARTO, and Esri ArcGIS World
+Imagery (satellite mode). Attribution is displayed on the map itself per
+each provider's terms of use.
 
 ## Deploying the API (Worker)
 
@@ -23,61 +58,60 @@ wrangler login
 wrangler deploy
 ```
 
-This gives you a URL like `https://pulse-api.<you>.workers.dev`.
-Test it directly: `curl https://pulse-api.<you>.workers.dev/api/feed`
-should return JSON.
+Set the following as Worker secrets for full functionality:
+- `RESEND_API_KEY` — verification emails (signup still works without it;
+  falls back to returning the code directly in the API response)
+- `OPENROUTESERVICE_API_KEY` — turn-by-turn directions
 
-### Day 2: switching from hardcoded data to D1
+### Database (D1)
 
 ```bash
 wrangler d1 create pulse-db
-# copy the database_id it prints into wrangler.toml, uncomment the
-# [[d1_databases]] block
+# copy the database_id into wrangler.toml's [[d1_databases]] block
 
 wrangler d1 execute pulse-db --file=schema.sql
-
 wrangler deploy
 ```
 
-Then in `worker/src/index.js`, replace the `DEMO_DATA` reads/writes
-in each route with `env.DB.prepare(...)` queries. The JSON shape
-each route returns should stay the same — the frontend is already
-built against it.
+**Important:** don't re-run the full `schema.sql` against a live database
+— its seed `INSERT` statements aren't idempotent and will duplicate data.
+For schema changes, run only the new `ALTER TABLE` statement needed,
+after checking current state with `PRAGMA table_info(<table>)`.
 
 ## Deploying the frontend
-
-Any static host works (Cloudflare Pages, Vercel, Netlify). Simplest
-with Wrangler:
 
 ```bash
 cd frontend
 wrangler pages deploy .
 ```
 
-Before deploying (or redeploying after the API is live), open
-`frontend/index.html` and set:
+`API_BASE` in `frontend/index.html` points at the deployed Worker API and
+is the source of truth for what the frontend calls.
 
-```js
-const API_BASE = 'https://pulse-api.<you>.workers.dev';
-```
+## Verifying it's publicly accessible
 
-If you leave `API_BASE` empty, the app still works — it just runs
-entirely on local demo data with a visible "Demo mode" banner.
+Open the deployed frontend URL in an incognito/private window, logged out
+of everything. It should load and work fully.
 
-## Verifying it's actually public
+## Known gaps (disclosed, not hidden)
 
-Before submitting: open the deployed frontend URL in an incognito /
-private browser window (logged out of everything). If it loads and
-works there, it satisfies requirement #1.
-
-## Known gaps (say these out loud if a judge asks, don't hide them)
-
-- No real auth on the owner-update route yet — anyone could currently
-  claim to be a business owner. `owner_claims` table in schema.sql is
-  the intended fix (claim via phone/email verification), not built
-  yet given the timeline.
-- Signal-state and hazard reports aren't fact-checked — they're
+- **Overpass "Nearby Places" doesn't refresh on map pan** — the fetch
+  runs once on load, centered on the initial location. Panning far away
+  won't show new places until reload or a new search. A pan-triggered
+  refresh was discussed but not built in the hackathon timeline.
+- **Signal-state and hazard reports aren't fact-checked** — they're
   crowd-confirmed only, same trust model as Waze.
-- Map is a stylized illustration, not a real map SDK (Google
-  Maps/Mapbox) — deliberate choice to avoid API key management and
-  extra integration time this week.
+- **i18n coverage is broad but not guaranteed exhaustive** — any UI
+  surface not explicitly verified may still have untranslated strings.
+- **Map tile labels (street/place names on the tiles themselves) aren't
+  translatable** — the free CARTO raster tiles don't support it; a paid
+  vector-tile provider would be needed to fix this.
+- **No real-time traffic data** — would require a paid API beyond the
+  hackathon's scope.
+
+## AI disclosure
+
+AI coding assistants were used throughout development — architecture
+decisions, the backend API and database schema, frontend UI, the auth
+system, i18n, analytics, and debugging — with the team directing
+requirements, testing, and final decisions.
