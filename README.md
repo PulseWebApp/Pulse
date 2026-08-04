@@ -5,7 +5,7 @@ road hazards, closures, and traffic-signal states; and a business-owner
 portal so shops can self-report their own status. Built for **RLC Hacks
 2026**.
 
-**Live app:** https://pulse-app.asadzahid100.workers.dev
+**Live app:** https://pulse-app.as4dzahid.workers.dev
 **API:** https://pulse.as4dzahid.workers.dev
 
 ## What's built
